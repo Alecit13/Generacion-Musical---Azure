@@ -1,0 +1,8 @@
+# Python 3.12 (64-bit) en Windows. mediapipe 0.10.21 no tiene paquetes para 3.13 ni 3.14.
+# Version fijada: desde 0.10.30 mediapipe elimino mp.solutions.
+mediapipe==0.10.21
+numpy<2
+opencv-python
+pykinect_azure==0.0.4
+websockets
+matplotlib
