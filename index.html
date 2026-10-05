@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+</head>
+<body>
+  <button id="iniciar">Haz clic para activar el audio</button>
+  <p id="estado">Esperando conexión con el servidor...</p>
+
+  <script>
+    // El navegador exige un clic humano antes de dejar sonar audio — por eso el botón.
+    const synth = new Tone.Synth({ oscillator: { type: "sine" } });
+    const filtro = new Tone.Filter(2000, "lowpass").toDestination();
+    synth.connect(filtro);
+
+    document.getElementById("iniciar").onclick = async () => {
+      await Tone.start();
+      console.log("Audio listo");
+    };
+
+    // Python usa Do/Re/Mi/Sol/La — Tone.js necesita nombres en inglés (C, D, E, G, A)
+    const MAPA_NOTAS = { "Do": "C", "Re": "D", "Mi": "E", "Sol": "G", "La": "A" };
+
+    let ultimaNotaSonada = null;
+    const estadoEl = document.getElementById("estado");
+
+    function conectarWebSocket() {
+      const ws = new WebSocket("ws://localhost:8765");
+
+      ws.onopen = () => {
+        console.log("WebSocket conectado");
+        estadoEl.textContent = "Conectado al servidor — moviéndote frente al Kinect deberías escuchar cambios.";
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket desconectado, reintentando en 2s...");
+        estadoEl.textContent = "Sin conexión con el servidor. Reintentando...";
+        setTimeout(conectarWebSocket, 2000);
+      };
+
+      ws.onerror = () => ws.close();
+
+      ws.onmessage = (evento) => {
+        const datos = JSON.parse(evento.data);
+        const notaTone = MAPA_NOTAS[datos.nota] + datos.octava;  // ej. "Do","4" -> "C4"
+
+        // El brillo (apertura de mano) se actualiza SIEMPRE, de forma continua
+        const corte = 300 + datos.apertura * 6000;  // ILUSTRATIVO — ajusta escuchando
+        filtro.frequency.rampTo(corte, 0.05);
+
+        // La nota solo se dispara cuando de verdad CAMBIÓ, no en cada mensaje
+        if (notaTone !== ultimaNotaSonada) {
+          synth.triggerAttackRelease(notaTone, "8n");
+          ultimaNotaSonada = notaTone;
+        }
+      };
+    }
+
+    conectarWebSocket();
+  </script>
+</body>
+</html>
