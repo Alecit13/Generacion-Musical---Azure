@@ -1,15 +1,15 @@
 import faulthandler
 faulthandler.enable(all_threads=True)  # si el proceso muere por un fallo nativo, muestra dónde
-
 import asyncio
 import cv2
 import numpy as np
 import mediapipe as mp
 from mediapipe.framework.formats import landmark_pb2
+import os
+os.environ["PATH"] = r"C:\Program Files\Azure Kinect Body Tracking SDK\tools;" + os.environ["PATH"]
 import pykinect_azure as pykinect
 import websockets
 import csv
-import os
 import time
 from datetime import datetime
 from zona import calcular_zona
@@ -17,10 +17,11 @@ from fluidez import calcular_fluidez
 from muestreo import elegir_siguiente_nota, calcular_octava
 from manos import calcular_apertura
 from servidor import manejar_cliente, enviar_a_todos
-
+import sys
 # =====================================================================
 # PARÁMETROS (todo lo ajustable está aquí arriba)
 # =====================================================================
+
 # Servidor
 HOST_WS = "localhost"
 PUERTO_WS = 8765
@@ -34,6 +35,7 @@ ZONA_INICIAL = "medio"
 # Detección de manos (MediaPipe sobre un recorte alrededor de cada mano)
 CONFIANZA_DETECCION_MANO = 0.5   # bájalo a 0.3-0.4 si aún se pierden manos
 COMPLEJIDAD_MODELO = 1           # 0 = rápido, 1 = más preciso
+ALTERNAR_MANOS = False      # False = detectar las dos manos en cada ciclo
 FOCAL_COLOR_PX = 610             # focal aprox. de la cámara de color a 720p
 TAMANO_MANO_M = 0.35             # tamaño del recuadro en metros (mano + margen)
 ROI_MIN_PX, ROI_MAX_PX = 96, 400 # límites del recuadro en píxeles
@@ -44,7 +46,7 @@ MOSTRAR_RECUADROS = False        # True = dibuja el recuadro de cada mano (útil
 #   "cpu"      -> más lento pero estable (úsalo para comprobar si el cierre viene de la GPU)
 #   "directml" -> GPU con cualquier tarjeta (es lo que se usaba antes por defecto)
 #   "cuda"     -> GPU NVIDIA con CUDA (más rápido, requiere los DLL de CUDA del SDK)
-MODO_BODY_TRACKER = "cpu"
+MODO_BODY_TRACKER = sys.argv[1] if len(sys.argv) > 1 else "cpu"
 
 # =====================================================================
 # Azure Kinect
@@ -114,6 +116,21 @@ log_writer.writerow(["timestamp", "zona", "lambda", "nota", "octava", "apertura"
 log_file.flush()
 print(f"Guardando la sesión en: {ruta_log}")
 
+# ---------- Medición de rendimiento ----------
+ETAPAS = ("captura", "tracker", "manos", "dibujo", "salida")
+acum = dict.fromkeys(ETAPAS, 0.0)
+perf = {"n": 0, "t": time.perf_counter()}
+REPORTE_CADA = 60  # ciclos entre reportes
+
+
+def reportar():
+    ahora = time.perf_counter()
+    dur, n = ahora - perf["t"], perf["n"]
+    etapas = " | ".join(f"{e}={acum[e] / n * 1000:.0f}ms" for e in ETAPAS)
+    print(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas}")
+    for e in ETAPAS:
+        acum[e] = 0.0
+    perf["n"], perf["t"] = 0, ahora
 
 def _fmt(valor):
     """Número redondeado, o vacío si esa mano no se detectó (así no cuenta como 0 en los gráficos)."""
@@ -159,8 +176,11 @@ def detectar_mano(detector, color_rgb, centro, profundidad_mm):
 
 async def bucle_kinect():
     global zona_actual, contador_estable, nota_actual, octava_actual, contador_frames
-
+    ciclo = 0
+    ult_apertura = {"izq": None, "der": None}     # último valor conocido de cada mano
+    ult_landmarks = {"izq": None, "der": None}
     while True:
+        t=time.perf_counter()
         capture = device.update()
 
         # A veces la Kinect entrega una captura sin imagen de profundidad (frame perdido).
@@ -174,13 +194,16 @@ async def bucle_kinect():
         # Copia propia de la imagen: el arreglo de pykinect apunta a memoria de la Kinect
         # que se libera con la siguiente captura; usarla después provoca cierres de golpe.
         color_image = color_image.copy()
+        acum["captura"]+=time.perf_counter()-t
 
+        t = time.perf_counter()
         body_frame = body_tracker.update()
+        num_bodies = body_frame.get_num_bodies()
+        acum["tracker"]+=time.perf_counter()-t
 
         # Copia de 3 canales solo para dibujar; color_image queda limpia para MediaPipe
         display = cv2.cvtColor(color_image, cv2.COLOR_BGRA2BGR)
 
-        num_bodies = body_frame.get_num_bodies()
         if num_bodies > 0:
             skeleton = body_frame.get_body_skeleton(0)
 
@@ -195,7 +218,7 @@ async def bucle_kinect():
             historial_muneca.append((muneca.x, muneca.y))
             if len(historial_muneca) > VENTANA_FLUIDEZ:
                 historial_muneca.pop(0)
-            lam = calcular_fluidez(historial_muneca)
+            lam,acc_media = calcular_fluidez(historial_muneca)
 
             contador_frames += 1
             if contador_frames >= TICKS_POR_NOTA:
@@ -203,14 +226,24 @@ async def bucle_kinect():
                 octava_actual = calcular_octava(zona_actual)
                 contador_frames = 0
 
+
+            t=time.perf_counter()
             # ---- Manos: la Kinect dice dónde está cada mano, MediaPipe la analiza de cerca ----
             color_rgb = cv2.cvtColor(color_image, cv2.COLOR_BGRA2RGB)
             body2d = body_frame.get_body2d(0, pykinect.K4A_CALIBRATION_TYPE_COLOR)
 
-            aperturas = {"izq": None, "der": None}
-            manos_detectadas = []
-            for lado, id_articulacion in ARTICULACIONES_MANO.items():
+            # aperturas = {"izq": None, "der": None}
+            if ALTERNAR_MANOS:
+                lados_hoy = ["izq"] if ciclo % 2 == 0 else ["der"]   # una mano por ciclo
+            else:
+                lados_hoy=["izq","der"]
+            ciclo += 1
+
+            for lado in lados_hoy:
+                id_articulacion = ARTICULACIONES_MANO[lado]
                 articulacion = skeleton.joints[id_articulacion]
+                ult_apertura[lado] = None          # si falla esta vez, se borra el dato viejo
+                ult_landmarks[lado] = None
                 if articulacion.confidence_level < CONF_MIN_ARTICULACION:
                     continue
                 centro = body2d.joints[id_articulacion].get_coordinates()
@@ -221,19 +254,25 @@ async def bucle_kinect():
                     color_caja = (0, 255, 0) if landmarks is not None else (0, 0, 255)
                     cv2.rectangle(display, recuadro[:2], recuadro[2:], color_caja, 2)
                 if landmarks is not None:
-                    aperturas[lado] = calcular_apertura(landmarks)
-                    manos_detectadas.append(landmarks)
+                    ult_apertura[lado] = calcular_apertura(landmarks)
+                    ult_landmarks[lado] = landmarks
 
+            aperturas = ult_apertura
+            manos_detectadas = [h for h in ult_landmarks.values() if h is not None]
             valores = [a for a in aperturas.values() if a is not None]
             apertura_val = sum(valores) / len(valores) if valores else 0.0
             ap_izq = aperturas["izq"] if aperturas["izq"] is not None else 0.0
             ap_der = aperturas["der"] if aperturas["der"] is not None else 0.0
+            acum["manos"]+=time.perf_counter()-t
 
+            t=time.perf_counter()
             # Superposición: esqueleto proyectado a la cámara de color + manos
             display = body_frame.draw_bodies(display, pykinect.K4A_CALIBRATION_TYPE_COLOR)
             for h in manos_detectadas:
                 mp_drawing.draw_landmarks(display, h, mp_hands.HAND_CONNECTIONS)
+            acum["dibujo"]+=time.perf_counter()-t
 
+            t=time.perf_counter()
             await enviar_a_todos({
                 "nota": nota_actual,
                 "octava": octava_actual,
@@ -245,17 +284,27 @@ async def bucle_kinect():
             })
 
             print(f"Nota: {nota_actual}{octava_actual} | zona={zona_actual:<6} | lambda={lam:.2f} "
+                  f"| acc={acc_media:.1f} "
                   f"| apertura={apertura_val:.3f} (izq={ap_izq:.3f}, der={ap_der:.3f}) "
                   f"| manos={len(manos_detectadas)}")
-            log_writer.writerow([time.time(), zona_actual, round(lam, 3), nota_actual, octava_actual,
+            log_writer.writerow([time.time(), zona_actual, round(lam, 3),round(acc_media,2), nota_actual, octava_actual,
                                  _fmt(apertura_val if valores else None),
                                  _fmt(aperturas["izq"]), _fmt(aperturas["der"]),
                                  len(manos_detectadas)])
             log_file.flush()  # guarda cada fila de inmediato
+            acum["salida"]+=time.perf_counter()-t
 
+
+        t=time.perf_counter()
         cv2.imshow('Kinect', display)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        tecla=cv2.waitKey(1) & 0xFF
+        acum["dibujo"]+=time.perf_counter()-t
+        if tecla==ord("q"):
             break
+
+        perf["n"]+=1
+        if perf["n"] >= REPORTE_CADA:
+            reportar()
         await asyncio.sleep(0)  # cede el control para que el servidor pueda enviar mensajes
 
 
