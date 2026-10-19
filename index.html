@@ -1,63 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+<meta charset="utf-8">
+<title>Música con movimiento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
-<body>
-  <button id="iniciar">Haz clic para activar el audio</button>
-  <p id="estado">Esperando conexión con el servidor...</p>
+<body style="font-family: sans-serif; max-width: 680px; margin: 24px auto;">
+<h2>Música con movimiento</h2>
+<button id="inicio">Iniciar audio</button>
+<button id="descargar">Descargar latencias (CSV)</button>
+<p id="estado">Esperando…</p>
+<pre id="datos"></pre>
+<pre id="latencia">Latencia: sin datos</pre>
 
-  <script>
-    // El navegador exige un clic humano antes de dejar sonar audio — por eso el botón.
-    const synth = new Tone.Synth({ oscillator: { type: "sine" } });
-    const filtro = new Tone.Filter(2000, "lowpass").toDestination();
-    synth.connect(filtro);
+<script>
+// =====================================================================
+// PARÁMETROS
+// =====================================================================
+const URL_WS = "ws://localhost:8765";
+const MAPA_NOTAS = { Do: "C", Re: "D", Mi: "E", Fa: "F", Sol: "G", La: "A", Si: "B" };
+const UMBRAL_CONTINUO_MS = 100;  // RNF01: captura -> actualización de parámetros continuos
+const UMBRAL_TICK_MS = 250;      // RNF02: tick del reloj musical -> sorteo de nota (medido en Python)
+const CORTE_MIN_HZ = 300, CORTE_MAX_HZ = 3000;   // timbre (apertura de manos)
+const VOL_MIN_DB = -30, VOL_MAX_DB = -6;         // intensidad (amplitud de extremidades)
+const MAX_VENTANA = 300;                         // muestras para las estadísticas en pantalla
+const MAX_REGISTRO = 50000;                      // muestras para el CSV descargable
 
-    document.getElementById("iniciar").onclick = async () => {
-      await Tone.start();
-      console.log("Audio listo");
-    };
+// =====================================================================
+// Audio: sintetizador -> filtro -> salida
+// =====================================================================
+const synth = new Tone.Synth({ oscillator: { type: "sine" } });
+const filtro = new Tone.Filter(2000, "lowpass").toDestination();
+synth.connect(filtro);
+let audioListo = false;
+let ultimoNotaId = null;
 
-    // Python usa Do/Re/Mi/Sol/La — Tone.js necesita nombres en inglés (C, D, E, G, A)
-    const MAPA_NOTAS = { "Do": "C", "Re": "D", "Mi": "E", "Sol": "G", "La": "A" };
+document.getElementById("inicio").onclick = async () => {
+  await Tone.start();
+  Tone.context.lookAhead = 0;   // Tone adelanta 100 ms por defecto; en 0 suena de inmediato
+                                // (si oyes clics, prueba 0.02)
+  audioListo = true;
+  document.getElementById("estado").textContent = "Audio activo";
+};
 
-    let ultimaNotaSonada = null;
-    const estadoEl = document.getElementById("estado");
+// =====================================================================
+// Medición de latencia
+//   RNF01  continuo : captura en Python -> sonido aplicado aquí (todos los mensajes)
+//   RNF02  tick     : retraso tick -> sorteo de nota (lo mide Python, llega en lat_tick_ms)
+//   Nota->sonido    : captura -> sonido en los mensajes con nota nueva (solo informativa)
+// =====================================================================
+const latContinua = [], latNota = [], latTick = [];
+const registro = [];            // todas las muestras, para el CSV
+let contadorMensajes = 0;
 
-    function conectarWebSocket() {
-      const ws = new WebSocket("ws://localhost:8765");
+function estadisticas(arr, umbral) {
+  /* Resumen de un arreglo de latencias: n, media, p95, máximo y % sobre el umbral.
+     Lo usa mostrarLatencia para cada categoría. */
+  if (arr.length === 0) return "sin datos";
+  const orden = [...arr].sort((a, b) => a - b);
+  const media = arr.reduce((s, v) => s + v, 0) / arr.length;
+  const p95 = orden[Math.floor(0.95 * (orden.length - 1))];
+  const sobre = 100 * arr.filter(v => v > umbral).length / arr.length;
+  return `n=${arr.length} media=${media.toFixed(0)} p95=${p95.toFixed(0)} ` +
+         `max=${orden[orden.length - 1].toFixed(0)} ms | >${umbral} ms: ${sobre.toFixed(1)}%`;
+}
 
-      ws.onopen = () => {
-        console.log("WebSocket conectado");
-        estadoEl.textContent = "Conectado al servidor — moviéndote frente al Kinect deberías escuchar cambios.";
-      };
+function guardar(lista, valor) {
+  /* Agrega un valor a una lista de ventana móvil (máximo MAX_VENTANA elementos). */
+  lista.push(valor);
+  if (lista.length > MAX_VENTANA) lista.shift();
+}
 
-      ws.onclose = () => {
-        console.log("WebSocket desconectado, reintentando en 2s...");
-        estadoEl.textContent = "Sin conexión con el servidor. Reintentando...";
-        setTimeout(conectarWebSocket, 2000);
-      };
+function registrarLatencia(ms, transporteMs, esNota) {
+  /* Guarda la latencia captura->sonido: siempre en 'continuo' (RNF01) y, si el mensaje
+     trae una nota nueva, también en 'nota' (informativa). Se llama desde ws.onmessage
+     justo después de aplicar el sonido. */
+  guardar(latContinua, ms);
+  if (esNota) guardar(latNota, ms);
+  const salidaMs = (Tone.context.rawContext.outputLatency || 0) * 1000;
+  if (registro.length < MAX_REGISTRO) {
+    registro.push([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1)]);
+    if (esNota) registro.push([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1)]);
+  }
+  if (++contadorMensajes % 30 === 0) mostrarLatencia(salidaMs);
+}
 
-      ws.onerror = () => ws.close();
+function mostrarLatencia(salidaMs) {
+  /* Pinta en pantalla las estadísticas de RNF01 y RNF02 y la latencia de salida de audio
+     que reporta el navegador (outputLatency). */
+  document.getElementById("latencia").textContent =
+    `RNF01 continuo (≤${UMBRAL_CONTINUO_MS} ms): ${estadisticas(latContinua, UMBRAL_CONTINUO_MS)}\n` +
+    `RNF02 tick->sorteo (≤${UMBRAL_TICK_MS} ms): ${estadisticas(latTick, UMBRAL_TICK_MS)}\n` +
+    `Nota->sonido (informativa): ${estadisticas(latNota, Infinity)}\n` +
+    `outputLatency del navegador: ${salidaMs.toFixed(0)} ms (el sonido real llega esto más tarde)`;
+}
 
-      ws.onmessage = (evento) => {
-        const datos = JSON.parse(evento.data);
-        const notaTone = MAPA_NOTAS[datos.nota] + datos.octava;  // ej. "Do","4" -> "C4"
+document.getElementById("descargar").onclick = () => {
+  /* RF09: descarga todas las latencias de la sesión como CSV
+     (tipos: continuo, nota, tick_sorteo). */
+  const filas = ["t_epoch_ms,tipo,latencia_ms,transporte_ms,output_latency_ms",
+                 ...registro.map(r => r.join(","))];
+  const blob = new Blob([filas.join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `latencias_${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
+  a.click();
+};
 
-        // El brillo (apertura de mano) se actualiza SIEMPRE, de forma continua
-        const corte = 300 + datos.apertura * 6000;  // ILUSTRATIVO — ajusta escuchando
-        filtro.frequency.rampTo(corte, 0.05);
+// =====================================================================
+// WebSocket: recibe el estado musical desde Python
+// =====================================================================
+function conectar() {
+  const ws = new WebSocket(URL_WS);
+  ws.onopen = () => { document.getElementById("estado").textContent = "Conectado a Python"; };
+  ws.onclose = () => {
+    document.getElementById("estado").textContent = "Desconectado, reintentando…";
+    setTimeout(conectar, 2000);
+  };
+  ws.onmessage = (ev) => {
+    const tRecv = Date.now();
+    const d = JSON.parse(ev.data);
+    if (!audioListo) return;
 
-        // La nota solo se dispara cuando de verdad CAMBIÓ, no en cada mensaje
-        if (notaTone !== ultimaNotaSonada) {
-          synth.triggerAttackRelease(notaTone, "8n");
-          ultimaNotaSonada = notaTone;
-        }
-      };
+    // Timbre: apertura de manos (normalizada por usuario) -> frecuencia de corte del filtro
+    filtro.frequency.rampTo(CORTE_MIN_HZ + d.apertura01 * (CORTE_MAX_HZ - CORTE_MIN_HZ), 0.05);
+    // Intensidad: amplitud de las extremidades -> volumen
+    synth.volume.rampTo(VOL_MIN_DB + d.intensidad * (VOL_MAX_DB - VOL_MIN_DB), 0.08);
+
+    // Nota nueva (el tempo lo marca Python con nota_id e intervalo_s)
+    const esNota = (d.nota_id !== ultimoNotaId);
+    if (esNota) {
+      ultimoNotaId = d.nota_id;
+      synth.triggerAttackRelease(MAPA_NOTAS[d.nota] + d.octava, Math.max(0.1, d.intervalo_s * 0.9));
     }
 
-    conectarWebSocket();
-  </script>
+    // RNF02: retraso tick -> sorteo, medido en Python (solo viene en mensajes con nota nueva)
+    if (d.lat_tick_ms !== null && d.lat_tick_ms !== undefined) {
+      guardar(latTick, d.lat_tick_ms);
+      if (registro.length < MAX_REGISTRO) {
+        registro.push([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", ""]);
+      }
+    }
+
+    // RNF01: frame recibido en Python -> sonido aplicado aquí
+    registrarLatencia(Date.now() - d.t_cap_ms, tRecv - d.t_env_ms, esNota);
+
+    document.getElementById("datos").textContent =
+      `Nota ${d.nota}${d.octava} | λ=${d.lam} | tempo=${d.tempo} | intensidad=${d.intensidad}\n` +
+      `apertura=${d.apertura} (norm ${d.apertura01}) | manos=${d.manos}`;
+  };
+}
+conectar();
+</script>
 </body>
 </html>
