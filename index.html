@@ -54,7 +54,9 @@ document.getElementById("inicio").onclick = async () => {
 //   Nota->sonido    : captura -> sonido en los mensajes con nota nueva (solo informativa)
 // =====================================================================
 const latContinua = [], latNota = [], latTick = [];
-const registro = [];            // todas las muestras, para el CSV
+const registro = [];            // todas las muestras, para el CSV descargable
+const pendientes = [];          // muestras aún no enviadas a Python (las guarda en sesiones/<sesion>_latencias.csv)
+let ws = null;                  // conexión actual (la crea conectar); la usa enviarLatencias
 let contadorMensajes = 0;
 
 function estadisticas(arr, umbral) {
@@ -68,6 +70,22 @@ function estadisticas(arr, umbral) {
   return `n=${arr.length} media=${media.toFixed(0)} p95=${p95.toFixed(0)} ` +
          `max=${orden[orden.length - 1].toFixed(0)} ms | >${umbral} ms: ${sobre.toFixed(1)}%`;
 }
+
+function anotar(fila) {
+  /* Guarda una fila de latencia para el CSV descargable (hasta MAX_REGISTRO) y la deja pendiente
+     de enviar a Python. La usan registrarLatencia y el bloque tick_sorteo de ws.onmessage. */
+  if (registro.length < MAX_REGISTRO) registro.push(fila);
+  pendientes.push(fila);
+}
+
+function enviarLatencias() {
+  /* Cada 500 ms manda a Python las filas pendientes por el mismo WebSocket, como
+     {"tipo":"latencias","filas":[...]}; Python las escribe junto al CSV de sesión con el mismo
+     formato que el botón de descarga. Sin conexión abierta, las filas esperan. */
+  if (pendientes.length === 0 || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ tipo: "latencias", filas: pendientes.splice(0) }));
+}
+setInterval(enviarLatencias, 500);
 
 function guardar(lista, valor) {
   /* Agrega un valor a una lista de ventana móvil (máximo MAX_VENTANA elementos). */
@@ -83,10 +101,8 @@ function registrarLatencia(ms, transporteMs, esNota) {
   if (esNota) guardar(latNota, ms);
   const salidaMs = (Tone.context.rawContext.outputLatency || 0) * 1000;
   const baseMs = (Tone.context.rawContext.baseLatency || 0) * 1000;   // latencia interna de Web Audio
-  if (registro.length < MAX_REGISTRO) {
-    registro.push([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
-    if (esNota) registro.push([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
-  }
+  anotar([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
+  if (esNota) anotar([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
   if (++contadorMensajes % 30 === 0) mostrarLatencia(salidaMs);
 }
 
@@ -117,7 +133,7 @@ document.getElementById("descargar").onclick = () => {
 // WebSocket: recibe el estado musical desde Python
 // =====================================================================
 function conectar() {
-  const ws = new WebSocket(URL_WS);
+  ws = new WebSocket(URL_WS);
   ws.onopen = () => { document.getElementById("estado").textContent = "Conectado a Python"; };
   ws.onclose = () => {
     document.getElementById("estado").textContent = "Desconectado, reintentando…";
@@ -143,9 +159,7 @@ function conectar() {
     // RNF02: retraso tick -> sorteo, medido en Python (solo viene en mensajes con nota nueva)
     if (d.lat_tick_ms !== null && d.lat_tick_ms !== undefined) {
       guardar(latTick, d.lat_tick_ms);
-      if (registro.length < MAX_REGISTRO) {
-        registro.push([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", "", ""]);
-      }
+      anotar([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", "", ""]);
     }
 
     // RNF01: frame recibido en Python -> sonido aplicado aquí

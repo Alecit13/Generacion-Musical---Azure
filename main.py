@@ -11,6 +11,7 @@ os.environ["PATH"] = r"C:\Program Files\Azure Kinect Body Tracking SDK\tools;" +
 import pykinect_azure as pykinect
 import websockets
 import csv
+import json
 import queue
 import threading
 import time
@@ -20,6 +21,7 @@ from zona import calcular_zona
 from muestreo import elegir_siguiente_nota, calcular_octava
 from manos import calcular_apertura
 from servidor import manejar_cliente, enviar_a_todos
+import servidor
 
 # =====================================================================
 # PARÁMETROS (todo lo ajustable está aquí arriba)
@@ -255,6 +257,32 @@ perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
+
+# Latencias del navegador: index.html las devuelve por el WebSocket cada 0.5 s y aquí se guardan con el mismo
+# nombre que el CSV de sesión y el mismo formato que el botón "Descargar latencias" (ya no hace falta descargar).
+ruta_latencias = ruta_log[:-4] + "_latencias.csv"
+lat_file, lat_writer = None, None
+
+
+def guardar_latencias(mensaje):
+    """Recibe un mensaje del navegador (str JSON). Si es {"tipo": "latencias", "filas": [...]}, escribe las filas
+    en ruta_latencias (cabecera igual a la del CSV descargable) y hace flush. La llama servidor.manejar_cliente
+    en los puntos `await` del ciclo. Variables: lat_file/lat_writer (se abren al primer mensaje: si no hay
+    navegador, no se crea el archivo)."""
+    global lat_file, lat_writer
+    datos = json.loads(mensaje)
+    if not isinstance(datos, dict) or datos.get("tipo") != "latencias":
+        return
+    if lat_file is None:
+        lat_file = open(ruta_latencias, "w", newline="")
+        lat_writer = csv.writer(lat_file)
+        lat_writer.writerow(["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms"])
+        print(f"Guardando las latencias del navegador en: {ruta_latencias}")
+    lat_writer.writerows(datos["filas"])
+    lat_file.flush()
+
+
+servidor.al_recibir = guardar_latencias
 
 # ---------- Medición de rendimiento ----------
 ETAPAS = ("cap_update", "cap_imgs", "tracker", "manos", "mapeo", "salida", "dibujo")
@@ -1106,5 +1134,7 @@ finally:
     cv2.destroyAllWindows()
     log_file.close()
     perf_file.close()
+    if lat_file is not None:
+        lat_file.close()
     print("Kinect cerrada correctamente")
     print(f"Sesión guardada en {ruta_log}. Para ver los gráficos: python3.11 grafico.py")

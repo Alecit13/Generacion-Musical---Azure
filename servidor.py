@@ -2,16 +2,23 @@ import asyncio
 import json
 
 clientes_conectados = set()
+al_recibir = None   # función (str) -> None que main.py asigna para procesar lo que envía el navegador (latencias)
 
 
 async def manejar_cliente(websocket):
     """Registra un navegador mientras esté conectado y lo quita al desconectarse.
+    Cada mensaje que llegue del navegador se pasa a `al_recibir` (si main.py la asignó); un mensaje
+    malformado se avisa y se ignora, nunca cierra la conexión.
     Relación: main.py lo pasa a websockets.serve; enviar_a_todos usa el conjunto que este mantiene.
-    Variable: `clientes_conectados` (conjunto de conexiones abiertas)."""
+    Variables: `clientes_conectados` (conexiones abiertas), `al_recibir` (callback de main.py)."""
     clientes_conectados.add(websocket)
     try:
-        async for _ in websocket:
-            pass  # no necesitamos recibir nada del navegador, solo enviarle datos
+        async for mensaje in websocket:
+            if al_recibir is not None:
+                try:
+                    al_recibir(mensaje)
+                except Exception as e:
+                    print(f"[servidor] mensaje del navegador ignorado: {e!r}")
     finally:
         clientes_conectados.discard(websocket)
 
