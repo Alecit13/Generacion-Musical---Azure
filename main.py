@@ -258,6 +258,11 @@ REPORTE_CADA = 60  # ciclos entre reportes
 lags_cam = []      # lag_cam_ms de cada ciclo desde el último reporte (lo llena bucle_kinect)
 descartes = []     # frames descartados por ciclo desde el último reporte
 aviso_lag = {"mostrado": False}
+# Cronómetros por LÍNEA (perf/ciclo-30hz): llamadas sueltas que hoy quedan dentro de una etapa agregada.
+# to_numpy está dentro de cap_imgs; print dentro de salida; imshow y waitKey dentro de dibujo.
+LINEAS = ("to_numpy", "print", "imshow", "waitKey")
+acum_linea = dict.fromkeys(LINEAS, 0.0)   # segundos acumulados por línea desde el último reporte
+n_linea = dict.fromkeys(LINEAS, 0)        # llamadas por línea desde el último reporte
 
 
 def reportar():
@@ -273,6 +278,9 @@ def reportar():
     print(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas} "
           f"| hilo_manos={ms_hilo:.0f}ms ({n_hilo / dur:.1f} trab/s"
           f"{f', {n_hilo / dur / hilo_manos.n_hilos:.1f} por hilo' if hilo_manos.n_hilos > 1 else ''})")
+    print("[PERF-LINEA] " + " | ".join(
+        f"{l}={acum_linea[l] / n_linea[l] * 1000:.2f}ms/llamada ({acum_linea[l] / n * 1000:.2f}ms/ciclo, {n_linea[l]} llamadas)"
+        if n_linea[l] else f"{l}=sin llamadas" for l in LINEAS))
     if lags_cam:
         print(f"[CAMARA] espera del frame desde que llegó al PC hasta Python: media={np.mean(lags_cam):.1f}ms "
               f"| p95={np.percentile(lags_cam, 95):.1f}ms | max={max(lags_cam):.1f}ms (n={len(lags_cam)}) "
@@ -283,6 +291,8 @@ def reportar():
     descartes.clear()
     for e in ETAPAS:
         acum[e] = 0.0
+    for l in LINEAS:
+        acum_linea[l], n_linea[l] = 0.0, 0
     perf["n"], perf["t"] = 0, ahora
 
 
@@ -852,7 +862,10 @@ def leer_frame(capture, t_upd):
         ok_depth, _ = capture.get_depth_image()
     else:
         ok_depth = bool(capture.get_depth_image_object().is_valid())    # solo comprueba que haya profundidad
-    ok_color, color_image = img_color.to_numpy()
+    t0 = time.perf_counter()
+    ok_color, color_image = img_color.to_numpy()      # con color MJPG esto incluye cv2.imdecode del JPEG
+    acum_linea["to_numpy"] += time.perf_counter() - t0
+    n_linea["to_numpy"] += 1
     lag_cam_ms = None
     if ok_color:
         try:
@@ -1003,9 +1016,12 @@ async def bucle_kinect():
             })
 
             ap_txt = "---" if apertura_val is None else f"{apertura_val:.3f}"
+            t0 = time.perf_counter()
             print(f"Nota: {nota_actual}{octava_actual} | zona={zona_actual:<6} | lambda={lam:.2f} "
                   f"| acc={m['acc_mm']:.0f}mm/s2 | tempo={m['tempo']:.2f} | inten={m['intensidad']:.2f} "
                   f"| reg={reg['registro01']:.2f} | apertura={ap_txt} | manos={len(manos_detectadas)}")
+            acum_linea["print"] += time.perf_counter() - t0
+            n_linea["print"] += 1
             log_writer.writerow([
                 time.time(), zona_actual, round(lam, 3), round(m["acc_mm"], 1),
                 nota_actual, octava_actual,
@@ -1037,8 +1053,15 @@ async def bucle_kinect():
                 display = body_frame.draw_bodies(display, pykinect.K4A_CALIBRATION_TYPE_COLOR)
                 for h in manos_detectadas:
                     mp_drawing.draw_landmarks(display, h, mp_hands.HAND_CONNECTIONS)
+            t0 = time.perf_counter()
             cv2.imshow('Kinect', display)
+            t1 = time.perf_counter()
             tecla = cv2.waitKey(1) & 0xFF
+            t2 = time.perf_counter()
+            acum_linea["imshow"] += t1 - t0
+            acum_linea["waitKey"] += t2 - t1
+            n_linea["imshow"] += 1
+            n_linea["waitKey"] += 1
             acum["dibujo"] += time.perf_counter() - t
             if tecla == ord("q"):
                 break
