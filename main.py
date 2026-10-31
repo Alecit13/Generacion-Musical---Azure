@@ -247,8 +247,14 @@ log_writer.writerow(["timestamp", "zona", "lambda", "acc_media", "nota", "octava
                      "lag_cam_ms",          # ms entre que el frame TERMINÓ de llegar al PC (USB) y que Python lo recibió (cola de cámara)
                      "frames_descartados"])  # frames viejos descartados de la cola en este ciclo
 log_file.flush()
+# Los reportes [PERF]/[PERF-LINEA]/[CAMARA]/[FUSION]/[ROI] se guardan también en un .txt con el mismo nombre que el CSV,
+# porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
+ruta_perf = ruta_log[:-4] + "_perf.txt"
+perf_file = open(ruta_perf, "w", encoding="utf-8")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
+print(f"Guardando los reportes [PERF] en: {ruta_perf}")
 
 # ---------- Medición de rendimiento ----------
 ETAPAS = ("cap_update", "cap_imgs", "tracker", "manos", "mapeo", "salida", "dibujo")
@@ -265,6 +271,13 @@ acum_linea = dict.fromkeys(LINEAS, 0.0)   # segundos acumulados por línea desde
 n_linea = dict.fromkeys(LINEAS, 0)        # llamadas por línea desde el último reporte
 
 
+def _reportar_linea(texto):
+    """Imprime una línea de reporte en consola y la añade a perf_file (sin flush: lo hace reportar al final).
+    La usa solo reportar(). Variable: `perf_file` (abierto junto al CSV de sesión)."""
+    print(texto)
+    perf_file.write(texto + "\n")
+
+
 def reportar():
     """Imprime ciclos/s y milisegundos promedio por etapa cada REPORTE_CADA ciclos.
     Usa los acumuladores `acum` (que llena bucle_kinect) y el contador `perf`; luego los reinicia.
@@ -273,20 +286,21 @@ def reportar():
     dur, n = ahora - perf["t"], perf["n"]
     etapas = " | ".join(f"{e}={acum[e] / n * 1000:.0f}ms" for e in ETAPAS)
     ms_hilo, n_hilo = hilo_manos.estadisticas_y_reiniciar()
-    print(f"[FUSION] {fusion.resumen_y_reiniciar()}")
-    print(f"[ROI] aciertos de MediaPipe por origen del recuadro -> {hilo_manos.estadisticas_roi_y_reiniciar()}")
-    print(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas} "
+    _reportar_linea(f"[FUSION] {fusion.resumen_y_reiniciar()}")
+    _reportar_linea(f"[ROI] aciertos de MediaPipe por origen del recuadro -> {hilo_manos.estadisticas_roi_y_reiniciar()}")
+    _reportar_linea(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas} "
           f"| hilo_manos={ms_hilo:.0f}ms ({n_hilo / dur:.1f} trab/s"
           f"{f', {n_hilo / dur / hilo_manos.n_hilos:.1f} por hilo' if hilo_manos.n_hilos > 1 else ''})")
-    print("[PERF-LINEA] " + " | ".join(
+    _reportar_linea("[PERF-LINEA] " + " | ".join(
         f"{l}={acum_linea[l] / n_linea[l] * 1000:.2f}ms/llamada ({acum_linea[l] / n * 1000:.2f}ms/ciclo, {n_linea[l]} llamadas)"
         if n_linea[l] else f"{l}=sin llamadas" for l in LINEAS))
     if lags_cam:
-        print(f"[CAMARA] espera del frame desde que llegó al PC hasta Python: media={np.mean(lags_cam):.1f}ms "
+        _reportar_linea(f"[CAMARA] espera del frame desde que llegó al PC hasta Python: media={np.mean(lags_cam):.1f}ms "
               f"| p95={np.percentile(lags_cam, 95):.1f}ms | max={max(lags_cam):.1f}ms (n={len(lags_cam)}) "
               f"| frames descartados/ciclo={np.mean(descartes) if descartes else 0:.2f}")
     else:
-        print("[CAMARA] sin dato de timestamp del sistema")
+        _reportar_linea("[CAMARA] sin dato de timestamp del sistema")
+    perf_file.flush()
     lags_cam.clear()
     descartes.clear()
     for e in ETAPAS:
@@ -1091,5 +1105,6 @@ finally:
     device.close()
     cv2.destroyAllWindows()
     log_file.close()
+    perf_file.close()
     print("Kinect cerrada correctamente")
     print(f"Sesión guardada en {ruta_log}. Para ver los gráficos: python3.11 grafico.py")
