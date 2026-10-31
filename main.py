@@ -26,7 +26,7 @@ from servidor import manejar_cliente, enviar_a_todos
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "fusion+joints+modelo+roi-muneca+captura+cola+hilo-por-mano-2026-10-28e"
+VERSION_MAIN = "perf30hz-a-un-hilo-manos-2026-10-31"
 
 # Servidor
 HOST_WS = "localhost"
@@ -67,7 +67,8 @@ if COMBINACION_BRAZOS not in ("media", "max"):
 # Manos (MediaPipe sobre un recorte alrededor de cada mano) -> configuración A elegida
 CONFIANZA_DETECCION_MANO = 0.5   # bájalo a 0.4 si se pierden manos
 COMPLEJIDAD_MODELO = 0           # 0 = rápido (lite), 1 = más preciso
-HILO_POR_MANO = True             # True = un hilo para cada mano (las dos se procesan EN PARALELO en cada ciclo; ignora ALTERNAR_MANOS)
+HILO_POR_MANO = False            # True = un hilo para cada mano (las dos se procesan EN PARALELO en cada ciclo; ignora ALTERNAR_MANOS)
+                                 # perf/ciclo-30hz: False porque con 2 hilos el ciclo subió de 38.4 a 42.0 ms (sesiones 28d vs 28e)
                                  # False = un solo hilo para las dos manos (comportamiento de v6)
 ALTERNAR_MANOS = True            # solo con HILO_POR_MANO=False: True = una mano por trabajo, alternando | False = las 2 manos del mismo frame
 HOLD_APERTURA_S = 0.5            # si se pierde una mano, se mantiene su última apertura este tiempo
