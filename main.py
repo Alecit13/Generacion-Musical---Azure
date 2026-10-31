@@ -28,7 +28,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "perf30hz-a-un-hilo-manos-2026-10-31"
+VERSION_MAIN = "perf30hz-b-bgra32-2026-10-31"
 
 # Servidor
 HOST_WS = "localhost"
@@ -87,6 +87,8 @@ DIBUJAR_CADA = 3                 # dibuja/muestra 1 de cada N ciclos (con 2 cost
 DESCARTAR_COLA_CAMARA = True     # True = si hay frames viejos en la cola del SDK, se descartan y se usa el MÁS RECIENTE (medido: la cola añadía ~220 ms)
                                  # False = comportamiento anterior (procesa todos los frames en orden, aunque lleguen con retraso)
 MAX_DESCARTE_POR_CICLO = 10      # tope de frames que se descartan en un ciclo (seguridad)
+COLOR_BGRA32 = True              # True = el SDK entrega el color YA decodificado en BGRA (decodifica en su propio hilo, fuera del ciclo)
+                                 # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
@@ -138,6 +140,7 @@ pykinect.initialize_libraries(track_body=True)
 
 device_config = pykinect.default_configuration
 device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_720P
+device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_BGRA32 if COLOR_BGRA32 else pykinect.K4A_IMAGE_FORMAT_COLOR_MJPG
 device_config.depth_mode = pykinect.K4A_DEPTH_MODE_NFOV_UNBINNED
 device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
 device_config.wired_sync_mode = pykinect.K4A_WIRED_SYNC_MODE_STANDALONE
@@ -253,7 +256,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
@@ -905,7 +908,7 @@ def leer_frame(capture, t_upd):
     else:
         ok_depth = bool(capture.get_depth_image_object().is_valid())    # solo comprueba que haya profundidad
     t0 = time.perf_counter()
-    ok_color, color_image = img_color.to_numpy()      # con color MJPG esto incluye cv2.imdecode del JPEG
+    ok_color, color_image = img_color.to_numpy()      # MJPG: incluye cv2.imdecode (BGR, 3 canales) | BGRA32: solo copia (BGRA, 4 canales)
     acum_linea["to_numpy"] += time.perf_counter() - t0
     n_linea["to_numpy"] += 1
     lag_cam_ms = None
