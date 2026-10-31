@@ -1,34 +1,31 @@
 import asyncio
 import json
-import websockets
 
-clientes_conectados = set()   # sockets de los navegadores conectados ahora mismo
+clientes_conectados = set()
 
 
 async def manejar_cliente(websocket):
-    """Registra un navegador al conectarse y lo quita al desconectarse (por cualquier motivo,
-    incluido un cierre con error). Lo llama websockets.serve en main.py una vez por cliente.
-    Variable importante: clientes_conectados, que usa enviar_a_todos."""
+    """Registra un navegador mientras esté conectado y lo quita al desconectarse.
+    Relación: main.py lo pasa a websockets.serve; enviar_a_todos usa el conjunto que este mantiene.
+    Variable: `clientes_conectados` (conjunto de conexiones abiertas)."""
     clientes_conectados.add(websocket)
     try:
-        async for _ in websocket:      # no esperamos mensajes del navegador; solo mantenemos la conexión
-            pass
-    except websockets.exceptions.ConnectionClosed:
-        pass                           # desconexión normal o por error: no es un problema
+        async for _ in websocket:
+            pass  # no necesitamos recibir nada del navegador, solo enviarle datos
     finally:
         clientes_conectados.discard(websocket)
 
 
-async def enviar_a_todos(datos):
-    """Envía un diccionario (como JSON) a todos los navegadores conectados.
-    Lo llama bucle_kinect en cada ciclo. Si un cliente falla, se descarta en silencio
-    y el bucle de la Kinect SIGUE funcionando (antes la excepción apagaba todo)."""
+async def enviar_a_todos(datos: dict):
+    """Envía el estado musical a todos los navegadores conectados.
+    Si un navegador se cerró justo en este instante, su envío falla: se descarta ESE cliente
+    y el programa sigue (antes, el error subía hasta el ciclo principal y podía detener Python).
+    Variables: `clientes` (copia de la lista, porque el conjunto puede cambiar mientras se envía)."""
     if not clientes_conectados:
         return
     mensaje = json.dumps(datos)
-    clientes = list(clientes_conectados)          # copia: el set puede cambiar durante el envío
-    resultados = await asyncio.gather(*(ws.send(mensaje) for ws in clientes),
-                                      return_exceptions=True)
+    clientes = list(clientes_conectados)
+    resultados = await asyncio.gather(*(ws.send(mensaje) for ws in clientes), return_exceptions=True)
     for ws, r in zip(clientes, resultados):
         if isinstance(r, Exception):
             clientes_conectados.discard(ws)

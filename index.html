@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>Música con movimiento</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+<!-- Tone.js LOCAL (RNF02: el sistema debe funcionar sin internet). Tone.js debe estar en la MISMA carpeta que este archivo -->
+<script src="Tone.js"></script>
 </head>
 <body style="font-family: sans-serif; max-width: 680px; margin: 24px auto;">
 <h2>Música con movimiento</h2>
@@ -22,14 +23,17 @@ const MAPA_NOTAS = { Do: "C", Re: "D", Mi: "E", Fa: "F", Sol: "G", La: "A", Si: 
 const UMBRAL_CONTINUO_MS = 100;  // RNF01: captura -> actualización de parámetros continuos
 const UMBRAL_TICK_MS = 250;      // RNF02: tick del reloj musical -> sorteo de nota (medido en Python)
 const CORTE_MIN_HZ = 300, CORTE_MAX_HZ = 3000;   // timbre (apertura de manos)
-const VOL_MIN_DB = -30, VOL_MAX_DB = -6;         // intensidad (amplitud de extremidades)
+const VOL_MIN_DB = -20, VOL_MAX_DB = -6;         // intensidad (amplitud de extremidades); -20 evita el casi-silencio en reposo
 const MAX_VENTANA = 300;                         // muestras para las estadísticas en pantalla
 const MAX_REGISTRO = 50000;                      // muestras para el CSV descargable
 
 // =====================================================================
 // Audio: sintetizador -> filtro -> salida
 // =====================================================================
-const synth = new Tone.Synth({ oscillator: { type: "sine" } });
+const synth = new Tone.Synth({
+  oscillator: { type: "sine" },
+  envelope: { attack: 0.01, decay: 0.1, sustain: 0.7, release: 0.4 }   // la nota se sostiene más (antes: sustain 0.3)
+});
 const filtro = new Tone.Filter(2000, "lowpass").toDestination();
 synth.connect(filtro);
 let audioListo = false;
@@ -78,9 +82,10 @@ function registrarLatencia(ms, transporteMs, esNota) {
   guardar(latContinua, ms);
   if (esNota) guardar(latNota, ms);
   const salidaMs = (Tone.context.rawContext.outputLatency || 0) * 1000;
+  const baseMs = (Tone.context.rawContext.baseLatency || 0) * 1000;   // latencia interna de Web Audio
   if (registro.length < MAX_REGISTRO) {
-    registro.push([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1)]);
-    if (esNota) registro.push([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1)]);
+    registro.push([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
+    if (esNota) registro.push([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
   }
   if (++contadorMensajes % 30 === 0) mostrarLatencia(salidaMs);
 }
@@ -92,13 +97,14 @@ function mostrarLatencia(salidaMs) {
     `RNF01 continuo (≤${UMBRAL_CONTINUO_MS} ms): ${estadisticas(latContinua, UMBRAL_CONTINUO_MS)}\n` +
     `RNF02 tick->sorteo (≤${UMBRAL_TICK_MS} ms): ${estadisticas(latTick, UMBRAL_TICK_MS)}\n` +
     `Nota->sonido (informativa): ${estadisticas(latNota, Infinity)}\n` +
-    `outputLatency del navegador: ${salidaMs.toFixed(0)} ms (el sonido real llega esto más tarde)`;
+    `outputLatency: ${salidaMs.toFixed(0)} ms | baseLatency: ${((Tone.context.rawContext.baseLatency || 0) * 1000).toFixed(0)} ms ` +
+    `(el sonido real llega esto más tarde; outputLatency=0 puede ser que Chrome no lo reporte)`;
 }
 
 document.getElementById("descargar").onclick = () => {
   /* RF09: descarga todas las latencias de la sesión como CSV
      (tipos: continuo, nota, tick_sorteo). */
-  const filas = ["t_epoch_ms,tipo,latencia_ms,transporte_ms,output_latency_ms",
+  const filas = ["t_epoch_ms,tipo,latencia_ms,transporte_ms,output_latency_ms,base_latency_ms",
                  ...registro.map(r => r.join(","))];
   const blob = new Blob([filas.join("\n")], { type: "text/csv" });
   const a = document.createElement("a");
@@ -138,7 +144,7 @@ function conectar() {
     if (d.lat_tick_ms !== null && d.lat_tick_ms !== undefined) {
       guardar(latTick, d.lat_tick_ms);
       if (registro.length < MAX_REGISTRO) {
-        registro.push([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", ""]);
+        registro.push([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", "", ""]);
       }
     }
 
@@ -147,7 +153,8 @@ function conectar() {
 
     document.getElementById("datos").textContent =
       `Nota ${d.nota}${d.octava} | λ=${d.lam} | tempo=${d.tempo} | intensidad=${d.intensidad}\n` +
-      `apertura=${d.apertura} (norm ${d.apertura01}) | manos=${d.manos}`;
+      `apertura=${d.apertura === null ? "sin mano (timbre se mantiene)" : d.apertura} (norm ${d.apertura01}) | manos=${d.manos}\n` +
+      `articulaciones fiables=${d.joints_ok}/32 | edad datos de manos=${d.edad_manos_ms === null ? "-" : d.edad_manos_ms} ms | desync manos=${d.desync_manos}`;
   };
 }
 conectar();
