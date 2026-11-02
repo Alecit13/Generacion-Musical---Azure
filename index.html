@@ -53,7 +53,7 @@ document.getElementById("inicio").onclick = async () => {
 //   RNF02  tick     : retraso tick -> sorteo de nota (lo mide Python, llega en lat_tick_ms)
 //   Nota->sonido    : captura -> sonido en los mensajes con nota nueva (solo informativa)
 // =====================================================================
-const latContinua = [], latNota = [], latTick = [];
+const latContinua = [], latNota = [], latTick = [], latLlegada = [];
 const registro = [];            // todas las muestras, para el CSV descargable
 const pendientes = [];          // muestras aún no enviadas a Python (las guarda en sesiones/<sesion>_latencias.csv)
 let ws = null;                  // conexión actual (la crea conectar); la usa enviarLatencias
@@ -93,16 +93,22 @@ function guardar(lista, valor) {
   if (lista.length > MAX_VENTANA) lista.shift();
 }
 
-function registrarLatencia(ms, transporteMs, esNota) {
-  /* Guarda la latencia captura->sonido: siempre en 'continuo' (RNF01) y, si el mensaje
-     trae una nota nueva, también en 'nota' (informativa). Se llama desde ws.onmessage
+function registrarLatencia(ms, transporteMs, esNota, lagCamMs) {
+  /* Guarda la latencia (a) Python recibe el frame -> sonido aplicado: siempre en 'continuo' y, si el mensaje
+     trae una nota nueva, también en 'nota' (informativa). Con lagCamMs (espera en la cola de la cámara,
+     viene de Python) calcula (b) latencia_llegada_ms = ms + lagCamMs (RNF01/US23, D-009) y la escribe en
+     la última columna; vacía si Python no pudo medir lagCamMs. Se llama desde ws.onmessage
      justo después de aplicar el sonido. */
   guardar(latContinua, ms);
   if (esNota) guardar(latNota, ms);
+  const hayLag = (lagCamMs !== null && lagCamMs !== undefined);
+  const llegadaMs = hayLag ? ms + lagCamMs : null;
+  if (hayLag) guardar(latLlegada, llegadaMs);
+  const llegadaTxt = hayLag ? llegadaMs.toFixed(1) : "";
   const salidaMs = (Tone.context.rawContext.outputLatency || 0) * 1000;
   const baseMs = (Tone.context.rawContext.baseLatency || 0) * 1000;   // latencia interna de Web Audio
-  anotar([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
-  if (esNota) anotar([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1)]);
+  anotar([Date.now(), "continuo", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1), llegadaTxt]);
+  if (esNota) anotar([Date.now(), "nota", ms.toFixed(1), transporteMs.toFixed(1), salidaMs.toFixed(1), baseMs.toFixed(1), llegadaTxt]);
   if (++contadorMensajes % 30 === 0) mostrarLatencia(salidaMs);
 }
 
@@ -110,7 +116,8 @@ function mostrarLatencia(salidaMs) {
   /* Pinta en pantalla las estadísticas de RNF01 y RNF02 y la latencia de salida de audio
      que reporta el navegador (outputLatency). */
   document.getElementById("latencia").textContent =
-    `RNF01 continuo (≤${UMBRAL_CONTINUO_MS} ms): ${estadisticas(latContinua, UMBRAL_CONTINUO_MS)}\n` +
+    `RNF01 (b) llegada al PC (≤${UMBRAL_CONTINUO_MS} ms): ${estadisticas(latLlegada, UMBRAL_CONTINUO_MS)}\n` +
+    `(a) Python recibe el frame (secundaria): ${estadisticas(latContinua, UMBRAL_CONTINUO_MS)}\n` +
     `RNF02 tick->sorteo (≤${UMBRAL_TICK_MS} ms): ${estadisticas(latTick, UMBRAL_TICK_MS)}\n` +
     `Nota->sonido (informativa): ${estadisticas(latNota, Infinity)}\n` +
     `outputLatency: ${salidaMs.toFixed(0)} ms | baseLatency: ${((Tone.context.rawContext.baseLatency || 0) * 1000).toFixed(0)} ms ` +
@@ -120,7 +127,7 @@ function mostrarLatencia(salidaMs) {
 document.getElementById("descargar").onclick = () => {
   /* RF09: descarga todas las latencias de la sesión como CSV
      (tipos: continuo, nota, tick_sorteo). */
-  const filas = ["t_epoch_ms,tipo,latencia_ms,transporte_ms,output_latency_ms,base_latency_ms",
+  const filas = ["t_epoch_ms,tipo,latencia_ms,transporte_ms,output_latency_ms,base_latency_ms,latencia_llegada_ms",
                  ...registro.map(r => r.join(","))];
   const blob = new Blob([filas.join("\n")], { type: "text/csv" });
   const a = document.createElement("a");
@@ -159,11 +166,11 @@ function conectar() {
     // RNF02: retraso tick -> sorteo, medido en Python (solo viene en mensajes con nota nueva)
     if (d.lat_tick_ms !== null && d.lat_tick_ms !== undefined) {
       guardar(latTick, d.lat_tick_ms);
-      anotar([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", "", ""]);
+      anotar([Date.now(), "tick_sorteo", d.lat_tick_ms.toFixed(1), "", "", "", ""]);
     }
 
-    // RNF01: frame recibido en Python -> sonido aplicado aquí
-    registrarLatencia(Date.now() - d.t_cap_ms, tRecv - d.t_env_ms, esNota);
+    // (a) frame recibido en Python -> sonido aplicado aquí; (b) = (a) + lag_cam_ms (RNF01, D-009)
+    registrarLatencia(Date.now() - d.t_cap_ms, tRecv - d.t_env_ms, esNota, d.lag_cam_ms);
 
     document.getElementById("datos").textContent =
       `Nota ${d.nota}${d.octava} | λ=${d.lam} | tempo=${d.tempo} | intensidad=${d.intensidad}\n` +

@@ -28,7 +28,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-un-hilo-2026-11-01"
+VERSION_MAIN = "mjpg-un-hilo-llegada-2026-11-02"
 
 # Servidor
 HOST_WS = "localhost"
@@ -280,7 +280,8 @@ def guardar_latencias(mensaje):
     if lat_file is None:
         lat_file = open(ruta_latencias, "w", newline="")
         lat_writer = csv.writer(lat_file)
-        lat_writer.writerow(["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms"])
+        lat_writer.writerow(["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms",
+                             "latencia_llegada_ms"])   # D-009: latencia_ms + lag_cam_ms (columna nueva, al final)
         print(f"Guardando las latencias del navegador en: {ruta_latencias}")
     lat_writer.writerows(datos["filas"])
     lat_file.flush()
@@ -1059,6 +1060,8 @@ async def bucle_kinect():
                 "t_cap_ms": round(t_cap_ms, 1),
                 "t_env_ms": round(ahora_ms(), 1),
                 "lat_tick_ms": None if lat_tick_ms is None else round(lat_tick_ms, 1),
+                # D-009: el navegador suma lag_cam_ms a su latencia_ms -> latencia_llegada_ms (RNF01/US23)
+                "lag_cam_ms": None if lag_cam_ms is None else round(lag_cam_ms, 1),
             })
 
             ap_txt = "---" if apertura_val is None else f"{apertura_val:.3f}"
