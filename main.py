@@ -279,6 +279,7 @@ if not MOSTRAR_VENTANA:
 # nombre que el CSV de sesión y el mismo formato que el botón "Descargar latencias" (ya no hace falta descargar).
 ruta_latencias = ruta_log[:-4] + "_latencias.csv"
 lat_file, lat_writer = None, None
+ESPERA_ULTIMAS_LATENCIAS_S = 1.0   # al cerrar: tiempo para recibir el último lote (el navegador envía cada 0.5 s)
 
 
 def guardar_latencias(mensaje):
@@ -1138,10 +1139,16 @@ async def bucle_kinect():
 
 
 async def main():
+    """Abre el servidor WebSocket y corre bucle_kinect hasta `q`, Ctrl+C o un error.
+    Al terminar, si hay navegador conectado, espera ESPERA_ULTIMAS_LATENCIAS_S con el servidor abierto: el
+    navegador manda sus latencias cada 0.5 s y sin esta espera el último lote no llegaría a _latencias.csv."""
     server = await websockets.serve(manejar_cliente, HOST_WS, PUERTO_WS, ping_interval=None)
     try:
         await bucle_kinect()
     finally:
+        if servidor.clientes_conectados:
+            print("Recibiendo las últimas latencias del navegador…")
+            await asyncio.sleep(ESPERA_ULTIMAS_LATENCIAS_S)
         server.close()
 
 
