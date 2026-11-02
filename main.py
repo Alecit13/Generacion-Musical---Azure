@@ -93,6 +93,10 @@ MAX_DESCARTE_POR_CICLO = 10      # tope de frames que se descartan en un ciclo (
 COLOR_BGRA32 = False             # EXPERIMENTO (D-007, P-005): desactivado por defecto desde el 01/11 (D-008); con BGRA32 la espera de cámara sube ≈ 22 ms
                                  # True = el SDK entrega el color YA decodificado en BGRA (decodifica en su propio hilo, fuera del ciclo)
                                  # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
+DECODIFICAR_EN_HILO_MANOS = False  # EXPERIMENTO (P-005 b): True = el ciclo solo copia el JPEG (MJPG) y lo decodifica HiloManos
+                                   # (el tracker no usa el color); False = to_numpy() en el ciclo, como siempre
+if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
+    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG (COLOR_BGRA32=False)")
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
@@ -100,6 +104,7 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
 # (nombre del CSV de sesión, _perf.txt y _latencias.csv), así cada corrida queda identificada sin editar el código.
 SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sinventana", not MOSTRAR_VENTANA),
+    ("-decodhilo", DECODIFICAR_EN_HILO_MANOS),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
 
@@ -268,7 +273,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
@@ -313,7 +318,7 @@ descartes = []     # frames descartados por ciclo desde el último reporte
 aviso_lag = {"mostrado": False}
 # Cronómetros por LÍNEA (perf/ciclo-30hz): llamadas sueltas que hoy quedan dentro de una etapa agregada.
 # to_numpy está dentro de cap_imgs; print dentro de salida; imshow y waitKey dentro de dibujo.
-LINEAS = ("to_numpy", "print", "imshow", "waitKey")
+LINEAS = ("to_numpy", "print", "imshow", "waitKey") + (("copia_jpeg",) if DECODIFICAR_EN_HILO_MANOS else ())   # copia_jpeg: dentro de cap_imgs
 acum_linea = dict.fromkeys(LINEAS, 0.0)   # segundos acumulados por línea desde el último reporte
 n_linea = dict.fromkeys(LINEAS, 0)        # llamadas por línea desde el último reporte
 
@@ -337,7 +342,8 @@ def reportar():
     _reportar_linea(f"[ROI] aciertos de MediaPipe por origen del recuadro -> {hilo_manos.estadisticas_roi_y_reiniciar()}")
     _reportar_linea(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas} "
           f"| hilo_manos={ms_hilo:.0f}ms ({n_hilo / dur:.1f} trab/s"
-          f"{f', {n_hilo / dur / hilo_manos.n_hilos:.1f} por hilo' if hilo_manos.n_hilos > 1 else ''})")
+          f"{f', {n_hilo / dur / hilo_manos.n_hilos:.1f} por hilo' if hilo_manos.n_hilos > 1 else ''})"
+          f"{f' | decod_hilo={hilo_manos._ms_decod:.2f}ms/trabajo' if DECODIFICAR_EN_HILO_MANOS else ''}")
     _reportar_linea("[PERF-LINEA] " + " | ".join(
         f"{l}={acum_linea[l] / n_linea[l] * 1000:.2f}ms/llamada ({acum_linea[l] / n * 1000:.2f}ms/ciclo, {n_linea[l]} llamadas)"
         if n_linea[l] else f"{l}=sin llamadas" for l in LINEAS))
@@ -667,6 +673,8 @@ class HiloManos:
         self.recuadros_lado = {"izq": None, "der": None} # (recuadro, acertó) de cada mano, solo para dibujar
         self.apertura01 = 0.5
         self._t_trabajo, self._n_trabajos = 0.0, 0
+        self._t_decod = 0.0                              # DECODIFICAR_EN_HILO_MANOS: segundos decodificando (dentro de _t_trabajo)
+        self._ms_decod = 0.0                             # ms de decodificación por trabajo del último reporte
         self.roi = {"mano": [0, 0], "muneca": [0, 0]}   # origen del recuadro -> [intentos, aciertos de MediaPipe]
         grupos = [("izq",), ("der",)] if HILO_POR_MANO else [("izq", "der")]
         self.trabajadores = []
@@ -712,6 +720,8 @@ class HiloManos:
         with self.lock:
             n, t = self._n_trabajos, self._t_trabajo
             self._n_trabajos, self._t_trabajo = 0, 0.0
+            self._ms_decod = self._t_decod / n * 1000.0 if n else 0.0   # lo lee reportar justo después
+            self._t_decod = 0.0
         return (t / n * 1000.0 if n else 0.0), n
 
     def estadisticas_roi_y_reiniciar(self):
@@ -766,6 +776,14 @@ class HiloManos:
         Un hilo con una sola mano la hace siempre; un hilo con las dos hace las dos (o una por trabajo,
         alternando, si ALTERNAR_MANOS=True)."""
         color_rgb, objetivos, t_frame = trabajo
+        if DECODIFICAR_EN_HILO_MANOS:   # llegaron los bytes del JPEG: mismas llamadas que to_numpy + bucle_kinect, aquí
+            t0 = time.perf_counter()
+            bgr = cv2.imdecode(color_rgb, -1)
+            if bgr is None:             # JPEG dañado: se salta este frame
+                return
+            color_rgb = cv2.cvtColor(bgr, cv2.COLOR_BGRA2RGB)
+            with self.lock:
+                self._t_decod += time.perf_counter() - t0
         if len(t["lados"]) == 1 or not ALTERNAR_MANOS:
             lados = list(t["lados"])
         else:
@@ -925,9 +943,17 @@ def leer_frame(capture, t_upd):
     else:
         ok_depth = bool(capture.get_depth_image_object().is_valid())    # solo comprueba que haya profundidad
     t0 = time.perf_counter()
-    ok_color, color_image = img_color.to_numpy()      # MJPG: incluye cv2.imdecode (BGR, 3 canales) | BGRA32: solo copia (BGRA, 4 canales)
-    acum_linea["to_numpy"] += time.perf_counter() - t0
-    n_linea["to_numpy"] += 1
+    if DECODIFICAR_EN_HILO_MANOS:
+        # Solo se copian los bytes del JPEG (el buffer del SDK se libera con el capture); los decodifica HiloManos
+        ok_color = img_color.is_valid()
+        color_image = (np.ctypeslib.as_array(img_color.buffer_pointer, shape=(img_color.get_size(),)).copy()
+                       if ok_color else None)
+        linea = "copia_jpeg"
+    else:
+        ok_color, color_image = img_color.to_numpy()  # MJPG: incluye cv2.imdecode (BGR, 3 canales) | BGRA32: solo copia (BGRA, 4 canales)
+        linea = "to_numpy"
+    acum_linea[linea] += time.perf_counter() - t0
+    n_linea[linea] += 1
     lag_cam_ms = None
     if ok_color:
         try:
@@ -1011,7 +1037,8 @@ async def bucle_kinect():
             # ---- Manos (timbre): se ofrecen al hilo; aquí NO se espera su resultado ----
             t = time.perf_counter()
             if hilo_manos.libre():
-                color_rgb = cv2.cvtColor(color_image, cv2.COLOR_BGRA2RGB)
+                # con DECODIFICAR_EN_HILO_MANOS color_image son los bytes del JPEG: el hilo decodifica y convierte
+                color_rgb = color_image if DECODIFICAR_EN_HILO_MANOS else cv2.cvtColor(color_image, cv2.COLOR_BGRA2RGB)
                 body2d = body_frame.get_body2d(0, pykinect.K4A_CALIBRATION_TYPE_COLOR)
                 objetivos = construir_objetivos(skeleton, body2d)
                 origen_roi = {l: (o[2] if o else None) for l, o in objetivos.items()}
@@ -1111,7 +1138,9 @@ async def bucle_kinect():
         # ---- Dibujo (después del envío, y solo 1 de cada DIBUJAR_CADA ciclos; nunca si MOSTRAR_VENTANA=False) ----
         if MOSTRAR_VENTANA and dibujar_ahora:
             t = time.perf_counter()
-            display = cv2.cvtColor(color_image, cv2.COLOR_BGRA2BGR)
+            # con DECODIFICAR_EN_HILO_MANOS + ventana (solo para depurar) este ciclo decodifica su propia copia
+            display = cv2.cvtColor(cv2.imdecode(color_image, -1) if DECODIFICAR_EN_HILO_MANOS else color_image,
+                                   cv2.COLOR_BGRA2BGR)
             if num_bodies > 0:
                 if MOSTRAR_RECUADROS:
                     for rec, ok in recuadros_hoy:
