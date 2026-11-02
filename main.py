@@ -74,6 +74,7 @@ COMPLEJIDAD_MODELO = 0           # 0 = rápido (lite), 1 = más preciso
 HILO_POR_MANO = False            # True = un hilo para cada mano (las dos se procesan EN PARALELO en cada ciclo; ignora ALTERNAR_MANOS)
                                  # perf/ciclo-30hz: False porque con 2 hilos el ciclo subió de 38.4 a 42.0 ms (sesiones 28d vs 28e)
                                  # False = un solo hilo para las dos manos (comportamiento de v6)
+USAR_HILO_MANOS = True           # DIAGNÓSTICO (paso 5b): False = sin hilo de manos ni MediaPipe (sin timbre: apertura siempre "sin mano")
 ALTERNAR_MANOS = True            # solo con HILO_POR_MANO=False: True = una mano por trabajo, alternando | False = las 2 manos del mismo frame
 HOLD_APERTURA_S = 0.5            # si se pierde una mano, se mantiene su última apertura este tiempo
 FOCAL_COLOR_PX = 610             # focal aprox. de la cámara de color a 720p
@@ -110,6 +111,7 @@ SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sinventana", not MOSTRAR_VENTANA),
     ("-decodhilo", DECODIFICAR_EN_HILO_MANOS),
     (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
+    ("-sinmanos", not USAR_HILO_MANOS),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
 
@@ -278,7 +280,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
@@ -682,6 +684,8 @@ class HiloManos:
         self._ms_decod = 0.0                             # ms de decodificación por trabajo del último reporte
         self.roi = {"mano": [0, 0], "muneca": [0, 0]}   # origen del recuadro -> [intentos, aciertos de MediaPipe]
         grupos = [("izq",), ("der",)] if HILO_POR_MANO else [("izq", "der")]
+        if not USAR_HILO_MANOS:         # sin trabajadores: libre() es False (nunca se envía) y estado() queda "sin mano"
+            grupos = []
         self.trabajadores = []
         for lados in grupos:
             self.trabajadores.append({"lados": lados, "cola": queue.Queue(maxsize=1), "ocupado": False, "ciclo": 0})
