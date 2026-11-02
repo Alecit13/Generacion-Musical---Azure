@@ -96,14 +96,33 @@ COLOR_BGRA32 = False             # EXPERIMENTO (D-007, P-005): desactivado por d
                                  # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
 DECODIFICAR_EN_HILO_MANOS = False  # EXPERIMENTO (P-005 b): True = el ciclo solo copia el JPEG (MJPG) y lo decodifica HiloManos
                                    # (el tracker no usa el color); False = to_numpy() en el ciclo, como siempre
-if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
-    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG (COLOR_BGRA32=False)")
 SWITCH_INTERVAL_S = None         # DIAGNÓSTICO (paso 5b): None = valor de Python (5 ms); 0.001 = sys.setswitchinterval(0.001)
                                  # (el hilo principal recupera antes el GIL cuando el hilo de manos ejecuta Python)
-if SWITCH_INTERVAL_S is not None:
-    sys.setswitchinterval(SWITCH_INTERVAL_S)
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
+
+# Opciones de línea de comandos para los experimentos (así no se edita main.py entre corridas):
+#   python main.py cuda lite --sin-ventana --decod-hilo
+# Cada opción solo ENCIENDE un experimento sobre la constante de arriba; sin opciones, todo queda como está.
+OPCIONES_VALIDAS = ("--sin-ventana", "--decod-hilo", "--swi1ms", "--sin-manos")
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
+OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
+_desconocidas = [o for o in OPCIONES if o not in OPCIONES_VALIDAS]
+if _desconocidas:   # una errata no debe producir una corrida mal etiquetada
+    raise ValueError(f"Opciones desconocidas {_desconocidas}; válidas: {', '.join(OPCIONES_VALIDAS)}")
+if "--sin-ventana" in OPCIONES:
+    MOSTRAR_VENTANA = False
+if "--decod-hilo" in OPCIONES:
+    DECODIFICAR_EN_HILO_MANOS = True
+if "--swi1ms" in OPCIONES:
+    SWITCH_INTERVAL_S = 0.001
+if "--sin-manos" in OPCIONES:
+    USAR_HILO_MANOS = False
+
+if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
+    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG (COLOR_BGRA32=False)")
+if SWITCH_INTERVAL_S is not None:
+    sys.setswitchinterval(SWITCH_INTERVAL_S)
 
 # Los interruptores de experimento que no estén en su valor por defecto se añaden a VERSION_MAIN
 # (nombre del CSV de sesión, _perf.txt y _latencias.csv), así cada corrida queda identificada sin editar el código.
@@ -117,11 +136,11 @@ VERSION_MAIN += SUFIJO_CONFIG
 
 # Body tracking: dónde corre la red neuronal del esqueleto
 #   "cpu" | "directml" | "cuda"   (el sistema final usa "cuda": python main.py cuda)
-MODO_BODY_TRACKER = sys.argv[1] if len(sys.argv) > 1 else "cpu"
+MODO_BODY_TRACKER = ARGS[0] if len(ARGS) > 0 else "cpu"
 
 # Modelo de la red del esqueleto (2º argumento):  python main.py cuda lite
 #   "default" = más preciso | "lite" = ~2x más rápido y ~5% menos preciso (según el changelog de Microsoft v1.1.0)
-MODELO_TRACKER = sys.argv[2] if len(sys.argv) > 2 else "default"
+MODELO_TRACKER = ARGS[1] if len(ARGS) > 1 else "default"
 if MODELO_TRACKER not in ("default", "lite"):
     raise ValueError('El 2º argumento debe ser "default" o "lite"')
 RUTAS_MODELO_LITE = [   # dónde busca el archivo del modelo lite (usa el primero que exista)
