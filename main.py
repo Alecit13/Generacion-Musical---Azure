@@ -97,6 +97,10 @@ DECODIFICAR_EN_HILO_MANOS = False  # EXPERIMENTO (P-005 b): True = el ciclo solo
                                    # (el tracker no usa el color); False = to_numpy() en el ciclo, como siempre
 if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
     raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG (COLOR_BGRA32=False)")
+SWITCH_INTERVAL_S = None         # DIAGNÓSTICO (paso 5b): None = valor de Python (5 ms); 0.001 = sys.setswitchinterval(0.001)
+                                 # (el hilo principal recupera antes el GIL cuando el hilo de manos ejecuta Python)
+if SWITCH_INTERVAL_S is not None:
+    sys.setswitchinterval(SWITCH_INTERVAL_S)
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
@@ -105,6 +109,7 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
 SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sinventana", not MOSTRAR_VENTANA),
     ("-decodhilo", DECODIFICAR_EN_HILO_MANOS),
+    (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
 
@@ -273,7 +278,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
