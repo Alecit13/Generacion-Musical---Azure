@@ -28,7 +28,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-un-hilo-llegada-2026-11-02"
+VERSION_MAIN = "mjpg-histeresis-ms-2026-11-02"
 
 # Servidor
 HOST_WS = "localhost"
@@ -62,7 +62,9 @@ RANGO_MIN_ANGULO_BRAZO = 60.0     # grados: rango mínimo para normalizar (evita
 HOLD_ANGULO_S = 0.5               # si un brazo deja de ser fiable, se mantiene su último valor este tiempo
 UMBRAL_REG_GRAVE = 0.33           # registro01 < esto -> "grave" (octava 3)
 UMBRAL_REG_AGUDO = 0.66           # registro01 >= esto -> "agudo" (octava 5); en medio -> "medio" (octava 4)
-UMBRAL_ESTABILIDAD_ZONA = 6       # ciclos que debe sostenerse una zona candidata antes de confirmarla (igual que zona.py)
+UMBRAL_ESTABILIDAD_ZONA_S = 0.250 # D-010 (HU0015-2): segundos que debe sostenerse una zona candidata antes de confirmarla
+                                  # (antes 6 ciclos: ≈ 235 ms a 25.5 Hz, ≈ 200 ms a 30 Hz; zona.py sigue en frames)
+DT_MAX_ZONA_S = 0.1               # tope del tiempo que suma un ciclo: tras una ausencia del cuerpo, el hueco no cuenta como "sostenido"
 if COMBINACION_BRAZOS not in ("media", "max"):
     raise ValueError('COMBINACION_BRAZOS debe ser "media" o "max"')
 
@@ -224,7 +226,8 @@ ARTICULACIONES_MUNECA_CODO = {       # (muñeca, codo) de cada lado: sirven de r
 # Estado entre frames
 # =====================================================================
 zona_actual = ZONA_INICIAL
-contador_estable = 0
+contador_estable = 0      # histéresis en frames de zona.py (solo si REGISTRO_POR_ANGULO=False)
+tiempo_fuera_zona = 0.0   # D-010: segundos sostenidos fuera de la zona actual (zona_desde_registro)
 nota_actual, octava_actual = NOTA_INICIAL, OCTAVA_INICIAL
 nota_id = 0          # contador de notas nuevas: el HTML toca una nota cada vez que cambia
 t_prox_tick = 0.0    # instante (perf_counter) en que toca el SIGUIENTE tick; se fija al sortear la nota anterior
@@ -537,11 +540,12 @@ class RegistroPorAngulo:
         return salida
 
 
-def zona_desde_registro(registro01, zona_anterior, contador_estable):
-    """Convierte registro01 (0-1) en zona "grave" | "medio" | "agudo" con la MISMA histéresis que
-    zona.py: una zona nueva debe sostenerse UMBRAL_ESTABILIDAD_ZONA ciclos para confirmarse (evita
-    que el tono parpadee cerca de un umbral). Devuelve (zona, contador_estable), como calcular_zona,
-    así que bucle_kinect puede usar una u otra sin cambiar nada más."""
+def zona_desde_registro(registro01, zona_anterior, tiempo_fuera_s, dt_s):
+    """Convierte registro01 (0-1) en zona "grave" | "medio" | "agudo" con histéresis EN TIEMPO (D-010):
+    una zona nueva debe sostenerse UMBRAL_ESTABILIDAD_ZONA_S segundos para confirmarse (evita que el tono
+    parpadee cerca de un umbral). Es la lógica de antes, pero cada ciclo fuera de la zona actual suma su
+    duración `dt_s` (con tope DT_MAX_ZONA_S) en lugar de 1, así que no depende de la tasa de ciclos.
+    Devuelve (zona, tiempo_fuera_s); bucle_kinect guarda tiempo_fuera_s para el siguiente ciclo."""
     if registro01 < UMBRAL_REG_GRAVE:
         candidata = "grave"
     elif registro01 < UMBRAL_REG_AGUDO:
@@ -549,11 +553,11 @@ def zona_desde_registro(registro01, zona_anterior, contador_estable):
     else:
         candidata = "agudo"
     if candidata == zona_anterior:
-        return zona_anterior, 0
-    contador_estable += 1
-    if contador_estable >= UMBRAL_ESTABILIDAD_ZONA:
-        return candidata, 0
-    return zona_anterior, contador_estable
+        return zona_anterior, 0.0
+    tiempo_fuera_s += min(dt_s, DT_MAX_ZONA_S)
+    if tiempo_fuera_s >= UMBRAL_ESTABILIDAD_ZONA_S:
+        return candidata, 0.0
+    return zona_anterior, tiempo_fuera_s
 
 
 registro = RegistroPorAngulo()
@@ -934,7 +938,7 @@ async def bucle_kinect():
     mapeo.actualizar (tempo, intensidad, lambda) y elegir_siguiente_nota (melodía);
     envía el resultado por WebSocket a index.html. El envío va ANTES de dibujar para
     no sumar el tiempo de dibujo a la latencia. t_cap_ms marca cuándo llegó el frame."""
-    global zona_actual, contador_estable, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
+    global zona_actual, contador_estable, tiempo_fuera_zona, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
     t_prev_cuerpo = None                          # último ciclo con cuerpo, para detectar ausencias
     ciclo_global = 0
     apertura01 = 0.5
@@ -979,8 +983,10 @@ async def bucle_kinect():
             reg = registro.actualizar(skeleton, t_ciclo)         # siempre se calcula (queda en el CSV)
             cand = registro.angulos_candidatos(skeleton)
             if REGISTRO_POR_ANGULO:
-                zona_actual, contador_estable = zona_desde_registro(
-                    reg["registro01"], zona_actual, contador_estable
+                # dt = duración de este ciclo, desde el ciclo con cuerpo anterior (t_prev_cuerpo se actualiza más abajo)
+                dt_zona = 0.0 if t_prev_cuerpo is None else t_ciclo - t_prev_cuerpo
+                zona_actual, tiempo_fuera_zona = zona_desde_registro(
+                    reg["registro01"], zona_actual, tiempo_fuera_zona, dt_zona
                 )
             else:
                 muneca = skeleton.joints[pykinect.K4ABT_JOINT_WRIST_LEFT].position.xyz
