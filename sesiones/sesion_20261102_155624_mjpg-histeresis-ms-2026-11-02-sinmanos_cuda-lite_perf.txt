@@ -1,0 +1,471 @@
+# mjpg-histeresis-ms-2026-11-02-sinmanos | tracker=cuda modelo=lite | color=MJPG | ventana=si | decodif=ciclo | switchinterval=5ms | manos=no | inicio=2026-11-02 15:56:24
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 24.6 ciclos/s | ciclo=41ms | cap_update=4ms | cap_imgs=6ms | tracker=27ms | manos=0ms | mapeo=1ms | salida=0ms | dibujo=3ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.64ms/llamada (5.64ms/ciclo, 60 llamadas) | print=0.26ms/llamada (0.26ms/ciclo, 60 llamadas) | imshow=3.36ms/llamada (1.12ms/ciclo, 20 llamadas) | waitKey=2.13ms/llamada (0.71ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.7ms | p95=40.3ms | max=54.0ms (n=60) | frames descartados/ciclo=0.23
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.4 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=1ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.46ms/llamada (5.46ms/ciclo, 60 llamadas) | print=0.25ms/llamada (0.25ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.73ms/llamada (0.58ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.5ms | p95=27.1ms | max=32.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=1ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=6.01ms/llamada (6.01ms/ciclo, 60 llamadas) | print=0.30ms/llamada (0.30ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.45ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.5ms | p95=36.2ms | max=42.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=1ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.90ms/llamada (5.90ms/ciclo, 60 llamadas) | print=0.38ms/llamada (0.38ms/ciclo, 60 llamadas) | imshow=0.76ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.55ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.0ms | p95=26.2ms | max=31.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=1ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.84ms/llamada (5.84ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.85ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.55ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.9ms | p95=33.8ms | max=41.8ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=1ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.71ms/llamada (5.71ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.54ms/llamada (0.51ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.1ms | p95=38.1ms | max=47.4ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.32ms/llamada (5.32ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.41ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.1ms | p95=23.6ms | max=25.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.40ms/llamada (5.40ms/ciclo, 60 llamadas) | print=0.24ms/llamada (0.24ms/ciclo, 60 llamadas) | imshow=0.77ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.5ms | p95=30.4ms | max=34.0ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.22ms/llamada (5.22ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.45ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.7ms | p95=28.9ms | max=37.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.17ms/llamada (5.17ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.76ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.79ms/llamada (0.60ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.0ms | p95=25.2ms | max=39.6ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.28ms/llamada (5.28ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.37ms/llamada (0.46ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=25.2ms | max=36.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.35ms/llamada (5.35ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.64ms/llamada (0.55ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.4ms | p95=27.1ms | max=31.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.23ms/llamada (5.23ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.47ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=15.8ms | p95=30.0ms | max=31.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.38ms/llamada (5.38ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.81ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.59ms/llamada (0.53ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.1ms | p95=29.6ms | max=30.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.32ms/llamada (5.32ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.50ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.0ms | p95=26.5ms | max=28.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.24ms/llamada (5.24ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.74ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=2.21ms/llamada (0.74ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.7ms | p95=42.9ms | max=46.8ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.27ms/llamada (5.27ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.80ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.48ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.0ms | p95=26.4ms | max=33.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.35ms/llamada (5.35ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.56ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.7ms | p95=32.9ms | max=34.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.43ms/llamada (5.43ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.76ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.66ms/llamada (0.55ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.5ms | p95=35.7ms | max=47.7ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.34ms/llamada (5.34ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.52ms/llamada (0.51ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.7ms | p95=24.9ms | max=32.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.35ms/llamada (5.35ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.0ms | p95=39.3ms | max=42.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.44ms/llamada (5.44ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.80ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.51ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.7ms | p95=31.5ms | max=32.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.21ms/llamada (5.21ms/ciclo, 60 llamadas) | print=0.25ms/llamada (0.25ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=26.7ms | max=32.3ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.37ms/llamada (5.37ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.48ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.7ms | p95=27.7ms | max=35.4ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.47ms/llamada (5.47ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.74ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.37ms/llamada (0.46ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.6ms | p95=35.5ms | max=38.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.37ms/llamada (5.37ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.54ms/llamada (0.51ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.6ms | p95=28.3ms | max=39.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.42ms/llamada (5.42ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.81ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.66ms/llamada (0.55ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.7ms | p95=26.6ms | max=28.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.39ms/llamada (5.39ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.80ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.41ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.8ms | p95=31.8ms | max=43.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.30ms/llamada (5.30ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.51ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.7ms | p95=28.0ms | max=35.5ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.23ms/llamada (5.23ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.62ms/llamada (0.54ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.3ms | p95=30.7ms | max=41.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.29ms/llamada (5.29ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.77ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.60ms/llamada (0.53ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.0ms | p95=26.2ms | max=38.6ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 28.6 ciclos/s | ciclo=35ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.19ms/llamada (5.19ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.5ms | p95=25.0ms | max=35.3ms (n=60) | frames descartados/ciclo=0.05
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.36ms/llamada (5.36ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.49ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.8ms | p95=25.4ms | max=28.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.22ms/llamada (5.22ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.74ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.8ms | p95=35.7ms | max=37.6ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.25ms/llamada (5.25ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.71ms/llamada (0.57ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.9ms | p95=32.3ms | max=33.8ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.32ms/llamada (5.32ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.45ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.1ms | p95=25.4ms | max=27.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.45ms/llamada (5.45ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.53ms/llamada (0.51ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.1ms | p95=28.0ms | max=30.0ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.06ms/llamada (5.06ms/ciclo, 60 llamadas) | print=0.17ms/llamada (0.17ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.35ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.3ms | p95=22.8ms | max=26.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.26ms/llamada (5.26ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.38ms/llamada (0.46ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.7ms | p95=28.0ms | max=34.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.18ms/llamada (5.18ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.86ms/llamada (0.62ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=24.0ms | max=24.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.31ms/llamada (5.31ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=30.2ms | max=43.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.21ms/llamada (5.21ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.41ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.2ms | p95=27.2ms | max=36.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.15ms/llamada (5.15ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.34ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.2ms | p95=23.0ms | max=28.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.38ms/llamada (5.38ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=2.09ms/llamada (0.70ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.6ms | p95=31.6ms | max=35.6ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.43ms/llamada (5.43ms/ciclo, 60 llamadas) | print=0.24ms/llamada (0.24ms/ciclo, 60 llamadas) | imshow=0.87ms/llamada (0.29ms/ciclo, 20 llamadas) | waitKey=2.21ms/llamada (0.74ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.0ms | p95=31.6ms | max=35.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.39ms/llamada (5.39ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.36ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.1ms | p95=26.4ms | max=34.8ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.8 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.37ms/llamada (5.37ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.78ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.67ms/llamada (0.56ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.7ms | p95=22.0ms | max=32.8ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.44ms/llamada (5.44ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.81ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.8ms | p95=27.2ms | max=37.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.33ms/llamada (5.33ms/ciclo, 60 llamadas) | print=0.25ms/llamada (0.25ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.89ms/llamada (0.63ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=15.4ms | p95=26.1ms | max=27.5ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.19ms/llamada (5.19ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.47ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.0ms | p95=24.8ms | max=26.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.24ms/llamada (5.24ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.78ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.49ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=25.9ms | max=35.2ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.12ms/llamada (5.12ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=0.82ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.54ms/llamada (0.51ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.7ms | p95=24.4ms | max=52.0ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.0 ciclos/s | ciclo=35ms | cap_update=1ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.23ms/llamada (5.23ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.50ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.8ms | p95=33.0ms | max=36.0ms (n=60) | frames descartados/ciclo=0.03
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.21ms/llamada (5.21ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.82ms/llamada (0.61ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.4ms | p95=26.6ms | max=30.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.26ms/llamada (5.26ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.85ms/llamada (0.62ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.6ms | p95=33.7ms | max=35.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.8 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.14ms/llamada (5.14ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.6ms | p95=26.1ms | max=29.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.16ms/llamada (5.16ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.47ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.0ms | p95=24.5ms | max=25.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.17ms/llamada (5.17ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.78ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.36ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.0ms | p95=30.2ms | max=31.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.07ms/llamada (5.07ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.49ms/llamada (0.50ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.3ms | p95=26.2ms | max=26.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.38ms/llamada (5.38ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.74ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.82ms/llamada (0.61ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.6ms | p95=33.1ms | max=37.2ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.20ms/llamada (5.20ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.37ms/llamada (0.46ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.0ms | p95=25.9ms | max=28.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.22ms/llamada (5.22ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.85ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.9ms | p95=34.0ms | max=35.2ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.7 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.12ms/llamada (5.12ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.77ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.62ms/llamada (0.54ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.9ms | p95=24.9ms | max=43.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.2 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.26ms/llamada (5.26ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=0.81ms/llamada (0.27ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.0ms | p95=32.3ms | max=35.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.6 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.45ms/llamada (5.45ms/ciclo, 60 llamadas) | print=0.27ms/llamada (0.27ms/ciclo, 60 llamadas) | imshow=0.83ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.63ms/llamada (0.54ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.7ms | p95=25.6ms | max=47.6ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.25ms/llamada (5.25ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.76ms/llamada (0.59ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.1ms | p95=25.7ms | max=27.2ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.43ms/llamada (5.43ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.73ms/llamada (0.58ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.8ms | p95=25.8ms | max=34.2ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.18ms/llamada (5.18ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.77ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.34ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.7ms | p95=24.7ms | max=27.5ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.27ms/llamada (5.27ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.35ms/llamada (0.45ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.6ms | p95=25.3ms | max=35.3ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.7 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.49ms/llamada (5.49ms/ciclo, 60 llamadas) | print=0.27ms/llamada (0.27ms/ciclo, 60 llamadas) | imshow=0.83ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.41ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.7ms | p95=27.7ms | max=35.7ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.8 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.28ms/llamada (5.28ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.45ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.6ms | p95=28.0ms | max=37.7ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.4 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.26ms/llamada (5.26ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.44ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.0ms | p95=36.3ms | max=46.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.37ms/llamada (5.37ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.1ms | p95=26.6ms | max=29.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.37ms/llamada (5.37ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.55ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.5ms | p95=26.2ms | max=34.3ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.45ms/llamada (5.45ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.78ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.57ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.2ms | p95=27.0ms | max=28.3ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.40ms/llamada (5.40ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.56ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.1ms | p95=25.9ms | max=27.4ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.9 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.31ms/llamada (5.31ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.73ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.41ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.2ms | p95=26.1ms | max=28.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=24ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.41ms/llamada (5.41ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.76ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.45ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.6ms | p95=25.9ms | max=35.3ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.30ms/llamada (5.30ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.85ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.56ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.5ms | p95=32.6ms | max=34.0ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=5ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.13ms/llamada (5.13ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.42ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=16.6ms | p95=24.3ms | max=25.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.29ms/llamada (5.29ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.8ms | p95=30.0ms | max=31.2ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.31ms/llamada (5.31ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.43ms/llamada (0.48ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.1ms | p95=25.9ms | max=28.4ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.27ms/llamada (5.27ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.69ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.57ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=17.0ms | p95=27.3ms | max=30.0ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.30ms/llamada (5.30ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.71ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.33ms/llamada (0.44ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.2ms | p95=26.3ms | max=51.9ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.25ms/llamada (5.25ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.90ms/llamada (0.63ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.2ms | p95=32.6ms | max=36.7ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.26ms/llamada (5.26ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.72ms/llamada (0.24ms/ciclo, 20 llamadas) | waitKey=1.40ms/llamada (0.47ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=18.2ms | p95=26.3ms | max=33.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.59ms/llamada (5.59ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.65ms/llamada (0.55ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=19.1ms | p95=28.3ms | max=34.6ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.40ms/llamada (5.40ms/ciclo, 60 llamadas) | print=0.21ms/llamada (0.21ms/ciclo, 60 llamadas) | imshow=0.70ms/llamada (0.23ms/ciclo, 20 llamadas) | waitKey=1.93ms/llamada (0.64ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=15.4ms | p95=27.0ms | max=31.3ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=1ms | cap_imgs=6ms | tracker=22ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.52ms/llamada (5.52ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.72ms/llamada (0.57ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=15.6ms | p95=25.0ms | max=25.9ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.5 ciclos/s | ciclo=34ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.56ms/llamada (5.56ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=0.75ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.46ms/llamada (0.49ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.7ms | p95=26.1ms | max=35.1ms (n=60) | frames descartados/ciclo=0.02
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.0 ciclos/s | ciclo=33ms | cap_update=1ms | cap_imgs=6ms | tracker=22ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.66ms/llamada (5.66ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=0.84ms/llamada (0.28ms/ciclo, 20 llamadas) | waitKey=1.61ms/llamada (0.54ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=14.3ms | p95=24.4ms | max=27.1ms (n=60) | frames descartados/ciclo=0.00
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 28.5 ciclos/s | ciclo=35ms | cap_update=1ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.94ms/llamada (5.94ms/ciclo, 60 llamadas) | print=0.22ms/llamada (0.22ms/ciclo, 60 llamadas) | imshow=0.79ms/llamada (0.26ms/ciclo, 20 llamadas) | waitKey=1.60ms/llamada (0.53ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.1ms | p95=36.4ms | max=40.2ms (n=60) | frames descartados/ciclo=0.05
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 29.1 ciclos/s | ciclo=34ms | cap_update=0ms | cap_imgs=6ms | tracker=23ms | manos=0ms | mapeo=2ms | salida=1ms | dibujo=1ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.99ms/llamada (5.99ms/ciclo, 60 llamadas) | print=0.25ms/llamada (0.25ms/ciclo, 59 llamadas) | imshow=0.76ms/llamada (0.25ms/ciclo, 20 llamadas) | waitKey=1.56ms/llamada (0.52ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=23.7ms | p95=35.9ms | max=42.8ms (n=60) | frames descartados/ciclo=0.03
+[FUSION] sin pares aún | dato vigente en 0% de ciclos | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=7ms | cap_imgs=6ms | tracker=18ms | manos=0ms | mapeo=0ms | salida=0ms | dibujo=2ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=5.24ms/llamada (5.24ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.02ms/ciclo, 5 llamadas) | imshow=0.42ms/llamada (0.14ms/ciclo, 20 llamadas) | waitKey=4.71ms/llamada (1.57ms/ciclo, 20 llamadas)
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=10.0ms | p95=18.5ms | max=25.6ms (n=60) | frames descartados/ciclo=0.00

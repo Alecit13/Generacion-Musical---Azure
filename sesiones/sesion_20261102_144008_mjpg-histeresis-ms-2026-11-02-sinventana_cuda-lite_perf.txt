@@ -1,0 +1,101 @@
+# mjpg-histeresis-ms-2026-11-02-sinventana | tracker=cuda modelo=lite | color=MJPG | ventana=no | decodif=ciclo | switchinterval=5ms | manos=hilo | inicio=2026-11-02 14:40:08
+[FUSION] 100% pares en ±16ms (n=36) | dato vigente en 98% de ciclos | edad manos media=73ms p95=120ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 37 | muneca: sin intentos
+[PERF] 20.5 ciclos/s | ciclo=49ms | cap_update=5ms | cap_imgs=10ms | tracker=29ms | manos=1ms | mapeo=1ms | salida=1ms | dibujo=0ms | hilo_manos=36ms (12.7 trab/s)
+[PERF-LINEA] to_numpy=9.76ms/llamada (9.76ms/ciclo, 60 llamadas) | print=0.27ms/llamada (0.25ms/ciclo, 57 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.5ms | p95=40.6ms | max=48.8ms (n=60) | frames descartados/ciclo=0.37
+[FUSION] 100% pares en ±16ms (n=70) | dato vigente en 100% de ciclos | edad manos media=84ms p95=122ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 33 | muneca: sin intentos
+[PERF] 26.2 ciclos/s | ciclo=38ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=2ms | salida=1ms | dibujo=0ms | hilo_manos=40ms (14.4 trab/s)
+[PERF-LINEA] to_numpy=9.63ms/llamada (9.63ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.4ms | p95=37.1ms | max=44.7ms (n=60) | frames descartados/ciclo=0.13
+[FUSION] 100% pares en ±16ms (n=108) | dato vigente en 100% de ciclos | edad manos media=76ms p95=118ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 38 | muneca: sin intentos
+[PERF] 25.9 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.4 trab/s)
+[PERF-LINEA] to_numpy=9.31ms/llamada (9.31ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.2ms | p95=36.4ms | max=45.8ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=146) | dato vigente en 100% de ciclos | edad manos media=78ms p95=120ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 38 | muneca: sin intentos
+[PERF] 25.8 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.3 trab/s)
+[PERF-LINEA] to_numpy=9.34ms/llamada (9.34ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.0ms | p95=40.6ms | max=48.9ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=177) | dato vigente en 100% de ciclos | edad manos media=87ms p95=142ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 89% de 36 | muneca: sin intentos
+[PERF] 25.8 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (15.5 trab/s)
+[PERF-LINEA] to_numpy=9.28ms/llamada (9.28ms/ciclo, 60 llamadas) | print=0.15ms/llamada (0.15ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.3ms | p95=40.2ms | max=47.9ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=216) | dato vigente en 100% de ciclos | edad manos media=74ms p95=116ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 38 | muneca: sin intentos
+[PERF] 25.7 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.2 trab/s)
+[PERF-LINEA] to_numpy=9.32ms/llamada (9.32ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.1ms | p95=40.7ms | max=46.9ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=253) | dato vigente en 100% de ciclos | edad manos media=77ms p95=120ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 100% de 22 | muneca: 100% de 15
+[PERF] 25.8 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=23ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (15.9 trab/s)
+[PERF-LINEA] to_numpy=9.51ms/llamada (9.51ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.7ms | p95=41.1ms | max=48.0ms (n=60) | frames descartados/ciclo=0.15
+[FUSION] 100% pares en ±16ms (n=290) | dato vigente en 100% de ciclos | edad manos media=80ms p95=120ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 100% de 37
+[PERF] 25.4 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (15.6 trab/s)
+[PERF-LINEA] to_numpy=9.70ms/llamada (9.70ms/ciclo, 60 llamadas) | print=0.23ms/llamada (0.23ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.8ms | p95=40.0ms | max=47.8ms (n=60) | frames descartados/ciclo=0.18
+[FUSION] 100% pares en ±16ms (n=324) | dato vigente en 100% de ciclos | edad manos media=91ms p95=201ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 89% de 38
+[PERF] 25.6 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=23ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (16.2 trab/s)
+[PERF-LINEA] to_numpy=9.52ms/llamada (9.52ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.0ms | p95=35.7ms | max=46.3ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=360) | dato vigente en 100% de ciclos | edad manos media=88ms p95=121ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 95% de 38
+[PERF] 25.9 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.4 trab/s)
+[PERF-LINEA] to_numpy=9.12ms/llamada (9.12ms/ciclo, 60 llamadas) | print=0.16ms/llamada (0.16ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.0ms | p95=38.1ms | max=48.5ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=397) | dato vigente en 100% de ciclos | edad manos media=78ms p95=119ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 97% de 38
+[PERF] 25.6 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.2 trab/s)
+[PERF-LINEA] to_numpy=9.43ms/llamada (9.43ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.2ms | p95=38.5ms | max=46.0ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=433) | dato vigente en 100% de ciclos | edad manos media=79ms p95=120ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 100% de 36
+[PERF] 25.7 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (15.4 trab/s)
+[PERF-LINEA] to_numpy=9.47ms/llamada (9.47ms/ciclo, 60 llamadas) | print=0.17ms/llamada (0.17ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.4ms | p95=39.3ms | max=46.0ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=472) | dato vigente en 100% de ciclos | edad manos media=74ms p95=118ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 100% de 39
+[PERF] 25.2 ciclos/s | ciclo=40ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=2ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (16.4 trab/s)
+[PERF-LINEA] to_numpy=9.35ms/llamada (9.35ms/ciclo, 60 llamadas) | print=0.19ms/llamada (0.19ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.2ms | p95=37.7ms | max=46.8ms (n=60) | frames descartados/ciclo=0.20
+[FUSION] 100% pares en ±16ms (n=512) | dato vigente en 100% de ciclos | edad manos media=73ms p95=121ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 100% de 40
+[PERF] 25.7 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=23ms | manos=1ms | mapeo=4ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (17.1 trab/s)
+[PERF-LINEA] to_numpy=9.28ms/llamada (9.28ms/ciclo, 60 llamadas) | print=0.17ms/llamada (0.17ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.0ms | p95=42.6ms | max=47.8ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=551) | dato vigente en 100% de ciclos | edad manos media=72ms p95=117ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 100% de 39
+[PERF] 25.4 ciclos/s | ciclo=39ms | cap_update=1ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (16.5 trab/s)
+[PERF-LINEA] to_numpy=9.34ms/llamada (9.34ms/ciclo, 60 llamadas) | print=0.17ms/llamada (0.17ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=20.0ms | p95=35.2ms | max=43.4ms (n=60) | frames descartados/ciclo=0.18
+[FUSION] 100% pares en ±16ms (n=583) | dato vigente en 100% de ciclos | edad manos media=88ms p95=163ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 82% de 39
+[PERF] 25.6 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (16.7 trab/s)
+[PERF-LINEA] to_numpy=9.42ms/llamada (9.42ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.7ms | p95=40.3ms | max=47.2ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=612) | dato vigente en 100% de ciclos | edad manos media=95ms p95=156ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: 78% de 37
+[PERF] 25.8 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=23ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=38ms (15.9 trab/s)
+[PERF-LINEA] to_numpy=9.33ms/llamada (9.33ms/ciclo, 60 llamadas) | print=0.20ms/llamada (0.20ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=21.7ms | p95=43.3ms | max=46.4ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=642) | dato vigente en 100% de ciclos | edad manos media=92ms p95=155ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 91% de 23 | muneca: 69% de 13
+[PERF] 25.6 ciclos/s | ciclo=39ms | cap_update=0ms | cap_imgs=10ms | tracker=24ms | manos=1ms | mapeo=3ms | salida=1ms | dibujo=0ms | hilo_manos=39ms (15.4 trab/s)
+[PERF-LINEA] to_numpy=9.19ms/llamada (9.19ms/ciclo, 60 llamadas) | print=0.18ms/llamada (0.18ms/ciclo, 60 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=22.0ms | p95=41.7ms | max=48.1ms (n=60) | frames descartados/ciclo=0.17
+[FUSION] 100% pares en ±16ms (n=648) | dato vigente en 100% de ciclos | edad manos media=81ms p95=143ms | edad<=16ms: 0% de ciclos
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: 88% de 8 | muneca: sin intentos
+[PERF] 28.9 ciclos/s | ciclo=35ms | cap_update=5ms | cap_imgs=10ms | tracker=19ms | manos=0ms | mapeo=1ms | salida=0ms | dibujo=0ms | hilo_manos=38ms (3.9 trab/s)
+[PERF-LINEA] to_numpy=9.66ms/llamada (9.66ms/ciclo, 60 llamadas) | print=0.15ms/llamada (0.02ms/ciclo, 10 llamadas) | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=9.3ms | p95=29.6ms | max=43.8ms (n=60) | frames descartados/ciclo=0.05
+[FUSION] 100% pares en ±16ms (n=648) |  | sin dato de manos vigente
+[ROI] aciertos de MediaPipe por origen del recuadro -> mano: sin intentos | muneca: sin intentos
+[PERF] 30.1 ciclos/s | ciclo=33ms | cap_update=5ms | cap_imgs=10ms | tracker=18ms | manos=0ms | mapeo=0ms | salida=0ms | dibujo=0ms | hilo_manos=0ms (0.0 trab/s)
+[PERF-LINEA] to_numpy=9.33ms/llamada (9.33ms/ciclo, 60 llamadas) | print=sin llamadas | imshow=sin llamadas | waitKey=sin llamadas
+[CAMARA] espera del frame desde que llegó al PC hasta Python: media=9.1ms | p95=18.8ms | max=20.3ms (n=60) | frames descartados/ciclo=0.00
