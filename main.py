@@ -85,7 +85,8 @@ FACTOR_RESPALDO_MUNECA = 0.35    # cuánto se avanza más allá de la muñeca, c
 MOSTRAR_RECUADROS = False        # True = dibuja el recuadro de cada mano (útil para depurar)
 
 # Ventana de vídeo
-DIBUJAR_CADA = 3                 # dibuja/muestra 1 de cada N ciclos (con 2 costaba ~3 ms por ciclo; con 3, ~2 ms). Sube a 4-5 si quieres ahorrar más
+MOSTRAR_VENTANA = True           # EXPERIMENTO (P-003): False = sin ventana de OpenCV (no dibuja ni llama a waitKey); se cierra con Ctrl+C
+DIBUJAR_CADA = 3                # dibuja/muestra 1 de cada N ciclos (con 2 costaba ~3 ms por ciclo; con 3, ~2 ms). Sube a 4-5 si quieres ahorrar más
 DESCARTAR_COLA_CAMARA = True     # True = si hay frames viejos en la cola del SDK, se descartan y se usa el MÁS RECIENTE (medido: la cola añadía ~220 ms)
                                  # False = comportamiento anterior (procesa todos los frames en orden, aunque lleguen con retraso)
 MAX_DESCARTE_POR_CICLO = 10      # tope de frames que se descartan en un ciclo (seguridad)
@@ -94,6 +95,13 @@ COLOR_BGRA32 = False             # EXPERIMENTO (D-007, P-005): desactivado por d
                                  # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
+
+# Los interruptores de experimento que no estén en su valor por defecto se añaden a VERSION_MAIN
+# (nombre del CSV de sesión, _perf.txt y _latencias.csv), así cada corrida queda identificada sin editar el código.
+SUFIJO_CONFIG = "".join(s for s, activo in (
+    ("-sinventana", not MOSTRAR_VENTANA),
+) if activo)
+VERSION_MAIN += SUFIJO_CONFIG
 
 # Body tracking: dónde corre la red neuronal del esqueleto
 #   "cpu" | "directml" | "cuda"   (el sistema final usa "cuda": python main.py cuda)
@@ -260,10 +268,12 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
+if not MOSTRAR_VENTANA:
+    print("Sin ventana de OpenCV (MOSTRAR_VENTANA=False): para terminar, Ctrl+C en esta consola")
 
 # Latencias del navegador: index.html las devuelve por el WebSocket cada 0.5 s y aquí se guardan con el mismo
 # nombre que el CSV de sesión y el mismo formato que el botón "Descargar latencias" (ya no hace falta descargar).
@@ -1097,8 +1107,8 @@ async def bucle_kinect():
             log_file.flush()
             acum["salida"] += time.perf_counter() - t
 
-        # ---- Dibujo (después del envío, y solo 1 de cada DIBUJAR_CADA ciclos) ----
-        if dibujar_ahora:
+        # ---- Dibujo (después del envío, y solo 1 de cada DIBUJAR_CADA ciclos; nunca si MOSTRAR_VENTANA=False) ----
+        if MOSTRAR_VENTANA and dibujar_ahora:
             t = time.perf_counter()
             display = cv2.cvtColor(color_image, cv2.COLOR_BGRA2BGR)
             if num_bodies > 0:
