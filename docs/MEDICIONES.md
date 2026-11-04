@@ -140,12 +140,35 @@ Fuentes en `sesiones/`: `sesion_20261102_<hora>_mjpg-un-hilo-llegada-2026-11-02_
 | Edad manos p95 · % ciclos con 2 manos | 43.5 · 96.7 | 69.9 · 97.0 | 43.7 · 95.4 |
 | GPU SM mediana (MHz) / W / °C máx · CPU % rendimiento | 1762 / 31.8 / 68 · 207 | 1762 / 32.3 / 68 · 208 | 1762 / 32.5 / 70 · 208 |
 - **Dibujo:** por fase módulo 3, el ciclo que dibuja mide 36.7–38.6 ms (> 33.3 en el 99–100 %) y los otros 31.7–33.5 ms.
-- **Frente al 31/10 (4b):** ciclo 39.0–39.4 → 33.3–34.8 ms; (b) media 59.5–60.1 → 45.2–53.5 ms. Cambiaron a la vez el modo de energía, el salón, el calor y el segundo cliente: la mejora no se puede atribuir a una sola causa (INFERIDO). La comparación de energía de 4d indica que el modo de energía pesa (6–9 ms).
+- **Frente al 31/10 (4b):** ciclo 39.0–39.4 → 33.3–34.8 ms; (b) media 59.5–60.1 → 45.2–53.5 ms. Cambiaron a la vez el modo de energía, el salón, el calor y el segundo cliente: la mejora no se puede atribuir a una sola causa (INFERIDO). La comparación de energía de 4d indica que el modo de energía pesa (una corrida por lado; sin cuantificar, D-014).
 - `to_numpy` en el ciclo: 5.4–5.9 ms. 133838 fue más lenta en todas las etapas sin cambio visible en GPU ni CPU (como 171408 el 31/10).
 
 ## 4d. Tanda del 02/11 por la tarde (14:45–16:00): ventana, decodificación, energía y diagnóstico de `mapeo` (MEDIDO)
 Fuentes en `sesiones/`: `sesion_20261102_<hora>_mjpg-histeresis-ms-2026-11-02<sufijo>_cuda-lite.*` (código hasta `1b69a33`; incluye D-010; el sufijo dice la configuración: `-sinventana`, `-sinventana-decodhilo`, `-swi1ms`, `-sinmanos`); GPU en `gpu_tanda_20261102.csv`; CPU en `cpu_tanda_20261102.csv` (% de rendimiento y % de tiempo del procesador). Calentamiento 144537 (descartado). Configuraciones intercaladas por rondas, como pidió Ale.
 - **Validez:** un solo cliente en las 19 corridas; en todas, las filas `continuo` que faltan están solo antes del primer mensaje (reconexión del navegador al arrancar: 0–154 filas) y ninguna después; la última fila de sesión está en `_latencias.csv` en todas (espera de cierre `b98258b`); (b) sin celdas vacías.
+
+Las 19 corridas (ciclo medio = media de los reportes `[PERF]` de 60 ciclos sin el 1º; filas `continuo` < filas de sesión solo por la reconexión al arrancar):
+| # | Archivo (en `sesiones/`) | Configuración | Filas de sesión | Filas `continuo` | Ciclo medio `[PERF]` (ms) |
+|---|---|---|---|---|---|
+| 0 | `sesion_20261102_144537_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base (calentamiento) | 5451 | 5297 | 33.2 |
+| 1 | `sesion_20261102_144917_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base | 5524 | 5524 | 33.2 |
+| 2 | `sesion_20261102_145316_mjpg-histeresis-ms-2026-11-02-sinventana_cuda-lite.csv` | Sin ventana | 5760 | 5702 | 33.1 |
+| 3 | `sesion_20261102_145656_mjpg-histeresis-ms-2026-11-02-sinventana-decodhilo_cuda-lite.csv` | Sin ventana + decodificación en el hilo | 5863 | 5809 | 33.1 |
+| 4 | `sesion_20261102_150132_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base | 5332 | 5258 | 34.3 |
+| 5 | `sesion_20261102_150533_mjpg-histeresis-ms-2026-11-02-sinventana_cuda-lite.csv` | Sin ventana | 5429 | 5367 | 33.4 |
+| 6 | `sesion_20261102_150859_mjpg-histeresis-ms-2026-11-02-sinventana-decodhilo_cuda-lite.csv` | Sin ventana + decodificación en el hilo | 5821 | 5815 | 33.1 |
+| 7 | `sesion_20261102_151330_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base | 5016 | 5010 | 36.8 |
+| 8 | `sesion_20261102_151707_mjpg-histeresis-ms-2026-11-02-sinventana_cuda-lite.csv` | Sin ventana | 5337 | 5331 | 34.6 |
+| 9 | `sesion_20261102_152134_mjpg-histeresis-ms-2026-11-02-sinventana-decodhilo_cuda-lite.csv` | Sin ventana + decodificación en el hilo | 5427 | 5376 | 33.1 |
+| 10 | `sesion_20261102_152559_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base | 4335 | 4228 | 41.8 |
+| 11 | `sesion_20261102_152953_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base (Equilibrado) | 3806 | 3743 | 47.6 |
+| 12 | `sesion_20261102_153456_mjpg-histeresis-ms-2026-11-02_cuda-lite.csv` | Base | 4697 | 4679 | 38.4 |
+| 13 | `sesion_20261102_153828_mjpg-histeresis-ms-2026-11-02-swi1ms_cuda-lite.csv` | `--swi1ms` | 4804 | 4731 | 38.8 |
+| 14 | `sesion_20261102_154207_mjpg-histeresis-ms-2026-11-02-sinmanos_cuda-lite.csv` | `--sin-manos` | 4797 | 4724 | 37.8 |
+| 15 | `sesion_20261102_154541_mjpg-histeresis-ms-2026-11-02-swi1ms_cuda-lite.csv` | `--swi1ms` | 4713 | 4679 | 38.8 |
+| 16 | `sesion_20261102_154916_mjpg-histeresis-ms-2026-11-02-sinmanos_cuda-lite.csv` | `--sin-manos` | 4728 | 4693 | 38.3 |
+| 17 | `sesion_20261102_155246_mjpg-histeresis-ms-2026-11-02-swi1ms_cuda-lite.csv` | `--swi1ms` | 4734 | 4704 | 38.7 |
+| 18 | `sesion_20261102_155624_mjpg-histeresis-ms-2026-11-02-sinmanos_cuda-lite.csv` | `--sin-manos` | 5584 | 5515 | 33.4 |
 
 Rondas intercaladas (cada celda: Base / Sin ventana / Sin ventana + decodificación en el hilo):
 | Ronda (corridas) | Ciclos/s · ventanas ≥ 29.5 | Ciclo · `cap_update` | `lag_cam_ms` media / p95 | (b) media / p95 / máx | Edad manos p95 · trabajos/s |
@@ -173,7 +196,7 @@ Rondas intercaladas (cada celda: Base / Sin ventana / Sin ventana + decodificaci
 - H2 (58–62 = latencia + espera de cámara): REFUTADA el 31/10; **REABIERTA el 01/11** y reproducida con (b) (sección 0.2 y 4b). El origen original de las cifras de ESTADO_ACTUAL sigue sin confirmarse (Ale no lo recuerda, 02/11).
 - H3 (`lat_tick` ≈ etapas previas + espera hasta el siguiente ciclo): CONSISTENTE con 47.6–51.2 ms (28/10), 48.8–50.4 (MJPG 31/10), 45.7–47.1 (BGRA32 31/10), 40.6–43.0 (Base 02/11, 4c) y 40.8–56.0 (tanda 02/11, 4d): baja al bajar el ciclo.
 - H4 (cortes baratos): el corte con evidencia es la decodificación MJPG; `flush`/`print` valen centésimas de ms aislados. 31/10: BGRA32 quita 4.3 ms de `to_numpy` pero empeora (b) (ver 4b); `print` = 0.27 ms (no vale la pena); ventana = 2.0 ms/ciclo de media y ≈ 6 ms en el ciclo que dibuja. **02/11 (4d):** decodificar en el hilo de manos saca ≈ 5 ms del ciclo sin empeorar `lag_cam_ms` (a diferencia de BGRA32), pero alarga el trabajo de manos 4.6–5.7 ms.
-- H6 (02/11, INFERIDA): el rendimiento depende del estado del equipo más que de los cambios probados (modo de energía: +6–9 ms en Equilibrado; ralentización de ≈ 8 ms en Base entre 14:49 y 15:26 con más uso de CPU). Prueba propuesta: registrar el uso de CPU por proceso (`python`, `chrome`) en la próxima tanda.
+- H6 (02/11, INFERIDA): el rendimiento depende del estado del equipo más que de los cambios probados (modo de energía: la corrida en Equilibrado salió más lenta que las dos que la rodeaban, sin cuantificar por D-014; ralentización de ≈ 8 ms en Base entre 14:49 y 15:26 con más uso de CPU). Prueba propuesta: registrar el uso de CPU por proceso (`python`, `chrome`) en la próxima tanda.
 - H5 (pipeline en 2 etapas): POSIBLE (las DLL se cargan con `ctypes.CDLL` y sueltan el GIL en la llamada nativa), pero 1→2 hilos de manos ya costó ≈ 3.6 ms de ciclo: NO es gratis; medir antes de asumir solapamiento. Solo si 5–11 no bastan.
 
 ## 7. Presupuesto (INFERIDO)
@@ -193,7 +216,7 @@ Rondas intercaladas (cada celda: Base / Sin ventana / Sin ventana + decodificaci
 
 ## 9. Plan vigente
 Tarea 1 (auditoría de solo lectura): **HECHA el 31/10/2026** (resultados arriba).
-Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. **Siguiente:** Ale decide P-003 y P-005 → paso 9 (10 min) con la configuración elegida.
+Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo, condicionada) y D-014 (máximo rendimiento). **Siguiente:** paso 9 (10 min) con `python main.py cuda lite --decod-hilo` y registro de CPU por proceso.
 | # | Paso | Estado |
 |---|---|---|
 | 1 | Commit del estado actual en la rama `wip-28e` | HECHO 31/10 (`368c20a`) |
@@ -201,22 +224,22 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 3 | Cronómetros por línea en `[PERF]` para `to_numpy()`, `print` e `imshow`, sin cambiar comportamiento | HECHO 31/10 (`1764380`, `[PERF-LINEA]`) |
 | 3b | Guardar `[PERF]` en `_perf.txt` y las latencias del navegador en `_latencias.csv` (D-006) | HECHO 31/10 (`e2fef0d`, `3151709`) |
 | 4 | Línea base: 3 corridas de 3 min con la rutina fija (sección 10) | HECHO 31/10 (171408, 171755, 172123; sección 4b), **con un cliente de prueba de más y sin calentamiento**; se repite en el paso 10 |
-| 5 | Color sin decodificar en el ciclo y sin ventana en sesiones de evaluación; volver a medir | MEDIDO. BGRA32 (`f453ac0`, 31/10): no cumple C1 ni C2. Sin ventana (`6b83b6c`) y decodificación en el hilo de manos (`47b8a3e`), 3 corridas cada una el 02/11 (4d): solo sin ventana + decodificación sostuvo ≥ 29.5 ciclos/s en las 3 rondas. Elegir configuración: P-003 y P-005 (decide Ale) |
-| 5b | Explicar `mapeo` (3.6 ms real frente a 0.7 aislado): corrida con `sys.setswitchinterval(0.001)` y corrida sin hilo de manos (diagnóstico) | HECHO 02/11 (`66b9ebd`, `529e248`; 4d): `setswitchinterval` sin efecto; sin hilo de manos −0.6 ms; el resto sigue al estado del equipo (H6). Queda abierto qué consume la CPU (sección 11) |
+| 5 | Color sin decodificar en el ciclo y sin ventana en sesiones de evaluación; volver a medir | MEDIDO. BGRA32 (`f453ac0`, 31/10): no cumple C1 ni C2. Sin ventana (`6b83b6c`) y decodificación en el hilo de manos (`47b8a3e`), 3 corridas cada una el 02/11 (4d): solo sin ventana + decodificación sostuvo ≥ 29.5 ciclos/s en las 3 rondas. Configuración elegida: D-012 (sin ventana por defecto, `e5b6643`) y D-013 (`--decod-hilo`, condicionada al paso 9) |
+| 5b | Explicar `mapeo` (3.6 ms real frente a 0.7 aislado): corrida con `sys.setswitchinterval(0.001)` y corrida sin hilo de manos (diagnóstico) | Corridas HECHAS 02/11 (`66b9ebd`, `529e248`; 4d): hipótesis GIL descartada; causa abierta (sección 11). Sin hilo de manos −0.6 ms; el resto sigue al estado del equipo (H6) |
 | 6 | Decidir histéresis y EMA en milisegundos (P-001) | HECHO 02/11: D-010 (histéresis 250 ms, `d0331e8`; EMA sin cambios) |
 | 7 | Enviar `lag_cam_ms` en el mensaje y guardar `latencia_llegada_ms` (= `latencia_ms + lag_cam_ms`) en `_latencias.csv`, sin cambiar columnas existentes ni comportamiento musical | HECHO 02/11 (`eb68590`); verificado contra el cálculo offline (≤ 0.05 ms, 4c) |
-| 7b | Cierre y operación de las corridas: esperar el último lote de latencias al cerrar (`b98258b`), interruptores por línea de comandos (`1b69a33`, D-011), soltar el último frame del tracker antes de destruirlo (`6ed5c0a`) | HECHO 02/11. `6ed5c0a` falta verificarlo con la Kinect (próxima corrida con `--decod-hilo`) |
+| 7b | Cierre y operación de las corridas: esperar el último lote de latencias al cerrar (`b98258b`), interruptores por línea de comandos (`1b69a33`, D-011), soltar el último frame del tracker antes de destruirlo (`6ed5c0a`, protegido en `e1616bf`), registro de CPU por proceso (`2892e6a`) | HECHO 02/11. `6ed5c0a` falta verificarlo con la Kinect (próxima corrida con `--decod-hilo`) |
 | 8 | Pipeline de 2 etapas (H5) solo si 5–11 no cumplen C1 | CONDICIONAL (con sin ventana + decodificación en el hilo C1 se cumplió en corridas de 3 min; falta el paso 9) |
-| 9 | Corrida de 10 min y verificación de C1–C5 | PENDIENTE. Bloqueado por P-003/P-005. Registrar CPU por proceso (sección 10) |
+| 9 | Corrida de 10 min y verificación de C1–C5 | PENDIENTE (desbloqueado por D-012/D-013). Con `--decod-hilo`, sin ventana, máximo rendimiento (D-014) y `registrar_procesos.ps1` (`2892e6a`) durante toda la corrida. Medir HU0008-1 (condición de D-013) |
 | 10 | Repetir la línea base MJPG: 1 pestaña, calentamiento descartado, plan de energía de máximo rendimiento, 3 corridas de 3 min | HECHO 02/11 (133512, 133838, 134201; 4c). La comparación 1 vs 2 hilos de D-003 **no** se repitió |
 | 11 | Método para medir (c) extremo a extremo (US23): micrófono o loopback, y latencia interna del SDK | PENDIENTE (decide Ale el método; no bloquea 7 ni 10) |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 
 ## 10. Protocolo de corrida (repetible)
-1. Laptop enchufada, modo de energía de **máximo rendimiento** (obligatorio: en Equilibrado el ciclo empeora 6–9 ms, 4d), solo Chrome con **una sola pestaña** de `index.html` (ninguna otra pestaña ni navegador integrado de Code con la página abierta), misma distancia (de pie), misma luz y el mismo salón para toda la tanda. Antes de empezar, revisar en el Administrador de tareas que ningún otro proceso use la CPU de forma sostenida. Segunda terminal: `nvidia-smi --query-gpu=timestamp,clocks.sm,clocks.max.sm,temperature.gpu,power.draw,clocks_throttle_reasons.active --format=csv -l 1 -f sesiones\gpu_<tanda>.csv`. Tercera terminal (Símbolo del sistema como administrador; contadores localizados en español): `typeperf "\Información del procesador(_Total)\% de rendimiento del procesador" "\Información del procesador(_Total)\% de tiempo de procesador" -si 1 -o sesiones\cpu_<tanda>.csv`; propuesta para la próxima tanda: añadir el uso por proceso de `python` y `chrome` (H6). Arrancar ambos una vez y detenerlos con Ctrl+C al terminar la tanda.
+1. Laptop enchufada, modo de energía de **máximo rendimiento** (requisito de operación, D-014; en Equilibrado la corrida salió más lenta, 4d), solo Chrome con **una sola pestaña** de `index.html` (ninguna otra pestaña ni navegador integrado de Code con la página abierta), misma distancia (de pie), misma luz y el mismo salón para toda la tanda. Antes de empezar, revisar en el Administrador de tareas que ningún otro proceso use la CPU de forma sostenida. Segunda terminal: `nvidia-smi --query-gpu=timestamp,clocks.sm,clocks.max.sm,temperature.gpu,power.draw,clocks_throttle_reasons.active --format=csv -l 1 -f sesiones\gpu_<tanda>.csv`. Tercera terminal (Símbolo del sistema como administrador; contadores localizados en español): `typeperf "\Información del procesador(_Total)\% de rendimiento del procesador" "\Información del procesador(_Total)\% de tiempo de procesador" -si 1 -o sesiones\cpu_<tanda>.csv`. Cuarta terminal (uso de CPU por proceso, H6; desde el 04/11): `powershell -ExecutionPolicy Bypass -File registrar_procesos.ps1 sesiones\procesos_<tanda>.csv` (columnas `t_local, proceso, pid, cpu_pct`; `cpu_pct` en % de un núcleo lógico, 12 núcleos = 1200 %). Arrancar las tres antes de la primera corrida y detenerlas con Ctrl+C al terminar la tanda.
 1b. Una corrida de calentamiento de ≈ 1 min que se descarta (31/10: la 1ª corrida de la tanda MJPG salió ≈ 7 ms más lenta en todas las etapas). Filtro: si `[PERF-LINEA]` muestra `to_numpy` ≥ 8 ms/llamada, el equipo está lento (02/11: 144008 dio 9.4 ms); esperar, revisar procesos y repetir el calentamiento.
-2. `python main.py cuda lite [--sin-ventana] [--decod-hilo] [--swi1ms] [--sin-manos]` (D-011); esperar 5 s (el navegador tarda hasta ≈ 5 s en reconectarse y esas filas faltan en `_latencias.csv`); rutina fija de 3 min: 30 s quieto, 60 s brazos arriba y abajo, 60 s baile amplio, 30 s abrir y cerrar manos con las dos manos visibles. No recargar la pestaña entre corridas.
-3. `q` para cerrar (con `--sin-ventana`, **un** Ctrl+C en la consola) y esperar a "Kinect cerrada correctamente". Quedan en `sesiones/` el CSV de sesión, `_perf.txt` y `_latencias.csv`. Comprobar que las filas `continuo` de `_latencias.csv` ≈ filas del CSV de sesión (si son el doble, había 2 clientes: repetir). La configuración queda en el nombre (sufijo de `VERSION_MAIN`). No usar `Start-Transcript` (no graba la salida de Python).
+2. `python main.py cuda lite [--decod-hilo] [--swi1ms] [--sin-manos] [--con-ventana]` (D-011; sin ventana por defecto desde D-012, `--con-ventana` solo para depurar); esperar 5 s (el navegador tarda hasta ≈ 5 s en reconectarse y esas filas faltan en `_latencias.csv`); rutina fija de 3 min: 30 s quieto, 60 s brazos arriba y abajo, 60 s baile amplio, 30 s abrir y cerrar manos con las dos manos visibles. No recargar la pestaña entre corridas.
+3. **Un** Ctrl+C en la consola para cerrar (con `--con-ventana`, `q` en la ventana) y esperar a "Kinect cerrada correctamente". Quedan en `sesiones/` el CSV de sesión, `_perf.txt` y `_latencias.csv`. Comprobar que las filas `continuo` de `_latencias.csv` ≈ filas del CSV de sesión (si son el doble, había 2 clientes: repetir). La configuración queda en el nombre (sufijo de `VERSION_MAIN`). No usar `Start-Transcript` (no graba la salida de Python).
 4. 3 corridas por configuración, **intercaladas por rondas** (A B C, A B C, …) para que la deriva del equipo afecte a todas por igual; comparar dentro de cada ronda (02/11: Base varió 33.2 → 41.8 ms en 37 min). No cambiar código durante la tanda. No mezclar con pruebas de sonido.
 
 ## 11. Pendientes y huecos
@@ -225,7 +248,7 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 - `[POR COMPLETAR]` latencia real hasta el sonido (c) (US23, paso 11).
 - `[POR COMPLETAR]` origen exacto de las cifras RNF01 p95 78–83 y máx 112–115. Candidato: (b) (sección 0.2). Ale no lo recuerda; no se puede confirmar.
 - `[POR COMPLETAR]` significado del bit `0x400` en las razones de reloj de la GPU.
-- ~~`[POR COMPLETAR]` causa de los 3.6 ms de `mapeo` (paso 5b).~~ Diagnóstico HECHO 02/11 (4d): no es el intervalo del GIL; el hilo de manos explica ≈ 0.6 ms; el resto acompaña al estado del equipo.
+- `[POR COMPLETAR]` causa de los 2–4 ms de `mapeo` (paso 5b): **hipótesis GIL descartada; causa abierta** (4d: `setswitchinterval(0.001)` sin efecto; sin hilo de manos −0.6 ms; `mapeo` varía 1.9–3.9 ms con el estado del equipo).
 - `[POR COMPLETAR]` qué consumió CPU durante la tanda del 02/11 (Base 33.2 → 41.8 ms, % de tiempo de CPU 34.8 → 46.6 %; H6). Falta el uso por proceso.
 - `[POR COMPLETAR]` verificar con la Kinect que `6ed5c0a` elimina el "access violation" al salir (visto solo con `--decod-hilo`, 02/11).
 - Riesgo para HU0008-1 con decodificación en el hilo: trabajo de manos 26–31 ms y edad p95 71–109 ms (4d). Medirlo en la corrida de 10 min.
