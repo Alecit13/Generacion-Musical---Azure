@@ -1218,9 +1218,11 @@ finally:
     hilo_manos.detener()      # cierra los detectores de MediaPipe dentro de su propio hilo
     # El tracker de pykinect guarda el último esqueleto en body_tracker.frame; se suelta ANTES de destruir el tracker.
     # Si no, Frame.__del__ lo suelta al salir de Python sobre un tracker ya destruido (access violation, 02/11).
-    if body_tracker.frame is not None:
-        body_tracker.frame.reset()   # release + handle = None: __del__ ya no hace nada
-    body_tracker.destroy()
+    _bt = globals().get("body_tracker")   # HU0026-1: puede no existir si el programa falló antes de crearlo
+    if _bt is not None:
+        if getattr(_bt, "frame", None) is not None:
+            _bt.frame.reset()        # release + handle = None: __del__ ya no hace nada
+        _bt.destroy()
     device.close()
     cv2.destroyAllWindows()
     log_file.close()
