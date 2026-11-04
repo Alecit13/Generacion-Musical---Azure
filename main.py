@@ -2,6 +2,7 @@ import faulthandler
 faulthandler.enable(all_threads=True)  # si el proceso muere por un fallo nativo, muestra dónde
 import asyncio
 import collections
+import gc
 import cv2
 import numpy as np
 import mediapipe as mp
@@ -1215,6 +1216,29 @@ async def main():
         server.close()
 
 
+def soltar_objetos_kinect(dev, tracker):
+    """Suelta, con la Kinect y el tracker todavía vivos, los objetos de pykinect que si no se soltarían al salir de
+    Python, cuando ya no existen (access violation en k4abt_frame_release y k4a_capture_release, 02/11 y 04/11).
+    Relación: la llama el finally del final, después de hilo_manos.detener() y antes de tracker.destroy() y dev.close().
+    Variables: `type(dev).capture` = el ÚNICO Capture de pykinect, atributo de CLASE de Device que device.update() reutiliza
+    (obtener_capture_reciente le cambia el handle); `tracker.frame` = el único Frame que reutiliza el tracker.
+    Cada uno lleva una Transformation (camera_transform / transformation). reset()/destroy() dejan el handle en None,
+    así su __del__ ya no llama a la DLL. dev o tracker pueden ser None si el programa falló antes de crearlos."""
+    gc.collect()    # finaliza ya lo que retiene la excepción de cancelación de bucle_kinect (capture local, imágenes)
+    frame = getattr(tracker, "frame", None)
+    if frame is not None:
+        frame.reset()
+        if getattr(frame, "transformation", None) is not None:
+            frame.transformation.destroy()
+    cap = getattr(type(dev), "capture", None) if dev is not None else None
+    if cap is not None:
+        cap.reset()
+        if getattr(cap, "camera_transform", None) is not None:
+            cap.camera_transform.destroy()
+        type(dev).capture = None
+    gc.collect()
+
+
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
@@ -1222,14 +1246,13 @@ except KeyboardInterrupt:
 finally:
     # Se ejecuta siempre (q, Ctrl+C o error) para liberar la Kinect
     hilo_manos.detener()      # cierra los detectores de MediaPipe dentro de su propio hilo
-    # El tracker de pykinect guarda el último esqueleto en body_tracker.frame; se suelta ANTES de destruir el tracker.
-    # Si no, Frame.__del__ lo suelta al salir de Python sobre un tracker ya destruido (access violation, 02/11).
-    _bt = globals().get("body_tracker")   # HU0026-1: puede no existir si el programa falló antes de crearlo
+    # HU0026-1: body_tracker o device pueden no existir si el programa falló antes de crearlos
+    _bt, _dev = globals().get("body_tracker"), globals().get("device")
+    soltar_objetos_kinect(_dev, _bt)   # último Frame y Capture ANTES de destruir el tracker y cerrar la Kinect
     if _bt is not None:
-        if getattr(_bt, "frame", None) is not None:
-            _bt.frame.reset()        # release + handle = None: __del__ ya no hace nada
         _bt.destroy()
-    device.close()
+    if _dev is not None:
+        _dev.close()
     cv2.destroyAllWindows()
     log_file.close()
     perf_file.close()
