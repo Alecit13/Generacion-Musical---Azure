@@ -29,7 +29,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-d012-2026-11-04"
+VERSION_MAIN = "mjpg-d013-2026-11-04"
 
 # Servidor
 HOST_WS = "localhost"
@@ -96,18 +96,19 @@ MAX_DESCARTE_POR_CICLO = 10      # tope de frames que se descartan en un ciclo (
 COLOR_BGRA32 = False             # EXPERIMENTO (D-007, P-005): desactivado por defecto desde el 01/11 (D-008); con BGRA32 la espera de cámara sube ≈ 22 ms
                                  # True = el SDK entrega el color YA decodificado en BGRA (decodifica en su propio hilo, fuera del ciclo)
                                  # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
-DECODIFICAR_EN_HILO_MANOS = False  # EXPERIMENTO (P-005 b): True = el ciclo solo copia el JPEG (MJPG) y lo decodifica HiloManos
-                                   # (el tracker no usa el color); False = to_numpy() en el ciclo, como siempre
+DECODIFICAR_EN_HILO_MANOS = True   # D-013/D-015: el ciclo solo copia el JPEG (MJPG) y lo decodifica HiloManos (el tracker no usa
+                                   # el color); --sin-decod-hilo vuelve a to_numpy() en el ciclo (reversible)
 SWITCH_INTERVAL_S = None         # DIAGNÓSTICO (paso 5b): None = valor de Python (5 ms); 0.001 = sys.setswitchinterval(0.001)
                                  # (el hilo principal recupera antes el GIL cuando el hilo de manos ejecuta Python)
 LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
 # Opciones de línea de comandos para los experimentos (así no se edita main.py entre corridas):
-#   python main.py cuda lite --decod-hilo        (--con-ventana para depurar)
+#   python main.py cuda lite                     (--sin-decod-hilo para decodificar en el ciclo; --con-ventana para depurar)
 # Cada opción solo cambia un interruptor sobre la constante de arriba; sin opciones, todo queda como está.
-# --sin-ventana coincide con el valor por defecto desde D-012; se acepta para que los comandos anteriores sigan valiendo.
-OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--swi1ms", "--sin-manos")
+# --sin-ventana (D-012) y --decod-hilo (D-015) coinciden con el valor por defecto; se aceptan para que los comandos anteriores
+# sigan valiendo.
+OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos")
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
 OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
 _desconocidas = [o for o in OPCIONES if o not in OPCIONES_VALIDAS]
@@ -119,15 +120,19 @@ if "--con-ventana" in OPCIONES:
     MOSTRAR_VENTANA = True
 if "--sin-ventana" in OPCIONES:
     MOSTRAR_VENTANA = False
+if "--decod-hilo" in OPCIONES and "--sin-decod-hilo" in OPCIONES:
+    raise ValueError("--decod-hilo y --sin-decod-hilo se contradicen: usa solo una")
 if "--decod-hilo" in OPCIONES:
     DECODIFICAR_EN_HILO_MANOS = True
+if "--sin-decod-hilo" in OPCIONES:
+    DECODIFICAR_EN_HILO_MANOS = False
 if "--swi1ms" in OPCIONES:
     SWITCH_INTERVAL_S = 0.001
 if "--sin-manos" in OPCIONES:
     USAR_HILO_MANOS = False
 
 if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
-    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG (COLOR_BGRA32=False)")
+    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG: con COLOR_BGRA32=True usa --sin-decod-hilo")
 if SWITCH_INTERVAL_S is not None:
     sys.setswitchinterval(SWITCH_INTERVAL_S)
 
@@ -135,7 +140,7 @@ if SWITCH_INTERVAL_S is not None:
 # (nombre del CSV de sesión, _perf.txt y _latencias.csv), así cada corrida queda identificada sin editar el código.
 SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-conventana", MOSTRAR_VENTANA),          # desde D-012 la ventana es lo que se sale del defecto
-    ("-decodhilo", DECODIFICAR_EN_HILO_MANOS),
+    ("-sindecodhilo", not DECODIFICAR_EN_HILO_MANOS),   # desde D-015 decodificar en el ciclo es lo que se sale del defecto
     (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
     ("-sinmanos", not USAR_HILO_MANOS),
 ) if activo)
