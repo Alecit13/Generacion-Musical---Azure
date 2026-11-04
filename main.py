@@ -28,7 +28,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-histeresis-ms-2026-11-02"
+VERSION_MAIN = "mjpg-d012-2026-11-04"
 
 # Servidor
 HOST_WS = "localhost"
@@ -86,7 +86,8 @@ FACTOR_RESPALDO_MUNECA = 0.35    # cuánto se avanza más allá de la muñeca, c
 MOSTRAR_RECUADROS = False        # True = dibuja el recuadro de cada mano (útil para depurar)
 
 # Ventana de vídeo
-MOSTRAR_VENTANA = True           # EXPERIMENTO (P-003): False = sin ventana de OpenCV (no dibuja ni llama a waitKey); se cierra con Ctrl+C
+MOSTRAR_VENTANA = False          # D-012: sin ventana de OpenCV en evaluaciones (no dibuja ni llama a waitKey; se cierra con Ctrl+C)
+                                 # --con-ventana la muestra para depurar (se cierra con q)
 DIBUJAR_CADA = 3                # dibuja/muestra 1 de cada N ciclos (con 2 costaba ~3 ms por ciclo; con 3, ~2 ms). Sube a 4-5 si quieres ahorrar más
 DESCARTAR_COLA_CAMARA = True     # True = si hay frames viejos en la cola del SDK, se descartan y se usa el MÁS RECIENTE (medido: la cola añadía ~220 ms)
                                  # False = comportamiento anterior (procesa todos los frames en orden, aunque lleguen con retraso)
@@ -102,14 +103,19 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
                                  # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
 # Opciones de línea de comandos para los experimentos (así no se edita main.py entre corridas):
-#   python main.py cuda lite --sin-ventana --decod-hilo
-# Cada opción solo ENCIENDE un experimento sobre la constante de arriba; sin opciones, todo queda como está.
-OPCIONES_VALIDAS = ("--sin-ventana", "--decod-hilo", "--swi1ms", "--sin-manos")
+#   python main.py cuda lite --decod-hilo        (--con-ventana para depurar)
+# Cada opción solo cambia un interruptor sobre la constante de arriba; sin opciones, todo queda como está.
+# --sin-ventana coincide con el valor por defecto desde D-012; se acepta para que los comandos anteriores sigan valiendo.
+OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--swi1ms", "--sin-manos")
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
 OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
 _desconocidas = [o for o in OPCIONES if o not in OPCIONES_VALIDAS]
 if _desconocidas:   # una errata no debe producir una corrida mal etiquetada
     raise ValueError(f"Opciones desconocidas {_desconocidas}; válidas: {', '.join(OPCIONES_VALIDAS)}")
+if "--con-ventana" in OPCIONES and "--sin-ventana" in OPCIONES:
+    raise ValueError("--con-ventana y --sin-ventana se contradicen: usa solo una")
+if "--con-ventana" in OPCIONES:
+    MOSTRAR_VENTANA = True
 if "--sin-ventana" in OPCIONES:
     MOSTRAR_VENTANA = False
 if "--decod-hilo" in OPCIONES:
@@ -127,7 +133,7 @@ if SWITCH_INTERVAL_S is not None:
 # Los interruptores de experimento que no estén en su valor por defecto se añaden a VERSION_MAIN
 # (nombre del CSV de sesión, _perf.txt y _latencias.csv), así cada corrida queda identificada sin editar el código.
 SUFIJO_CONFIG = "".join(s for s, activo in (
-    ("-sinventana", not MOSTRAR_VENTANA),
+    ("-conventana", MOSTRAR_VENTANA),          # desde D-012 la ventana es lo que se sale del defecto
     ("-decodhilo", DECODIFICAR_EN_HILO_MANOS),
     (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
     ("-sinmanos", not USAR_HILO_MANOS),
@@ -304,7 +310,7 @@ print(f"Versión de main.py: {VERSION_MAIN}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
 if not MOSTRAR_VENTANA:
-    print("Sin ventana de OpenCV (MOSTRAR_VENTANA=False): para terminar, Ctrl+C en esta consola")
+    print("Sin ventana de OpenCV (D-012; --con-ventana para depurar): para terminar, Ctrl+C en esta consola")
 
 # Latencias del navegador: index.html las devuelve por el WebSocket cada 0.5 s y aquí se guardan con el mismo
 # nombre que el CSV de sesión y el mismo formato que el botón "Descargar latencias" (ya no hace falta descargar).
