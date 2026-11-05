@@ -7,3 +7,6 @@ env/
 # Caché de Python
 __pycache__/
 *.pyc
+
+# Grabaciones de la Kinect (k4arecorder, ≈ 1.3 GB/min): no van al repositorio
+sesiones/*.mkv
