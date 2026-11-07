@@ -14,12 +14,15 @@ import websockets
 import csv
 import json
 import queue
+import random
+import secrets
+import subprocess
 import threading
 import time
 import sys
 from datetime import datetime
 from zona import calcular_zona
-from muestreo import elegir_siguiente_nota, calcular_octava
+from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
 from manos import calcular_apertura, apertura_vigente
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
@@ -111,6 +114,16 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
 OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos")
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
 OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
+# Cambio 3 (HU0021-1, HU0022-1): --seed=N fija la semilla del sorteo de notas; sin --seed se genera una. Va con "=" porque
+# un valor suelto ("--seed 42") caería en ARGS como modo del tracker. La semilla no cambia VERSION_MAIN (va en sus columnas).
+_semillas = [o for o in OPCIONES if o.startswith("--seed=")]
+OPCIONES = [o for o in OPCIONES if not o.startswith("--seed=")]
+if len(_semillas) > 1:
+    raise ValueError("--seed=N aparece más de una vez")
+try:
+    SEMILLA = int(_semillas[0].split("=", 1)[1]) if _semillas else secrets.randbelow(2**31)
+except ValueError:
+    raise ValueError(f"--seed necesita un entero: {_semillas[0]}") from None
 _desconocidas = [o for o in OPCIONES if o not in OPCIONES_VALIDAS]
 if _desconocidas:   # una errata no debe producir una corrida mal etiquetada
     raise ValueError(f"Opciones desconocidas {_desconocidas}; válidas: {', '.join(OPCIONES_VALIDAS)}")
@@ -145,6 +158,26 @@ SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sinmanos", not USAR_HILO_MANOS),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
+
+
+def commit_git():
+    """Cambio 3 (HU0022-1): hash corto del commit con el que corre main.py, con "-sucio" si hay cambios sin commit en
+    archivos versionados (los archivos sin versionar, como los CSV nuevos de sesiones/, no cuentan). "desconocido" si
+    git falla. Se llama una vez al arrancar; el valor va a la cabecera de _perf.txt y a la columna `commit` del CSV."""
+    carpeta = os.path.dirname(os.path.abspath(__file__))
+    try:
+        h = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=carpeta, capture_output=True,
+                           text=True, timeout=5, check=True).stdout.strip()
+        sucio = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=carpeta,
+                               capture_output=True, text=True, timeout=5, check=True).stdout.strip()
+        return h + ("-sucio" if sucio else "")
+    except Exception:
+        return "desconocido"
+
+
+COMMIT_GIT = commit_git()
+random.seed(SEMILLA)       # el sorteo de notas (muestreo.py) usa el módulo random; numpy no sortea nada en el proyecto
+reiniciar_estado()         # dirección y racha iniciales: misma semilla + misma entrada = misma secuencia
 
 # Body tracking: dónde corre la red neuronal del esqueleto
 #   "cpu" | "directml" | "cuda"   (el sistema final usa "cuda": python main.py cuda)
@@ -305,14 +338,17 @@ log_writer.writerow(["timestamp", "zona", "lambda", "acc_media", "nota", "octava
                      "n_joints_ok", "joints_no_disp", "edad_manos_ms", "par_dt_ms", "desync_manos",
                      "roi_izq", "roi_der",   # origen del último recuadro enviado: mano | muneca | vacío (sin recuadro)
                      "lag_cam_ms",          # ms entre que el frame TERMINÓ de llegar al PC (USB) y que Python lo recibió (cola de cámara)
-                     "frames_descartados"])  # frames viejos descartados de la cola en este ciclo
+                     "frames_descartados",  # frames viejos descartados de la cola en este ciclo
+                     # cambio 3 (HU0021-1, HU0022-1): para reconstruir la secuencia de notas. lam_sorteo = λ EXACTO
+                     # (repr) que recibió elegir_siguiente_nota, solo en la fila con nota nueva (la columna lambda va redondeada)
+                     "nota_id", "lam_sorteo", "semilla", "version", "commit"])
 log_file.flush()
 # Los reportes [PERF]/[PERF-LINEA]/[CAMARA]/[FUSION]/[ROI] se guardan también en un .txt con el mismo nombre que el CSV,
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
-print(f"Versión de main.py: {VERSION_MAIN}")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+print(f"Versión de main.py: {VERSION_MAIN} | commit {COMMIT_GIT} | semilla {SEMILLA}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
 if not MOSTRAR_VENTANA:
@@ -1103,6 +1139,7 @@ async def bucle_kinect():
 
             intervalo_s = 1.0 / (NOTAS_POR_SEG_MIN + m["tempo"] * (NOTAS_POR_SEG_MAX - NOTAS_POR_SEG_MIN))
             lat_tick_ms = None                       # solo tiene valor en el ciclo en que hay nota nueva
+            lam_sorteo = None                        # cambio 3: λ exacto del sorteo, solo en el ciclo con nota nueva
             reanclado = False
             # Si el cuerpo estuvo ausente >0.5 s, el reloj se re-ancla: eso es ausencia, no latencia
             if t_prev_cuerpo is not None and t_ciclo - t_prev_cuerpo > 0.5:
@@ -1111,6 +1148,7 @@ async def bucle_kinect():
             t_prev_cuerpo = t_ciclo
             if t_ciclo >= t_prox_tick:
                 es_primera = (nota_id == 0)          # la primera nota no tiene tick previo
+                lam_sorteo = lam
                 nota_actual = elegir_siguiente_nota(nota_actual, lam)
                 octava_actual = calcular_octava(zona_actual)
                 nota_id += 1
@@ -1172,6 +1210,7 @@ async def bucle_kinect():
                 _fmt(fus["par_dt_ms"]), int(fus["desync_manos"]),
                 origen_roi["izq"] or "", origen_roi["der"] or "",
                 _fmt(lag_cam_ms), n_descartados,
+                nota_id, "" if lam_sorteo is None else repr(float(lam_sorteo)), SEMILLA, VERSION_MAIN, COMMIT_GIT,
             ])
             log_file.flush()
             acum["salida"] += time.perf_counter() - t

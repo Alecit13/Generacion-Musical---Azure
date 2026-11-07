@@ -77,5 +77,42 @@ class PruebaTopeRepeticiones(unittest.TestCase):
         self.assertAlmostEqual(rep / (len(notas) - 1), p / (1 + p), delta=0.003)
 
 
+class PruebaSemilla(unittest.TestCase):
+    """Cambio 3 (HU0021-1): misma semilla + misma secuencia de λ = misma secuencia de notas."""
+
+    @staticmethod
+    def _sortear(semilla, lams):
+        import random
+        import muestreo
+        random.seed(semilla)          # lo mismo que hace main.py al arrancar
+        muestreo.reiniciar_estado()
+        nota, notas = "Do", []        # NOTA_INICIAL de main.py
+        for lam in lams:
+            nota = muestreo.elegir_siguiente_nota(nota, lam)
+            notas.append(nota)
+        return notas
+
+    def _lams(self, n=2000):
+        import random
+        r = random.Random(99)         # generador aparte: no toca el estado global
+        return [max(0.05, r.random()) for _ in range(n)]
+
+    def test_misma_semilla_misma_secuencia(self):
+        lams = self._lams()
+        self.assertEqual(self._sortear(123, lams), self._sortear(123, lams))
+
+    def test_otra_semilla_otra_secuencia(self):
+        lams = self._lams()
+        self.assertNotEqual(self._sortear(123, lams), self._sortear(124, lams))
+
+    def test_lambda_redondeado_puede_cambiar_la_secuencia(self):
+        """Condición (1) de Ale: con λ redondeado a 3 decimales (columna `lambda`) el re-sorteo puede diferir del real;
+        por eso main.py guarda lam_sorteo exacto. Esta prueba documenta que la diferencia existe."""
+        lams = self._lams(20000)
+        exacta = self._sortear(5, lams)
+        redondeada = self._sortear(5, [round(l, 3) for l in lams])
+        self.assertNotEqual(exacta, redondeada)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
