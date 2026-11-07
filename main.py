@@ -16,6 +16,7 @@ import json
 import queue
 import random
 import secrets
+import socket
 import subprocess
 import threading
 import time
@@ -35,8 +36,19 @@ import servidor
 VERSION_MAIN = "mjpg-cambios-2026-11-07"
 
 # Servidor
-HOST_WS = "localhost"
+HOST_WS = "127.0.0.1"   # cambio 7b: dirección IPv4 fija (antes "localhost", que en este equipo resuelve a ::1 y a 127.0.0.1)
 PUERTO_WS = 8765
+
+# Cambio 7b (HU0010-2): el socket de escucha se abre YA, antes de encender la Kinect y el tracker (varios segundos).
+# En Windows cada intento contra un puerto cerrado tarda 2.0 s en fallar (MEDIDO 07/11), así que la página tardaba
+# hasta ≈ 4 s en reconectar. Con el socket abierto, el navegador se conecta durante el arranque y queda esperando;
+# main() lo entrega a websockets.serve(sock=SOCK_WS) y la conexión se completa en el primer ciclo.
+SOCK_WS = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    SOCK_WS.bind((HOST_WS, PUERTO_WS))
+except OSError as e:
+    raise SystemExit(f"El puerto {PUERTO_WS} ya está en uso ({e}): ¿hay otro main.py abierto?") from None
+SOCK_WS.listen(16)
 
 # Música
 NOTA_INICIAL, OCTAVA_INICIAL = "Do", 4
@@ -1268,7 +1280,7 @@ async def main():
     """Abre el servidor WebSocket y corre bucle_kinect hasta `q`, Ctrl+C o un error.
     Al terminar, si hay navegador conectado, espera ESPERA_ULTIMAS_LATENCIAS_S con el servidor abierto: el
     navegador manda sus latencias cada 0.5 s y sin esta espera el último lote no llegaría a _latencias.csv."""
-    server = await websockets.serve(manejar_cliente, HOST_WS, PUERTO_WS, ping_interval=None)
+    server = await websockets.serve(manejar_cliente, sock=SOCK_WS, ping_interval=None)   # cambio 7b: socket abierto al arrancar
     try:
         await bucle_kinect()
     finally:

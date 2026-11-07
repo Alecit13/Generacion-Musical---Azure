@@ -18,7 +18,7 @@
 // =====================================================================
 // PARÁMETROS
 // =====================================================================
-const URL_WS = "ws://localhost:8765";
+const URL_WS = "ws://127.0.0.1:8765";   // cambio 7b: IPv4 fija, igual que HOST_WS de main.py
 const REINTENTO_MS = 500;        // cambio 7 (HU0010-2): espera antes de reintentar la conexión (antes 2000 ms: caso A tardó 2.09 s)
 const MAPA_NOTAS = { Do: "C", Re: "D", Mi: "E", Fa: "F", Sol: "G", La: "A", Si: "B" };
 const UMBRAL_CONTINUO_MS = 100;  // RNF01: captura -> actualización de parámetros continuos
