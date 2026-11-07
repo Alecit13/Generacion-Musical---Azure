@@ -165,5 +165,48 @@ class PruebaTimbrePorManos(unittest.TestCase):
         self.assertIsNone(TimbrePorManos(_NormalizadorDePrueba()).actualizar(None, None, 1.0))
 
 
+class PruebaHisteresisZona(unittest.TestCase):
+    """Cambio 5 (HU0015-2): la zona cambia solo tras 250 ms continuos dentro de la misma candidata (reloj simulado)."""
+    DT = 1 / 30
+    REG = {"grave": 0.1, "medio": 0.5, "agudo": 0.9}
+
+    def _correr(self, secuencia, zona="grave", dts=None):
+        """secuencia: lista de candidatas, una por ciclo. Devuelve la lista de zonas tras cada ciclo."""
+        from zona import zona_desde_registro
+        pend, tiempo, zonas = None, 0.0, []
+        for i, c in enumerate(secuencia):
+            dt = self.DT if dts is None else dts[i]
+            zona, pend, tiempo = zona_desde_registro(self.REG[c], zona, pend, tiempo, dt)
+            zonas.append(zona)
+        return zonas
+
+    def test_cambia_en_la_novena_muestra_a_30hz(self):
+        z = self._correr(["agudo"] * 9)
+        self.assertEqual(z[7], "grave")       # 8 muestras = 233 ms dentro: aún no
+        self.assertEqual(z[8], "agudo")       # 9 muestras = 267 ms dentro: cambia
+
+    def test_paso_por_medio_no_suma_para_agudo(self):
+        z = self._correr(["medio"] * 4 + ["agudo"] * 5)
+        self.assertTrue(all(v == "grave" for v in z))   # con la regla anterior cambiaba (9 ciclos fuera de grave)
+
+    def test_relampago_no_cambia(self):
+        z = self._correr(["agudo"] * 6 + ["grave"] * 10)   # 200 ms en agudo y vuelve
+        self.assertTrue(all(v == "grave" for v in z))
+
+    def test_volver_a_la_zona_reinicia(self):
+        z = self._correr(["agudo"] * 7 + ["grave"] + ["agudo"] * 8)
+        self.assertTrue(all(v == "grave" for v in z))
+
+    def test_tope_dt_tras_ausencia(self):
+        dts = [self.DT, 2.0, self.DT, self.DT]              # hueco de 2 s sin cuerpo en el 2º ciclo: suma solo 0.1 s
+        z = self._correr(["agudo"] * 4, dts=dts)
+        self.assertTrue(all(v == "grave" for v in z))
+
+    def test_sostenido_largo_cambia_una_vez(self):
+        z = self._correr(["medio"] * 30)
+        self.assertEqual(z.count("grave"), 8)
+        self.assertTrue(all(v == "medio" for v in z[8:]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
