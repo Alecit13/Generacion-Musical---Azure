@@ -112,7 +112,12 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
 # Cada opción solo cambia un interruptor sobre la constante de arriba; sin opciones, todo queda como está.
 # --sin-ventana (D-012) y --decod-hilo (D-015) coinciden con el valor por defecto; se aceptan para que los comandos anteriores
 # sigan valiendo.
-OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos")
+OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos",
+                    "--tempo-medium")
+# PRUEBA (07/11, pendiente del OK de Ale): --tempo-medium exige confianza MEDIUM (2) en cadera, rodilla y tobillo para usar una
+# rodilla en el tempo; con LOW (posición inferida) esa rodilla no cuenta y, si ninguna cuenta, el tempo mantiene su valor.
+# Solo afecta al tempo: CONF_MIN_ARTICULACION (manos, intensidad, λ, n_joints_ok) no cambia.
+CONF_MIN_RODILLA_TEMPO = 1
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
 OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
 # Cambio 3 (HU0021-1, HU0022-1): --seed=N fija la semilla del sorteo de notas; sin --seed se genera una. Va con "=" porque
@@ -144,6 +149,8 @@ if "--swi1ms" in OPCIONES:
     SWITCH_INTERVAL_S = 0.001
 if "--sin-manos" in OPCIONES:
     USAR_HILO_MANOS = False
+if "--tempo-medium" in OPCIONES:
+    CONF_MIN_RODILLA_TEMPO = 2
 
 if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
     raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG: con COLOR_BGRA32=True usa --sin-decod-hilo")
@@ -157,6 +164,7 @@ SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sindecodhilo", not DECODIFICAR_EN_HILO_MANOS),   # desde D-015 decodificar en el ciclo es lo que se sale del defecto
     (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
     ("-sinmanos", not USAR_HILO_MANOS),
+    ("-tempomedium", CONF_MIN_RODILLA_TEMPO == 2),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
 
@@ -349,7 +357,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | conf_rodilla_tempo={CONF_MIN_RODILLA_TEMPO} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN} | commit {COMMIT_GIT} | semilla {SEMILLA}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
@@ -569,7 +577,7 @@ class MapeoExtremidades:
         # --- Tempo: velocidad angular media de las rodillas ---
         omegas = []
         for lado, (cad, rod, tob) in J_RODILLAS.items():
-            if self._ok(J, cad) and self._ok(J, rod) and self._ok(J, tob):
+            if all(J[i].confidence_level >= CONF_MIN_RODILLA_TEMPO for i in (cad, rod, tob)):   # 1 = igual que _ok
                 ang = angulo_articulacion(self._pos(J, cad), self._pos(J, rod), self._pos(J, tob))
                 w = self.vel_rod[lado].actualizar(ang, t)
                 if w is not None:
