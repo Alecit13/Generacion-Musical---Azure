@@ -114,6 +114,21 @@ class PruebaSemilla(unittest.TestCase):
         self.assertNotEqual(exacta, redondeada)
 
 
+class PruebaVariabilidadMinima(unittest.TestCase):
+    """Cambio 4 (HU0021-2): variabilidad mínima (λ = LAMBDA_MIN = 0.05) = secuencia determinística."""
+
+    def test_lambda_minimo_igual_con_cualquier_semilla(self):
+        secs = [PruebaSemilla._sortear(sem, [0.05] * 500) for sem in (1, 2, 123, 99999)]
+        self.assertTrue(all(s == secs[0] for s in secs[1:]))
+
+    def test_lambda_minimo_es_escala_con_rebote(self):
+        sec = PruebaSemilla._sortear(7, [0.05] * 14)
+        self.assertEqual(sec, ["Re", "Mi", "Fa", "Sol", "La", "Si", "La", "Sol", "Fa", "Mi", "Re", "Do", "Re", "Mi"])
+
+    def test_por_encima_del_minimo_vuelve_a_variar(self):
+        self.assertNotEqual(PruebaSemilla._sortear(1, [0.3] * 500), PruebaSemilla._sortear(2, [0.3] * 500))
+
+
 class _NormalizadorDePrueba:
     """Sustituto de NormalizadorAdaptativo (vive en main.py, que enciende la Kinect): identidad, y cuenta las llamadas."""
 

@@ -1128,7 +1128,7 @@ async def bucle_kinect():
             if t_ciclo >= t_prox_tick:
                 es_primera = (nota_id == 0)          # la primera nota no tiene tick previo
                 lam_sorteo = lam
-                nota_actual = elegir_siguiente_nota(nota_actual, lam)
+                nota_actual = elegir_siguiente_nota(nota_actual, lam, lam_min=LAMBDA_MIN)   # cambio 4: λ mínimo = determinístico
                 octava_actual = calcular_octava(zona_actual)
                 nota_id += 1
                 if not es_primera and not reanclado:

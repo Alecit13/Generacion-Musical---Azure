@@ -57,37 +57,43 @@ def construir_tabla_pesos(notas=NOTAS):
 TABLA_PESOS = construir_tabla_pesos()
 
 
-def _nota_moda(nota_anterior, notas=NOTAS):
-    """Nota más probable. Como hay empate entre el paso de arriba y el de abajo,
-    se desempata con la dirección actual de la melodía (antes siempre ganaba
-    la primera de la lista y la melodía rebotaba entre las mismas dos notas)."""
+def _nota_moda(nota_anterior, lam_ef=1.0, notas=NOTAS):
+    """Nota más probable: un paso en la dirección actual de la melodía (desempata el paso de arriba y el de abajo).
+    Cambio 4 (HU0021-2): la dirección se invierte al azar con probabilidad PROB_CAMBIO_DIRECCION * lam_ef (con
+    variabilidad mínima, lam_ef = 0, nunca) y, al llegar a un extremo de la escala, rebota de forma fija en lugar de
+    dar la vuelta (antes Si -> Do por módulo). Siempre consume un número al azar, así la semilla avanza igual."""
     global _direccion
-    if random.random() < PROB_CAMBIO_DIRECCION:
+    if random.random() < PROB_CAMBIO_DIRECCION * lam_ef:
         _direccion *= -1
     i = notas.index(nota_anterior)
-    return notas[(i + _direccion) % len(notas)]
+    if not 0 <= i + _direccion < len(notas):
+        _direccion *= -1                       # rebote fijo en el extremo de la escala
+    return notas[i + _direccion]
 
 
-def elegir_siguiente_nota(nota_anterior, lam, tabla_pesos=TABLA_PESOS):
-    """Sortea la nota siguiente mezclando la tabla de pesos (λ alto) con la nota moda (λ bajo).
+def elegir_siguiente_nota(nota_anterior, lam, tabla_pesos=TABLA_PESOS, lam_min=0.05):
+    """Sortea la nota siguiente mezclando la tabla de pesos (variabilidad alta) con la nota moda (variabilidad baja).
+    Cambio 4 (HU0021-2): la variabilidad efectiva es lam_ef = (λ − lam_min) / (1 − lam_min), así que con λ en su mínimo
+    (main.py: LAMBDA_MIN = 0.05) todo el peso va a la moda y la secuencia es determinística, sea cual sea la semilla.
     Cambio 2 (HU0019-2): si nota_anterior ya salió MAX_REPETICIONES veces seguidas, su peso pasa a 0.
     Siempre queda otra nota posible: la moda es un paso arriba o abajo, nunca la misma nota.
     Variables: `_racha` (veces seguidas de la última nota devuelta), `_direccion` (la cambia _nota_moda)."""
     global _racha
     # lambda debe estar entre 0 y 1; fuera de ese rango los pesos serían negativos
     lam = min(max(float(lam), 0.0), 1.0)
+    lam_ef = min(max((lam - lam_min) / (1.0 - lam_min), 0.0), 1.0)
 
     if nota_anterior not in tabla_pesos:
         nota_anterior = NOTAS[0]
 
     fila = tabla_pesos[nota_anterior]
-    nota_moda = _nota_moda(nota_anterior)
+    nota_moda = _nota_moda(nota_anterior, lam_ef)
 
-    # lam alto (movimiento fluido) -> más variedad; lam bajo -> sigue la moda
+    # variabilidad alta (movimiento fluido) -> más variedad; baja -> sigue la moda (con lam_ef = 0, solo la moda)
     pesos_finales = {}
     for nota, peso_original in fila.items():
         peso_moda = 1.0 if nota == nota_moda else 0.0
-        pesos_finales[nota] = lam * peso_original + (1 - lam) * peso_moda
+        pesos_finales[nota] = lam_ef * peso_original + (1 - lam_ef) * peso_moda
     if _racha >= MAX_REPETICIONES:
         pesos_finales[nota_anterior] = 0.0
 
