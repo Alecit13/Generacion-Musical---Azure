@@ -114,5 +114,56 @@ class PruebaSemilla(unittest.TestCase):
         self.assertNotEqual(exacta, redondeada)
 
 
+class _NormalizadorDePrueba:
+    """Sustituto de NormalizadorAdaptativo (vive en main.py, que enciende la Kinect): identidad, y cuenta las llamadas."""
+
+    def __init__(self):
+        self.n_actualizar, self.n_normalizar = 0, 0
+
+    def actualizar(self, valor, t):
+        self.n_actualizar += 1
+        return valor
+
+    def normalizar(self, valor, t):
+        self.n_normalizar += 1
+        return valor
+
+
+class PruebaTimbrePorManos(unittest.TestCase):
+    """Cambio 6 (HU0017-1): sin saltos al alternar manos; recalibra solo con datos nuevos; None sin manos."""
+
+    @staticmethod
+    def _simular(segundos=3.0, dt_ciclo=1 / 30, dt_trabajo=0.035, ap={"izq": 0.02, "der": 0.05}):
+        """Reproduce la 2d(i): el hilo alterna manos, un trabajo cada dt_trabajo; el ciclo lee cada dt_ciclo."""
+        from manos import TimbrePorManos
+        norm = _NormalizadorDePrueba()
+        timbre = TimbrePorManos(norm)
+        ult_ap, ult_t = {"izq": None, "der": None}, {"izq": -1e9, "der": -1e9}
+        t, t_trab, lado, salida = 0.0, 0.0, "izq", []
+        while t < segundos:
+            while t_trab <= t:                      # trabajos terminados hasta este ciclo
+                ult_ap[lado], ult_t[lado] = ap[lado], t_trab
+                lado = "der" if lado == "izq" else "izq"
+                t_trab += dt_trabajo
+            ef, val = apertura_vigente(ult_ap, ult_t, t, HOLD)
+            salida.append(timbre.actualizar(val, max((ult_t[l] for l in ef), default=None), t))
+            t += dt_ciclo
+        return salida, norm
+
+    def test_sin_saltos_con_una_abierta_y_otra_cerrada(self):
+        salida, _ = self._simular()
+        estable = salida[3:]                        # desde que las dos manos tienen dato
+        self.assertTrue(all(abs(v - 0.035) < 1e-9 for v in estable))
+
+    def test_recalibra_solo_con_datos_nuevos(self):
+        _, norm = self._simular(segundos=3.0, dt_ciclo=1 / 30, dt_trabajo=0.07)   # el hilo va más lento que el ciclo
+        self.assertGreater(norm.n_normalizar, 0)
+        self.assertLess(norm.n_actualizar, 3.0 / 0.07 + 2)
+
+    def test_sin_manos_devuelve_none(self):
+        from manos import TimbrePorManos
+        self.assertIsNone(TimbrePorManos(_NormalizadorDePrueba()).actualizar(None, None, 1.0))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

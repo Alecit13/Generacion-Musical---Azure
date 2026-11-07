@@ -23,7 +23,7 @@ import sys
 from datetime import datetime
 from zona import calcular_zona
 from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
-from manos import calcular_apertura, apertura_vigente
+from manos import calcular_apertura, apertura_vigente, TimbrePorManos
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
 
@@ -460,7 +460,12 @@ class NormalizadorAdaptativo:
         self.muestras.append((t, valor))
         while t - self.muestras[0][0] > NORM_VENTANA_S:
             self.muestras.popleft()
-        if t - self.muestras[0][0] < NORM_CALENTAMIENTO_S:
+        return self.normalizar(valor, t)
+
+    def normalizar(self, valor, t):
+        """Lleva `valor` a [0,1] con las muestras ya guardadas, SIN añadirlo (cambio 6: TimbrePorManos lo usa en los
+        ciclos sin dato nuevo de manos, para no recalibrar con valores mantenidos). actualizar() termina aquí."""
+        if not self.muestras or t - self.muestras[0][0] < NORM_CALENTAMIENTO_S:
             return 0.5                      # aún calibrando: valor neutro
         vals = np.fromiter((v for _, v in self.muestras), dtype=float)
         lo, hi = np.percentile(vals, [5, 95])
@@ -732,20 +737,18 @@ class HiloManos:
     con `estado()` cada ciclo (los datos de la Kinect NO cruzan el hilo: bucle_kinect extrae antes
     centro 2D y profundidad de cada mano).
     Variables importantes: `trabajadores` (lista; cada uno con su `cola` de 1 hueco, su bandera
-    `ocupado` y sus `lados`), `lock` (protege los resultados compartidos), `lock_norm` (protege el
-    normalizador de apertura, que comparten los dos hilos), `ult_apertura/ult_t_ap/ult_landmarks`
-    (último dato por mano), `recuadros_lado` (último recuadro por mano), `apertura01` (RF04).
+    `ocupado` y sus `lados`), `lock` (protege los resultados compartidos), `ult_apertura/ult_t_ap/ult_landmarks`
+    (último dato por mano), `recuadros_lado` (último recuadro por mano).
+    Cambio 6: ya NO normaliza la apertura (con ALTERNAR_MANOS cada trabajo trae una sola mano y apertura01 saltaba
+    entre las dos); la normaliza bucle_kinect con TimbrePorManos sobre el promedio de las manos vigentes.
     Cada detector de MediaPipe SOLO lo toca el hilo que lo creó (MediaPipe no es seguro entre hilos)."""
 
     def __init__(self):
         self.lock = threading.Lock()
-        self.lock_norm = threading.Lock()
-        self.norm_apertura = NormalizadorAdaptativo(RANGO_MIN_APERTURA)
         self.ult_apertura = {"izq": None, "der": None}
         self.ult_t_ap = {"izq": -1e9, "der": -1e9}      # perf_counter del frame que la midió
         self.ult_landmarks = {"izq": None, "der": None}  # solo para dibujar
         self.recuadros_lado = {"izq": None, "der": None} # (recuadro, acertó) de cada mano, solo para dibujar
-        self.apertura01 = 0.5
         self._t_trabajo, self._n_trabajos = 0.0, 0
         self._t_decod = 0.0                              # DECODIFICAR_EN_HILO_MANOS: segundos decodificando (dentro de _t_trabajo)
         self._ms_decod = 0.0                             # ms de decodificación por trabajo del último reporte
@@ -785,10 +788,10 @@ class HiloManos:
 
     def estado(self):
         """Copia consistente de los resultados para leer desde bucle_kinect.
-        Devuelve (ult_apertura, ult_t_ap, ult_landmarks, recuadros, apertura01)."""
+        Devuelve (ult_apertura, ult_t_ap, ult_landmarks, recuadros)."""
         with self.lock:
             return (dict(self.ult_apertura), dict(self.ult_t_ap), dict(self.ult_landmarks),
-                    [r for r in self.recuadros_lado.values() if r is not None], self.apertura01)
+                    [r for r in self.recuadros_lado.values() if r is not None])
 
     def estadisticas_y_reiniciar(self):
         """(ms promedio por trabajo, número de trabajos) desde el último reporte. Lo usa reportar().
@@ -866,7 +869,7 @@ class HiloManos:
             lados = [t["lados"][t["ciclo"] % 2]]
         t["ciclo"] += 1
 
-        nuevos, frescos, recuadros = {}, [], {}
+        nuevos, recuadros = {}, {}
         for lado in lados:
             obj = objetivos.get(lado)
             nuevos[lado] = None
@@ -883,12 +886,6 @@ class HiloManos:
             if landmarks is not None:
                 ap = calcular_apertura(landmarks)
                 nuevos[lado] = (ap, landmarks)
-                frescos.append(ap)
-        # solo se recalibra con datos nuevos (el normalizador lo comparten los hilos: se protege con candado)
-        ap01 = None
-        if frescos:
-            with self.lock_norm:
-                ap01 = self.norm_apertura.actualizar(float(np.mean(frescos)), t_frame)
 
         with self.lock:
             for lado, r in nuevos.items():
@@ -898,11 +895,10 @@ class HiloManos:
                     self.ult_apertura[lado], self.ult_landmarks[lado] = r
                     self.ult_t_ap[lado] = t_frame
                 self.recuadros_lado[lado] = recuadros[lado]
-            if ap01 is not None:
-                self.apertura01 = ap01
 
 
 hilo_manos = HiloManos()
+timbre = TimbrePorManos(NormalizadorAdaptativo(RANGO_MIN_APERTURA))   # cambio 6: apertura01 desde el promedio de las manos
 
 
 class FusionTemporal:
@@ -1122,12 +1118,12 @@ async def bucle_kinect():
 
             # Resultado más reciente del hilo. Si una mano se pierde, se mantiene su última
             # apertura HOLD_APERTURA_S segundos (el tiempo se compara con el del frame medido).
-            ult_apertura, ult_t_ap, ult_landmarks, recuadros_hoy, apertura01 = hilo_manos.estado()
+            ult_apertura, ult_t_ap, ult_landmarks, recuadros_hoy = hilo_manos.estado()
             # Cambio 1 (HU0008-2, P-006): sin mano vigente NO se inventa un valor: apertura_val y apertura01 = None
             # (CSV vacío; el navegador lleva el timbre al valor neutro)
             efectivas, apertura_val = apertura_vigente(ult_apertura, ult_t_ap, t_ciclo, HOLD_APERTURA_S)
-            if not efectivas:
-                apertura01 = None
+            # Cambio 6: apertura01 = promedio de las manos vigentes, normalizado; recalibra solo con datos nuevos
+            apertura01 = timbre.actualizar(apertura_val, max((ult_t_ap[l] for l in efectivas), default=None), t_ciclo)
             fus = fusion.actualizar(t_ciclo, ult_t_ap, bool(efectivas))      # HU0009: edad y desfase
             manos_detectadas = [h for h in ult_landmarks.values() if h is not None]
             acum["manos"] += time.perf_counter() - t
