@@ -395,6 +395,27 @@ aviso_lag = {"mostrado": False}
 # Cronómetros por LÍNEA (perf/ciclo-30hz): llamadas sueltas que hoy quedan dentro de una etapa agregada.
 # to_numpy está dentro de cap_imgs; print dentro de salida; imshow y waitKey dentro de dibujo.
 LINEAS = ("to_numpy", "print", "imshow", "waitKey") + (("copia_jpeg",) if DECODIFICAR_EN_HILO_MANOS else ())   # copia_jpeg: dentro de cap_imgs
+# HU0007-2 (07/11, diagnóstico solo para el log): confianza de las articulaciones de pierna por ventana de reporte.
+# No cambia el CSV ni el mapeo. conf_piernas[nombre] = [n NONE, n LOW, n MEDIUM, n HIGH]; rodillas_conf2 = ciclos con
+# 2 / 1 / 0 rodillas con confianza >= MEDIUM (lo que vería el tempo si exigiera MEDIUM en las rodillas).
+J_PIERNAS = {"cad_i": pykinect.K4ABT_JOINT_HIP_LEFT, "rod_i": pykinect.K4ABT_JOINT_KNEE_LEFT,
+             "tob_i": pykinect.K4ABT_JOINT_ANKLE_LEFT, "pie_i": pykinect.K4ABT_JOINT_FOOT_LEFT,
+             "cad_d": pykinect.K4ABT_JOINT_HIP_RIGHT, "rod_d": pykinect.K4ABT_JOINT_KNEE_RIGHT,
+             "tob_d": pykinect.K4ABT_JOINT_ANKLE_RIGHT, "pie_d": pykinect.K4ABT_JOINT_FOOT_RIGHT}
+conf_piernas = {k: [0, 0, 0, 0] for k in J_PIERNAS}
+rodillas_conf2 = [0, 0, 0]   # [ciclos con 2, con 1, con 0 rodillas >= MEDIUM]
+
+
+def anotar_conf_piernas(skeleton):
+    """Cuenta el nivel de confianza (0 NONE, 1 LOW = posición inferida/predicha, 2 MEDIUM) de cada articulación de
+    pierna en este ciclo. La llama bucle_kinect en cada ciclo con cuerpo; reportar() escribe [PIERNAS] y reinicia."""
+    J = skeleton.joints
+    for k, i in J_PIERNAS.items():
+        conf_piernas[k][min(int(J[i].confidence_level), 3)] += 1
+    n2 = sum(int(J[J_PIERNAS[k]].confidence_level) >= 2 for k in ("rod_i", "rod_d"))
+    rodillas_conf2[2 - n2] += 1
+
+
 acum_linea = dict.fromkeys(LINEAS, 0.0)   # segundos acumulados por línea desde el último reporte
 n_linea = dict.fromkeys(LINEAS, 0)        # llamadas por línea desde el último reporte
 
@@ -429,6 +450,14 @@ def reportar():
               f"| frames descartados/ciclo={np.mean(descartes) if descartes else 0:.2f}")
     else:
         _reportar_linea("[CAMARA] sin dato de timestamp del sistema")
+    n_p = sum(rodillas_conf2)
+    if n_p:   # % de ciclos con cuerpo por nivel N/L/M (NONE/LOW/MEDIUM); HIGH no lo usa el SDK
+        _reportar_linea("[PIERNAS] " + " | ".join(
+            f"{k} N{100 * c[0] / n_p:.0f} L{100 * c[1] / n_p:.0f} M{100 * (c[2] + c[3]) / n_p:.0f}" for k, c in conf_piernas.items())
+            + f" | rodillas>=MEDIUM 2:{100 * rodillas_conf2[0] / n_p:.0f}% 1:{100 * rodillas_conf2[1] / n_p:.0f}% 0:{100 * rodillas_conf2[2] / n_p:.0f}%")
+    for c in conf_piernas.values():
+        c[:] = [0, 0, 0, 0]
+    rodillas_conf2[:] = [0, 0, 0]
     perf_file.flush()
     lags_cam.clear()
     descartes.clear()
@@ -1067,6 +1096,7 @@ async def bucle_kinect():
         if num_bodies > 0:
             skeleton = body_frame.get_body_skeleton(0)
             n_joints_ok, joints_no_disp = estado_articulaciones(skeleton)   # HU0007-2
+            anotar_conf_piernas(skeleton)                                    # HU0007-2: solo para [PIERNAS] en _perf.txt
             fusion.registrar_cuerpo(t_ciclo)                                 # HU0009: frame con cuerpo
 
             # ---- Registro (tono): ángulo de los hombros (o altura de la muñeca si REGISTRO_POR_ANGULO=False) ----
