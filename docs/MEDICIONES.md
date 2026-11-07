@@ -1,4 +1,4 @@
-# MEDICIONES — línea base, hipótesis y plan (corte: 05/11/2026; mediciones hasta el 05/11)
+# MEDICIONES — línea base, hipótesis y plan (corte: 07/11/2026; mediciones hasta el 07/11)
 
 > Este archivo CAMBIA en cada sesión. Cada cifra cita su origen. MEDIDO = salió de un CSV o log. INFERIDO = deducción no comprobada.
 > Toda cifra de latencia va con su definición (sección 0). Si dos cifras no coinciden, primero se revisa que usen la misma definición.
@@ -424,6 +424,69 @@ Fuentes en `sesiones/`: `sesion_20261107_<hora>_<VERSION_MAIN>_cuda-lite.*`; GPU
 - **Actualizaciones de apertura por mano: 8.2–9.1/s** en la tanda (04/11: 9.9–10.5). D-024 acepta "≈ 10": falta que Ale diga si 8.2–9.1 entra.
 - **Rodillas con short** (misma regla que 4g.3: ventanas de 20 s con los dos hombros con desviación ≤ 0.8°). Tanda del 07/11 (short): 4 ventanas, desviación de rodilla izq / der 0.2° / 0.1–0.2°, `vel_rodilla` mediana 0–5 °/s. Finales del 04/11 (pantalón ancho): 7 ventanas, 0.5–2.2° / 0.9–1.6°, 6–18 °/s. INFERIDO: compatible con que el pantalón ancho empeore las rodillas; n pequeño y cambiaron también el día, la espera moderna (04/11) y los cambios de código (ninguno toca las piernas).
 
+### 4h.5 Después de la tanda: análisis offline, cambios 4, 7 y 7b, piernas y corrida de confirmación (MEDIDO salvo indicación)
+**Registro de qué código midió qué:** la tanda 3 × 10 min del paso 14 (4h.3) fue sobre **`3686feb`**; la corrida de confirmación de 10 min fue sobre **`30ccbf7`** (commit final del 07/11, cabecera sin `-sucio`).
+
+**Por qué 29.9 trabajos/s dan 8.2–9.1 cambios de apertura por mano/s** (tanda 163615, 165040, 170224; `[ROI]` y `[PERF]` de `_perf.txt`, columnas `apertura_izq`/`apertura_der` del CSV):
+| Paso | Valor |
+|---|---|
+| Trabajos/s del hilo | 29.86–29.94 |
+| Por mano (`ALTERNAR_MANOS=True`: una mano por trabajo) | 14.9 |
+| Aciertos de MediaPipe (`[ROI]`, recuadro desde la muñeca) | 87.2–88.8 % → 13.0–13.3 detecciones/s por mano |
+| Cambios de valor en el CSV | 8.2–9.1/s; el 54–58 % de esos cambios es de 0.001 (la resolución del CSV) |
+| Cambios por mano/s por fase (aprox. por tiempo) | quieto 7.3–8.7, brazos 9.4–9.6, piernas 9.2–9.4, manos 6.8–8.6 |
+- INFERIDO: ≈ 1/3 de las detecciones nuevas repite el valor redondeado y no cuenta como "cambio"; la métrica de cambios subestima las actualizaciones (≈ 13/s por mano). Medirlas directo requiere guardar por mano el instante de su último dato (no aprobado). **HU0008-1 queda parcial; D-024 sigue abierta.**
+
+**HU0019-3** (tanda, 2695 sorteos, código `3686feb`; teoría por sorteo con la racha real):
+| λ | n | Repite obs/teo | 1 paso | 2 pasos | 3 pasos | χ² (3 gl) |
+|---|---|---|---|---|---|---|
+| 0.05–0.2 | 457 | 0.2 / 0.3 % | 96.7 / 96.4 % | 1.5 / 2.2 % | 1.5 / 1.0 % | 2.3 |
+| 0.2–0.4 | 246 | 0.8 / 1.3 % | 82.5 / 85.4 % | 11.8 / 9.1 % | 4.9 / 4.2 % | 2.8 |
+| 0.4–0.6 | 288 | 2.1 / 2.1 % | 76.7 / 75.9 % | 15.6 / 15.1 % | 5.6 / 6.9 % | 0.8 |
+| 0.6–0.8 | 446 | 1.3 / 3.0 % | 67.0 / 65.8 % | 22.0 / 21.4 % | 9.6 / 9.8 % | 4.1 |
+| 0.8–1.0 | 1258 | 5.0 / 3.9 % | 55.1 / 55.0 % | 27.5 / 28.2 % | 12.4 / 12.9 % | 4.7 |
+- **Cumple:** la frecuencia de pasos cambia con λ (1 paso: 96.7 → 55.1 %) y coincide con la teoría (χ² ≤ 4.7 < 7.81 en cada rango; total 0.6). Con el cambio 4 la teoría pasa a usar λ efectivo.
+
+**Cambio 4 (HU0021-2, `15fb93c`):** λ efectivo = (λ − 0.05)/0.95; con λ = 0.05 la secuencia es determinística (4 semillas, misma secuencia: escala con rebote en los extremos). Corrida de 3 min 174555 (`2bfd81e`): 29.99 ciclos/s, ventana mín. 29.8 (sin #0).
+
+**HU0010-2 caso A** (1ª fila `continuo` − 1ª fila de sesión; la página sin tocar):
+| Código | Arranques | Resultado |
+|---|---|---|
+| `754468b` (reintento 2000 ms) | 150413 | 2.09 s |
+| `2bfd81e` (cambio 7, reintento 500 ms) | 174219, 174312, 174419, 174555 | 0.67 / 2.92 / 3.82 / 1.04 s: no cumple |
+| `30ccbf7` (cambio 7b, socket abierto al arrancar) | 180446, 180540, 180633, 180729 | **0.18 / 0.18 / 0.20 / 0.18 s: cumple** (n = 4) |
+- MEDIDO sin la Kinect: en este Windows cada `connect` a un puerto cerrado tarda 2.0 s en fallar (3/3 por `::1`, 3/3 por `127.0.0.1`) y `localhost` resuelve a los dos. INFERIDO: por eso el reintento solo no bastaba. Prueba sin Kinect del 7b: un cliente que se conecta durante un arranque de 3 s recibe el primer mensaje a los 3.0 s. Con 7b faltan solo 7 filas `continuo` al arrancar en 180729 (antes 15–154).
+
+**Piernas (HU0007-2; línea `[PIERNAS]` de `_perf.txt`, `2bfd81e`, corrida 174555):** al tapar la pierna izquierda con la mano detrás del muslo (≈ 30–50 s), las rodillas siguieron en MEDIUM y solo el pie izquierdo bajó a LOW (hasta 67 % de la ventana). Las rodillas salen LOW en el baile libre (88–96 s: hasta 68 % izq y 100 % der; tobillos 79–100 %) y con piernas en movimiento y brazos arriba (174 s: todas las articulaciones de pierna LOW 100 %). **Nunca NONE.** En la corrida: 0 rodillas ≥ MEDIUM en el 5.4 % de los ciclos y 1 en el 4.6 % (180729: 1.9 % y 5.1 %). INFERIDO: el LOW sale cuando el tracker pierde la pose entera (mismo % en todas las articulaciones de la ventana), más que por tapar una pierna.
+
+**Prueba A/B de `--tempo-medium`** (`d2d2de4`, apagada por defecto; A = 175432, B = 175618 con la opción; 78 s cada una, 29.99 ciclos/s; n = 1 por lado):
+| Tramo | A: `vel_rodilla` mediana · tempo | B: `vel_rodilla` mediana · tempo |
+|---|---|---|
+| 0–20 s quieto, brazos abajo | 4 °/s · 0.13 | 157 °/s · 0.41 |
+| 20–40 s brazos arriba, piernas quietas | 5 °/s · 0.16 | 6 °/s · 0.03 |
+| 40–60 s piernas con brazos arriba | 108 °/s · 0.61 | 100 °/s · 0.66 |
+| 60–80 s baile | 100 °/s · 0.29 | 116 °/s · 0.31 |
+- **No concluyente:** en A no apareció velocidad falsa con los brazos arriba; los 157 °/s de B "quieto" no los puede producir la opción (solo quita rodillas). INFERIDO: Ale se estaba acomodando al empezar B. Ciclos con 0 rodillas ≥ MEDIUM: 2.1 % (A), 4.6 % (B).
+
+**Corrida de confirmación de 10 min** (180729, `30ccbf7`, configuración por defecto; calentamiento: los 3 arranques cortos 180446–180633). Sin registros de GPU, CPU ni procesos. **Validez:** Δ `transporte_ms` −0.02 ms; sin Kernel-Power 506/507 ni Time-Service desde las 17:30; 0 duplicadas; faltan 7 filas al arrancar y ninguna después.
+| Métrica (ms salvo indicación) | 180729 |
+|---|---|
+| Ciclos/s media (sin #0) · ventana #0 | 29.95 · 25.6 |
+| Ventanas < 29.5 · < 29.0 (sin #0) | **5** (#2 29.3, #5 29.1, #12 29.3, #118 29.1, #249 29.1) · 0 |
+| C1 estricto (≥ 29.5) · D-023 | **294/299: no cumple** · **cumple** |
+| `cap_update` · `tracker` · `mapeo` · `salida` | 10.9 · 20.0 · 1.0 · 0.4 |
+| Periodo media / p95 · % > 33.3 ms | 33.4 / 47.9 · 8.9 |
+| `lag_cam_ms` media / p95 / máx · p95 por minuto | 5.5 / 16.9 / **98.0** · 16.7–17.0 |
+| (a) media / p95 / máx | 22.3 / 23.5 / 55.4 |
+| **(b) RNF01** media / p95 / máx (n > 100; %) | 27.8 / 40.1 / **127.2** (1; 0.01) |
+| `lat_tick_ms` media / p95 / máx (% > 250) | 38.8 / 53.7 / 79.3 (0) |
+| Trabajos/s · por tercio · cambios de apertura por mano/s (izq / der) | 29.83 · 29.8 → 29.8 → 29.9 · 9.41 / 8.35 |
+| Edad manos p95 · % ciclos con 2 manos | 64.6 · 79.8 |
+| Notas reconstruidas con la semilla · racha máx · cambios de zona (< 250 ms dentro) | 892/892 · 2 · 199 (3, mismo artefacto de redondeo que 4h.3) |
+- Ventanas bajas: 60 lecturas de color en 60 ciclos y 0–0.02 frames descartados, igual que las de 29.1–29.3 del 04/11 (4f): no son capturas incompletas. La #118 tiene `tracker` 24 ms, `mapeo` 3 ms y trabajo de manos 32 ms (19.4 trabajos/s): INFERIDO, un pico de carga del equipo (sin registro de procesos para confirmarlo).
+- La muestra de (b) > 100 ms coincide con el máximo de `lag_cam_ms` (98.0 ms): INFERIDO, una espera de cámara aislada. **C3:** media y p95 mejores que la línea base 4c; **máx peor** (127.2 frente a 81.4–101.3 de 4c), 1 muestra de 17 975 (0.01 %) > 100 ms. **C2** cumple (p95 16.9, plano). **C4** cumple.
+- Frente a la tanda (`3686feb`): mismas cifras de ciclo y latencia salvo esas 5 ventanas y esa muestra. Con n = 1 no se distingue un efecto de los cambios 4, 7, 7b y `[PIERNAS]` de la variación entre corridas `[POR COMPLETAR]`.
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -459,7 +522,7 @@ Fuentes en `sesiones/`: `sesion_20261107_<hora>_<VERSION_MAIN>_cuda-lite.*`; GPU
 
 ## 9. Plan vigente
 Tarea 1 (auditoría de solo lectura): **HECHA el 31/10/2026** (resultados arriba).
-Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **Siguiente:** paso 13 (función de pantalla encendida, D-021), paso 14 (tanda nueva con pantalla en "Nunca") y fijar la métrica de HU0008-1 (P-009).
+Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **07/11:** paso 14 HECHO (tanda sobre `3686feb`, C1–C4 cumplen) y paso 9 cerrado con él; cambios aprobados del 07/11 aplicados (D-025 a D-033); corrida de confirmación sobre `30ccbf7` (4h.5): D-023 cumple, C1 estricto 294/299. **Siguiente:** paso 13 (función de pantalla encendida, D-021), decidir D-023, D-024 y las propuestas por aprobar (P-012 a P-015), y paso 11 (latencia extremo a extremo).
 | # | Paso | Estado |
 |---|---|---|
 | 1 | Commit del estado actual en la rama `wip-28e` | HECHO 31/10 (`368c20a`) |
@@ -480,6 +543,8 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 12b | **Prueba B de cámara**: script aparte (`prueba_camara.py`, sin tocar `main.py`) que abre la Kinect con el mismo `device_config`, sin tracker ni manos ni WebSocket, lee todas las capturas sin descartar y guarda por captura `t_perf`, las marcas de tiempo del sistema y del dispositivo de color y profundidad, `ok_color` y `ok_depth`. Ve también la entrega al PC | NO SE HACE: la prueba A mostró el hueco (condición no cumplida) |
 | 13 | Función que pide a Windows mantener la pantalla encendida mientras corre `main.py` (`SetThreadExecutionState` con `ES_CONTINUOUS \| ES_SYSTEM_REQUIRED \| ES_DISPLAY_REQUIRED`), como opción apagable por línea de comandos con sufijo en `VERSION_MAIN` y campo en la cabecera de `_perf.txt` (D-021). Se pide en el hilo del event loop antes de `start_device` y se suelta en el cierre; verificar con `powercfg /requests` (administrador). No cambia el comportamiento musical (C5); afecta a la condición de medida de C1 (HU0007-1) | PENDIENTE (sesión siguiente; aprobada por Ale el 05/11) |
 | 14 | Tanda nueva con pantalla en "Nunca" (D-017) y regla de reloj (D-019): `w32tm /resync` antes, calentamiento + 3 corridas de 10 min con la configuración por defecto y Edge (D-020); comprobar que no hay Kernel-Power 506 durante las corridas. Cierra el paso 9 | **HECHO 07/11** (4h.3): 163615, 165040 y 170224 sobre `3686feb`, válidas por reloj y sin 506; C1–C4 cumplen en las 3; C5 con los cambios del 07/11 (D-025 a D-030, borrador) |
+| 15 | Cambios aprobados del 07/11 con prueba unitaria (`pruebas_unitarias.py`, 23/23) y prueba en vivo: 1, 2, 3, 5, 6, rango de apertura, 4, 7, 7b; registro `[PIERNAS]`; `--tempo-medium` (apagada) | HECHO 07/11 (4h.2, 4h.5; D-025 a D-033 en borrador) |
+| 16 | Corrida de confirmación de 10 min sobre el commit final | HECHO 07/11 (180729, `30ccbf7`): válida; D-023 cumple; C1 estricto 294/299 y C3 máx 127.2 ms (1 muestra) no cumplen. Repetir con registros de GPU, CPU y procesos para ver la causa de las ventanas de 29.1–29.3 `[POR COMPLETAR]` |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 
 ## 10. Protocolo de corrida (repetible)
@@ -518,6 +583,10 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 - Git (05/11): `sesiones/gpu_20261031.csv` estaba recortado en la copia de trabajo (2134 de 2626 líneas; faltaban del 31/10 18:00:02 al 01/11 11:55:22, fecha de modificación 02/11 13:23, causa desconocida) y `sesion_file.csv` (formato antiguo, commit `f970444`, lo usa `grafico.py:24` como respaldo) estaba borrado sin commit. Ambos restaurados desde HEAD (D-022); la línea base de 4b (17:14–17:23 del 31/10) no estaba afectada.
 - `[POR COMPLETAR]` por qué `mapeo` sube de ≈ 1 a ≈ 2 ms en los primeros ≈ 5 min con decodificación en el hilo (4f; con resolución de 1 ms).
 - ~~Navegador del protocolo (P-010).~~ **05/11: Edge, anotado en cada tanda (D-020).** `[POR COMPLETAR]` en qué navegador se hicieron las tandas anteriores al 04/11 por la tarde.
-- `[POR COMPLETAR]` ropa en las corridas del 02/11 (para comparar el ruido de rodilla, 4e). 04/11 mañana y tarde: pantalón ancho (baggy).
+- `[POR COMPLETAR]` ropa en las corridas del 02/11 (para comparar el ruido de rodilla, 4e). 04/11 mañana y tarde: pantalón ancho (baggy). 07/11: short y polo blanco (4h.4: rodillas más quietas con short, INFERIDO, n pequeño).
+- 07/11 `[POR COMPLETAR]`: causa de las 5 ventanas de 29.1–29.3 ciclos/s y de la muestra de (b) de 127.2 ms en 180729 (sin registro de procesos).
+- 07/11 `[POR COMPLETAR]`: medir directamente las actualizaciones por mano (instante del último dato por mano); hoy solo se aproximan por los cambios de valor (4h.5).
+- 07/11 `[POR COMPLETAR]`: por qué las articulaciones de mano del Kinect salen NONE en el 100 % (antes ≈ 53 %).
+- 07/11 `[POR COMPLETAR]`: navegador (Edge) y consola sin errores de US14 dichos por Ale; no guardados.
 - Pendiente de datos (no medido): confianza de rodillas y tobillos en el CSV. Ale observó el 31/10 más movimiento falso de piernas al subir los brazos; en las sesiones 164334/164633 la mediana de la velocidad de rodilla es 35–111 °/s con los hombros a 45–135° (11–16 °/s quieto con los brazos abajo), y eso sube el tempo.
 - Garantía FIFO del SDK al vaciar la cola: INFERIDA; las cifras de `lag_cam_ms` la respaldan.
