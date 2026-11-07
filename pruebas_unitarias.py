@@ -39,5 +39,43 @@ class PruebaAperturaVigente(unittest.TestCase):
         self.assertEqual((ef, val), ({}, None))
 
 
+class PruebaTopeRepeticiones(unittest.TestCase):
+    """Cambio 2 (HU0019-2): nunca más de MAX_REPETICIONES notas iguales seguidas."""
+
+    def _secuencia(self, lam, n, semilla):
+        import random
+        import muestreo
+        random.seed(semilla)
+        muestreo.reiniciar_estado()
+        nota, notas = "Do", []
+        for _ in range(n):
+            nota = muestreo.elegir_siguiente_nota(nota, lam)
+            notas.append(nota)
+        return notas
+
+    @staticmethod
+    def _racha_max(notas):
+        mejor = actual = 1
+        for a, b in zip(notas, notas[1:]):
+            actual = actual + 1 if a == b else 1
+            mejor = max(mejor, actual)
+        return mejor
+
+    def test_tope_con_varios_lambda(self):
+        import muestreo
+        for lam in (1.0, 0.5, 0.05):
+            notas = self._secuencia(lam, 100_000, semilla=7)
+            self.assertLessEqual(self._racha_max(notas), muestreo.MAX_REPETICIONES, f"lam={lam}")
+
+    def test_repetir_una_vez_sigue_posible(self):
+        """El tope no prohíbe repetir: con λ = 1 la probabilidad de repetir (racha 1 -> 2) sigue siendo
+        peso(0) / suma de la fila = 0.05 / 1.16 ≈ 0.043 en la escala mayor."""
+        notas = self._secuencia(1.0, 200_000, semilla=11)
+        rep = sum(1 for a, b in zip(notas, notas[1:]) if a == b)
+        # tras una repetición la siguiente no puede repetir: P(repetir) ≈ p / (1 + p)
+        p = 0.05 / 1.16
+        self.assertAlmostEqual(rep / (len(notas) - 1), p / (1 + p), delta=0.003)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
