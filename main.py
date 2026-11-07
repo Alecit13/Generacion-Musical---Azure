@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 from zona import calcular_zona
 from muestreo import elegir_siguiente_nota, calcular_octava
-from manos import calcular_apertura
+from manos import calcular_apertura, apertura_vigente
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
 
@@ -29,7 +29,7 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-d013-2026-11-04"
+VERSION_MAIN = "mjpg-cambios-2026-11-07"
 
 # Servidor
 HOST_WS = "localhost"
@@ -1087,10 +1087,11 @@ async def bucle_kinect():
             # Resultado más reciente del hilo. Si una mano se pierde, se mantiene su última
             # apertura HOLD_APERTURA_S segundos (el tiempo se compara con el del frame medido).
             ult_apertura, ult_t_ap, ult_landmarks, recuadros_hoy, apertura01 = hilo_manos.estado()
-            efectivas = {l: v for l, v in ult_apertura.items()
-                         if v is not None and t_ciclo - ult_t_ap[l] <= HOLD_APERTURA_S}
-            # HU0008-2: sin mano vigente NO se inventa un valor: apertura_val = None (el HTML mantiene el timbre)
-            apertura_val = float(np.mean(list(efectivas.values()))) if efectivas else None
+            # Cambio 1 (HU0008-2, P-006): sin mano vigente NO se inventa un valor: apertura_val y apertura01 = None
+            # (CSV vacío; el navegador lleva el timbre al valor neutro)
+            efectivas, apertura_val = apertura_vigente(ult_apertura, ult_t_ap, t_ciclo, HOLD_APERTURA_S)
+            if not efectivas:
+                apertura01 = None
             fus = fusion.actualizar(t_ciclo, ult_t_ap, bool(efectivas))      # HU0009: edad y desfase
             manos_detectadas = [h for h in ult_landmarks.values() if h is not None]
             acum["manos"] += time.perf_counter() - t
@@ -1134,7 +1135,7 @@ async def bucle_kinect():
                 "registro": round(reg["registro01"], 3),
                 "zona": zona_actual,
                 "apertura": None if apertura_val is None else round(apertura_val, 3),
-                "apertura01": round(apertura01, 3),
+                "apertura01": None if apertura01 is None else round(apertura01, 3),
                 "apertura_izq": None if ap_izq is None else round(ap_izq, 3),
                 "apertura_der": None if ap_der is None else round(ap_der, 3),
                 "joints_ok": n_joints_ok,
@@ -1160,7 +1161,7 @@ async def bucle_kinect():
                 nota_actual, octava_actual,
                 _fmt(apertura_val), _fmt(ap_izq), _fmt(ap_der),
                 len(manos_detectadas),
-                round(m["tempo"], 3), round(m["intensidad"], 3), round(apertura01, 3),
+                round(m["tempo"], 3), round(m["intensidad"], 3), _fmt(apertura01),
                 round(m["vel_rodilla"], 1), round(m["amplitud_mm"], 1), round(t_cap_ms, 1),
                 "" if lat_tick_ms is None else round(lat_tick_ms, 1),
                 _fmt(cand["hombro_izq"]), _fmt(cand["hombro_der"]), _fmt(cand["codo_izq"]), _fmt(cand["codo_der"]),

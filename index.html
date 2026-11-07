@@ -23,6 +23,7 @@ const MAPA_NOTAS = { Do: "C", Re: "D", Mi: "E", Fa: "F", Sol: "G", La: "A", Si: 
 const UMBRAL_CONTINUO_MS = 100;  // RNF01: captura -> actualización de parámetros continuos
 const UMBRAL_TICK_MS = 250;      // RNF02: tick del reloj musical -> sorteo de nota (medido en Python)
 const CORTE_MIN_HZ = 300, CORTE_MAX_HZ = 3000;   // timbre (apertura de manos)
+const APERTURA_NEUTRA = 0.5;                     // cambio 1 (HU0008-2): sin mano vigente Python manda apertura01 = null y el timbre vuelve aquí
 const VOL_MIN_DB = -20, VOL_MAX_DB = -6;         // intensidad (amplitud de extremidades); -20 evita el casi-silencio en reposo
 const MAX_VENTANA = 300;                         // muestras para las estadísticas en pantalla
 const MAX_REGISTRO = 50000;                      // muestras para el CSV descargable
@@ -151,8 +152,10 @@ function conectar() {
     const d = JSON.parse(ev.data);
     if (!audioListo) return;
 
-    // Timbre: apertura de manos (normalizada por usuario) -> frecuencia de corte del filtro
-    filtro.frequency.rampTo(CORTE_MIN_HZ + d.apertura01 * (CORTE_MAX_HZ - CORTE_MIN_HZ), 0.05);
+    // Timbre: apertura de manos (normalizada por usuario) -> frecuencia de corte del filtro;
+    // sin mano vigente (apertura01 = null) va al valor neutro, no se queda en el último valor
+    const ap01 = (d.apertura01 === null || d.apertura01 === undefined) ? APERTURA_NEUTRA : d.apertura01;
+    filtro.frequency.rampTo(CORTE_MIN_HZ + ap01 * (CORTE_MAX_HZ - CORTE_MIN_HZ), 0.05);
     // Intensidad: amplitud de las extremidades -> volumen
     synth.volume.rampTo(VOL_MIN_DB + d.intensidad * (VOL_MAX_DB - VOL_MIN_DB), 0.08);
 
@@ -174,7 +177,7 @@ function conectar() {
 
     document.getElementById("datos").textContent =
       `Nota ${d.nota}${d.octava} | λ=${d.lam} | tempo=${d.tempo} | intensidad=${d.intensidad}\n` +
-      `apertura=${d.apertura === null ? "sin mano (timbre se mantiene)" : d.apertura} (norm ${d.apertura01}) | manos=${d.manos}\n` +
+      `apertura=${d.apertura === null ? "sin mano (timbre neutro)" : d.apertura} (norm ${d.apertura01 === null ? "-" : d.apertura01}) | manos=${d.manos}\n` +
       `articulaciones fiables=${d.joints_ok}/32 | edad datos de manos=${d.edad_manos_ms === null ? "-" : d.edad_manos_ms} ms | desync manos=${d.desync_manos}`;
   };
 }
