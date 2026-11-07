@@ -19,6 +19,7 @@
 // PARÁMETROS
 // =====================================================================
 const URL_WS = "ws://localhost:8765";
+const REINTENTO_MS = 500;        // cambio 7 (HU0010-2): espera antes de reintentar la conexión (antes 2000 ms: caso A tardó 2.09 s)
 const MAPA_NOTAS = { Do: "C", Re: "D", Mi: "E", Fa: "F", Sol: "G", La: "A", Si: "B" };
 const UMBRAL_CONTINUO_MS = 100;  // RNF01: captura -> actualización de parámetros continuos
 const UMBRAL_TICK_MS = 250;      // RNF02: tick del reloj musical -> sorteo de nota (medido en Python)
@@ -145,7 +146,7 @@ function conectar() {
   ws.onopen = () => { document.getElementById("estado").textContent = "Conectado a Python"; };
   ws.onclose = () => {
     document.getElementById("estado").textContent = "Desconectado, reintentando…";
-    setTimeout(conectar, 2000);
+    setTimeout(conectar, REINTENTO_MS);
   };
   ws.onmessage = (ev) => {
     const tRecv = Date.now();
