@@ -422,6 +422,7 @@ Fuentes en `sesiones/`: `sesion_20261107_<hora>_<VERSION_MAIN>_cuda-lite.*`; GPU
 - **HU0010-2 caso A:** 2.09 s (n = 1); bajar el reintento de `index.html` a 500 ms sería un cambio no aprobado.
 - **Articulaciones de mano del Kinect NONE en el 100 %** de las filas el 07/11 (antes ≈ 53 %, ESTADO_ACTUAL 26–28/10). Causa desconocida.
 - **Actualizaciones de apertura por mano: 8.2–9.1/s** en la tanda (04/11: 9.9–10.5). D-024 acepta "≈ 10": falta que Ale diga si 8.2–9.1 entra.
+- **Rodillas con short** (misma regla que 4g.3: ventanas de 20 s con los dos hombros con desviación ≤ 0.8°). Tanda del 07/11 (short): 4 ventanas, desviación de rodilla izq / der 0.2° / 0.1–0.2°, `vel_rodilla` mediana 0–5 °/s. Finales del 04/11 (pantalón ancho): 7 ventanas, 0.5–2.2° / 0.9–1.6°, 6–18 °/s. INFERIDO: compatible con que el pantalón ancho empeore las rodillas; n pequeño y cambiaron también el día, la espera moderna (04/11) y los cambios de código (ninguno toca las piernas).
 
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
