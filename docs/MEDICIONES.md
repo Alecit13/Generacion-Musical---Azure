@@ -356,6 +356,73 @@ Hora del hueco = hora de pared (`timestamp` del CSV de sesión) de la última fi
   - Los rangos se superponen.
   - Además de la ropa cambiaron: el día, la pantalla ("Nunca"), la hora del sistema y la rutina (`[POR COMPLETAR]` la de 171135). Salón y luz no anotados. El navegador fue Edge en ambos casos.
 
+## 4h. 07/11: pruebas funcionales, cambios aprobados y tanda limpia del paso 14 (MEDIDO)
+Fuentes en `sesiones/`: `sesion_20261107_<hora>_<VERSION_MAIN>_cuda-lite.*`; GPU, CPU y CPU por proceso en `gpu_paso14.csv`, `cpu_paso14.csv`, `procesos_paso14.csv`. Análisis con scripts de solo lectura de Code (fuera del repositorio). Ropa: **short y polo blanco** en todas las corridas del día (Ale). Navegador: Edge, una pestaña.
+**Preparación (MEDIDO por comando):** `ActiveOverlayAcPowerScheme = ded574b5-…c238`; `VIDEOIDLE` y `STANDBYIDLE` CA/CC = 0; con corriente (`BatteryStatus = 2`); VS Code cerrado. Reloj: en la red `upc.edu.pe` NTP (UDP 123) no responde (`w32tm /stripchart`: error `0x800705B4` hacia `time.windows.com` y `pool.ntp.org`); `w32tm /resync` funcionó con el hotspot del celular (sincronización 07/11 14:54:27) y la tanda se corrió de vuelta en `upc.edu.pe`, donde Windows no puede corregir la hora.
+
+### 4h.1 Fase 2: pruebas funcionales sin cambiar código (commit `754468b`, `VERSION_MAIN = mjpg-d013-2026-11-04`)
+| Prueba | Archivo | Resultado |
+|---|---|---|
+| HU0014-2 (sin clic no suena) | 150233 | 765 filas de sesión (25.6 s) antes del clic y 0 filas `continuo`. Ale no oyó sonido |
+| HU0014-1 (sin errores de inicio) | 150233 | Consola de Edge sin errores (dicho por Ale; no guardada) |
+| HU0010-2 caso A (reconecta ≤ 2 s) | 150413 | 1ª fila `continuo` **2.09 s** después de la 1ª fila de sesión (n = 1): **no cumple por poco**. INFERIDO: la página reintenta 2000 ms después de cada fallo (`index.html`) |
+| HU0010-2 caso B (pestaña cerrada) | 150413 | 43.0 s sin cliente: 1247 filas de sesión (29.0/s), sin hueco > 0.5 s; reconecta al reabrir: **cumple** |
+| HU0007-2 | 151513, 152259; con ventana 151310, 151909 | Articulaciones 8, 9, 10, 15, 16, 17 (mano, punta, pulgar) NONE en el **100 %** de las filas y el resto sigue a 30 filas/s. Piernas **nunca** NONE (0 filas), también con la rodilla tapada. Fuera del encuadre se pierde el cuerpo entero (huecos de 7.2, 8.1 y 17.8 s en las corridas con ventana). INFERIDO: el SDK predice la pierna con confianza LOW y `CONF_MIN_ARTICULACION = 1` la cuenta como disponible; Ale vio los puntos de una pierna "juntarse" con la otra |
+| Manos 2d(i): una abierta (der 0.045) y otra en puño (izq 0.024), 58 s | 151513 | `apertura01` cambia 16.8 veces/s, **14.6 saltos > 0.3 por segundo** (salto medio 0.48). Con las dos abiertas: 5 saltos en 13 s |
+| Manos 2d(ii): manos atrás | 151513 | `apertura01` fija en 0.254 durante 9.0 s y en 0.0 durante 4.5 s (la columna `apertura` sí vacía) |
+| HU0016-2 / HU0018-2 (saturación) | 152259 | `tempo` e `intensidad` en [0, 1], llegan a los dos topes (tempo 7.2 % de filas en 0 y 5.7 % en 1; intensidad 8.6 % y 13.0 %): **cumple** |
+| HU0015-2 | 151513, 152259 | 72 y 108 cambios de zona en 3 min; **6/72 y 85/108** sin 250 ms continuos dentro de la zona nueva (el paso por "medio" sumaba para "agudo"; los relámpagos cambiaban la zona) |
+
+### 4h.2 Fase 3: cambios aprobados por Ale (uno por commit; pruebas en `pruebas_unitarias.py`, 20/20 OK)
+| Cambio | Commit | Prueba sin dispositivo | Prueba en vivo |
+|---|---|---|---|
+| 1 HU0008-2: sin mano vigente en 0.5 s, `apertura01` vacía (JSON `null`) y el timbre vuelve a 0.5 (1650 Hz) | `d01499a` | Vencimiento con reloj simulado (6 pruebas) | 155040: 545/545 filas sin mano con `apertura01` vacía |
+| 2 HU0019-2: máx. 2 notas iguales seguidas (por nombre) | `170680a` | Racha ≤ 2 en 100 000 sorteos (λ 1, 0.5, 0.05); el código anterior daba hasta 4 con λ = 1 | 160759: racha máx 2 |
+| 3 HU0021-1 / HU0022-1: `--seed=N`; columnas `nota_id`, `lam_sorteo` (λ exacto), `semilla`, `version`, `commit` | `534177e` | Misma semilla = misma secuencia; con λ redondeado a 3 decimales cambian 39 de 20 000 sorteos | 160759 (`--seed=123`): 94/94 notas reconstruidas |
+| 6 HU0017-1 / D-024: `apertura01` desde el promedio de las manos vigentes (`TimbrePorManos`) | `080f36f` | Alternancia 0.02/0.05 → `apertura01` constante | 162433: **0.98 saltos > 0.3 por segundo** (antes 14.6), ninguno por pérdida de mano |
+| `RANGO_MIN_APERTURA` 0.05 → 0.015 (HU0017-1, US27) | `46aced4` | — | 162433: dos abiertas 0.97 (p5 0.92), dos en puño 0.06 (p95 0.15); antes ≤ ≈ 0.58 |
+| 5 HU0015-2: 250 ms continuos dentro de la misma candidata (`zona.zona_desde_registro`) | `3686feb` | 6 pruebas; offline: 72 → 66 y 108 → 82 cambios (la regla vieja reproduce la columna `zona` en 99.8–100 %) | 162433: 0/23 cambios con < 250 ms dentro |
+- Datos para `RANGO_MIN_APERTURA` (151513, 152259, 155040, 160759): abierta ≈ 0.048, puño ≈ 0.021 (ancho ≈ 0.027); ruido en reposo p95 − p5 0.001–0.006 (resolución del CSV 0.001). En 155040 la apertura fue 0.038–0.064: INFERIDO, Ale más cerca de la cámara (la apertura está en coordenadas de la imagen completa).
+
+### 4h.3 Fase 4: tanda limpia del paso 14 (3 × 10 min), commit **`3686feb`** (US22; cabecera sin `-sucio`)
+`VERSION_MAIN = mjpg-cambios-2026-11-07`, configuración por defecto (sin ventana, decodificación en el hilo). Calentamiento 163444 (descartado). Rutina de 3 min repetida (30 s quieto, brazos, piernas con algo de brazos, 30 s manos). **Validez:** Kernel-Power 506/507: ninguno desde las 16:30; Time-Service sin eventos; un solo cliente (0 duplicadas); filas que faltan solo al arrancar; la última fila llegó en las 3.
+| Métrica (ms salvo indicación) | **163615** | **165040** | **170224** |
+|---|---|---|---|
+| Semilla | 275989368 | 1394752313 | 611563737 |
+| Reloj: Δ `transporte_ms` (últimos − primeros 30 s) | −0.20 | −0.13 | −0.10 |
+| Faltan al arrancar | 55 | 86 | 15 |
+| Ciclos/s media (sin #0) · ventana mín. · ventana #0 | 29.98 · 29.5 · 25.3 | 29.99 · 29.5 · 25.5 | 29.99 · 29.5 · 25.2 |
+| C1: ventanas ≥ 29.5 sin #0 · con #0 | 299/299 · 299/300 | 299/299 · 299/300 | 299/299 · 299/300 |
+| D-023 (media ≥ 29.5 y ninguna < 29.0) | cumple | cumple | cumple |
+| `cap_update` · `tracker` · `mapeo` · `salida` | 10.4 · 20.1 · 1.0 · 0.9 | 10.4 · 20.2 · 1.1 · 0.9 | 10.4 · 20.1 · 1.0 · 0.9 |
+| Periodo media / p95 · % > 33.3 ms | 33.4 / 47.8 · 8.7 | 33.4 / 47.8 · 8.6 | 33.4 / 47.8 · 8.6 |
+| `lag_cam_ms` media / p95 / máx · p95 por minuto | 5.4 / 17.0 / 48.7 · 16.9–17.0 | 5.4 / 16.9 / 48.9 · 16.8–17.0 | 5.3 / 16.9 / 34.5 · 16.8–17.0 |
+| (a) media / p95 / máx | 22.6 / 24.4 / 59.4 | 22.7 / 24.6 / 57.7 | 22.7 / 24.5 / 55.2 |
+| **(b) RNF01** media / p95 / máx (n > 100) | 28.0 / 40.4 / 74.5 (0) | 28.1 / 39.8 / 71.8 (0) | 27.9 / 40.0 / 61.0 (0) |
+| `lat_tick_ms` media / p95 / máx (% > 250) | 39.5 / 54.3 / 70.6 (0) | 39.0 / 54.5 / 69.9 (0) | 39.0 / 54.6 / 69.3 (0) |
+| Trabajos/s del hilo de manos · por tercio | 29.87 · 29.9 → 29.9 → 29.9 | 29.86 · 29.9 → 29.8 → 29.9 | 29.94 · 29.9 → 29.9 → 30.0 |
+| Cambios de apertura por mano/s (izq / der) | 9.06 / 8.94 | 8.67 / 8.23 | 8.66 / 8.51 |
+| Trabajo del hilo · `decod_hilo` | 23.1 · 4.83 | 22.9 · 4.78 | 22.7 · 4.73 |
+| Edad manos p95 · % ciclos con 2 manos · % filas sin mano | 95.8 · 81.6 · 0.2 | 79.8 · 78.5 · 0.1 | 79.9 · 81.7 · 0.1 |
+| Huecos de filas > 0.5 s | ninguno | ninguno | ninguno |
+| Notas reconstruidas con la semilla · racha máx | 954/954 · 2 | 863/863 · 2 | 878/878 · 2 |
+| Cambios de zona · con < 250 ms dentro de la nueva | 194 · 3 | 208 · 3 | 201 · 0 |
+| CPU % rendimiento · % tiempo (medianas) | 194 · 21.9 | 193 · 21.7 | 193 · 21.5 |
+- GPU: SM mediana 1762 MHz, temperatura máx 68 °C (`gpu_paso14.csv`).
+- **Criterios (CLAUDE.md sección 7), en las 3:** **C1 cumple** (299/299 ventanas ≥ 29.5 sin #0, D-016; `cap_update` 10.4 ms > 0; % de ciclos > 33.3 ms: 8.6–8.7). **C2 cumple** (p95 16.9–17.0 ≤ línea base 4c 27.1–35.9; plano por minuto). **C3 cumple** ((b) media, p95 y máx mejores que 4c; 0 muestras > 100 ms, HU0023-1). **C4 cumple** (0 % > 250 ms). **C5:** cambios aprobados por Ale el 07/11 (D-025 a D-030, borrador).
+- **Sin escalón ni ralentización:** trabajos/s planos por tercio y `tracker` 20.1–20.2 ms en las 3 (reserva (2) de D-015: sin la espera moderna, la bajada no aparece).
+- Los 6 cambios de zona "con < 250 ms" son INFERIDO artefacto del redondeo: en los 6, la fila del borde se lee exactamente 0.660 o 0.330 en el CSV (3 decimales); si esa fila ya era candidata nueva, el tiempo dentro es 256–273 ms.
+- **Procesos ajenos durante la tanda** (`procesos_paso14.csv`, media en las muestras en que aparecen, % de un núcleo): `svchost#95` 151–443, `mousocoreworker` 27–65 (orquestador de Windows Update), `officeclicktorun` 67 y `sdxhelper` 43–95 (actualizaciones de Office). Media sobre todas las muestras de la tanda: `python` 135, `system` 24, el resto ≤ 7. No se vio efecto en el ciclo (INFERIDO).
+- **Evento externo (Ale):** en los primeros minutos de 170224 la compañera apareció detrás. MEDIDO: entre 104.8 y 107 s los ángulos saltan de forma no humana (hombro 6° → 131° → 29° → 131° en 0.2 s; 10+ ciclos con ≥ 3 ángulos que saltan > 40°, frente a 1–2 sueltos en las otras corridas). INFERIDO: cambio de cuerpo o confusión del tracker por la segunda persona; el CSV no guarda el número de cuerpos. Sin efecto en C1–C4.
+
+### 4h.4 Hallazgos `[POR REGISTRAR]` (sin resolver; cambian comportamiento musical o criterio, decide Ale)
+- **Normalización adaptativa de 20 s** (`NORM_VENTANA_S`): un estado sostenido pasa a ser el "nuevo rango". Tempo lento y rápido casi iguales (0.38 frente a 0.35 con `vel_rodilla` 93 frente a 192 °/s, 152259); brazos horizontales salen "grave" después de tenerlos arriba (152259) o "agudo" si antes estaban abajo (162433); una mano abierta y otra cerrada sostenidas dan `apertura01` ≈ 0.10 (162433). Afecta a la redacción de HU0015-1, HU0016-1 y HU0017-1.
+- **Parpadeo de zona cerca del umbral** estando quieto (grave ↔ medio cada 0.3–1 s, 152259 26.8–30.3 s): la histéresis de tiempo no lo evita; haría falta una banda muerta en `registro01`.
+- **Apertura dependiente de la distancia** (coordenadas de la imagen completa): dividir por el tamaño de la palma en `calcular_apertura` la haría independiente.
+- **HU0010-2 caso A:** 2.09 s (n = 1); bajar el reintento de `index.html` a 500 ms sería un cambio no aprobado.
+- **Articulaciones de mano del Kinect NONE en el 100 %** de las filas el 07/11 (antes ≈ 53 %, ESTADO_ACTUAL 26–28/10). Causa desconocida.
+- **Actualizaciones de apertura por mano: 8.2–9.1/s** en la tanda (04/11: 9.9–10.5). D-024 acepta "≈ 10": falta que Ale diga si 8.2–9.1 entra.
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -405,13 +472,13 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 7 | Enviar `lag_cam_ms` en el mensaje y guardar `latencia_llegada_ms` (= `latencia_ms + lag_cam_ms`) en `_latencias.csv`, sin cambiar columnas existentes ni comportamiento musical | HECHO 02/11 (`eb68590`); verificado contra el cálculo offline (≤ 0.05 ms, 4c) |
 | 7b | Cierre y operación de las corridas: esperar el último lote de latencias al cerrar (`b98258b`), interruptores por línea de comandos (`1b69a33`, D-011), soltar el último frame del tracker antes de destruirlo (`6ed5c0a`, protegido en `e1616bf`; Capture compartido en `9cf80d9`), registro de CPU por proceso (`2892e6a`) | HECHO. Error al salir resuelto con `9cf80d9` (04/11), verificado en 3 cierres seguidos (4d) |
 | 8 | Pipeline de 2 etapas (H5) solo si 5–11 no cumplen C1 | CONDICIONAL. En las corridas del 04/11 C1 estricto no se cumplió por la ventana #144 y 0–2 ventanas de 29.1–29.3 ciclos/s por corrida (4f). Esas corridas quedan fuera de protocolo (D-018). Se decide después del paso 14 |
-| 9 | Corrida de 10 min y verificación de C1–C5 | **PENDIENTE** (05/11, D-018): las corridas del 04/11 tienen evento 506 en la segunda mitad y quedan **fuera de protocolo**; sus datos se conservan (4e, 4f y 4g.2). Se cierra con el paso 14. Corrido el 04/11 (4e y 4f). Mañana: 144401 con VS Code abierto (no cumple C1 estricto ni C3 máx); 153328 Base, 154420 decodificación y 155449 control. Tarde: corrida quieta 170136 y **3 corridas finales** 171221, 172514 y 173544 con la configuración por defecto: **C1 estricto no cumple** (297/301, 302/303 y 299/302 ventanas ≥ 29.5 sin #0); **C2–C5 cumplen**. Condición de D-013 cumplida con reservas; D-015 (`9ecf383`). Métrica de HU0008-1 abierta (P-009) |
+| 9 | Corrida de 10 min y verificación de C1–C5 | **HECHO 07/11 con el paso 14** (4h.3: C1–C4 cumplen en 3 corridas de 10 min válidas; C5 con D-025 a D-030 en borrador). Antes, PENDIENTE (05/11, D-018): las corridas del 04/11 tienen evento 506 en la segunda mitad y quedan **fuera de protocolo**; sus datos se conservan (4e, 4f y 4g.2). Se cierra con el paso 14. Corrido el 04/11 (4e y 4f). Mañana: 144401 con VS Code abierto (no cumple C1 estricto ni C3 máx); 153328 Base, 154420 decodificación y 155449 control. Tarde: corrida quieta 170136 y **3 corridas finales** 171221, 172514 y 173544 con la configuración por defecto: **C1 estricto no cumple** (297/301, 302/303 y 299/302 ventanas ≥ 29.5 sin #0); **C2–C5 cumplen**. Condición de D-013 cumplida con reservas; D-015 (`9ecf383`). Métrica de HU0008-1 abierta (P-009) |
 | 10 | Repetir la línea base MJPG: 1 pestaña, calentamiento descartado, plan de energía de máximo rendimiento, 3 corridas de 3 min | HECHO 02/11 (133512, 133838, 134201; 4c). La comparación 1 vs 2 hilos de D-003 **no** se repitió |
 | 11 | Método para medir (c) extremo a extremo (US23): micrófono o loopback, y latencia interna del SDK | PENDIENTE (decide Ale el método; no bloquea 7 ni 10) |
 | 12 | **Prueba A de cámara**: grabar 6 min solo con la cámara (sin tracker, sin MediaPipe, sin Python) y buscar el hueco de la caída. Comando: `"C:\Program Files\Azure Kinect SDK v1.4.1\tools\k4arecorder.exe" -c 720p -d NFOV_UNBINNED -r 30 --imu ON -l 360 sesiones\camara_A1.mkv`. Modos iguales a `main.py` líneas 196–200: color 720p MJPG (`-c 720p`; NV12 y YUY2 son modos aparte), profundidad `NFOV_UNBINNED`, 30 fps, sin sincronización externa (Standalone, el valor por defecto). IMU encendida porque `pykinect` la arranca en `Device.start` (`start_imu()`). `main.py` usa `synchronized_images_only = False`; qué hace `k4arecorder` con eso `[POR COMPLETAR]`. Comprobar en el MKV que el formato de color grabado es MJPG. Mismo salón, persona quieta delante, `main.py` cerrado (la cámara es exclusiva), registros de GPU, CPU y procesos encendidos; si se puede, 2 grabaciones. Análisis (script de solo lectura con la reproducción de `pykinect_azure`): por captura, si hay color y profundidad y su marca de tiempo del dispositivo; saltos > 50 ms entre marcas de color, capturas incompletas y frames frente a 30 × duración; **hueco buscado entre 270 y 310 s** desde el primer frame. Límite: el MKV no guarda la hora de llegada al PC. Disco: **≈ 17.9 GB por grabación** (MEDIDO 05/11: 17.7–17.9 GB, ≈ 3 GB/min, incluye el IR; la estimación previa de ≈ 7.8 GB era errónea). `sesiones/*.mkv` está en `.gitignore` (`2d3920a`) | **HECHO 05/11** (4g.1): A1 (pantalla en 5 min) y A3 (control, 5 min) muestran el corte a ≈ 295 s del reloj del dispositivo; A2 ("Nunca") no. `synchronized_images_only` de `k4arecorder`: se comporta como `False` (INFERIDO) |
 | 12b | **Prueba B de cámara**: script aparte (`prueba_camara.py`, sin tocar `main.py`) que abre la Kinect con el mismo `device_config`, sin tracker ni manos ni WebSocket, lee todas las capturas sin descartar y guarda por captura `t_perf`, las marcas de tiempo del sistema y del dispositivo de color y profundidad, `ok_color` y `ok_depth`. Ve también la entrega al PC | NO SE HACE: la prueba A mostró el hueco (condición no cumplida) |
 | 13 | Función que pide a Windows mantener la pantalla encendida mientras corre `main.py` (`SetThreadExecutionState` con `ES_CONTINUOUS \| ES_SYSTEM_REQUIRED \| ES_DISPLAY_REQUIRED`), como opción apagable por línea de comandos con sufijo en `VERSION_MAIN` y campo en la cabecera de `_perf.txt` (D-021). Se pide en el hilo del event loop antes de `start_device` y se suelta en el cierre; verificar con `powercfg /requests` (administrador). No cambia el comportamiento musical (C5); afecta a la condición de medida de C1 (HU0007-1) | PENDIENTE (sesión siguiente; aprobada por Ale el 05/11) |
-| 14 | Tanda nueva con pantalla en "Nunca" (D-017) y regla de reloj (D-019): `w32tm /resync` antes, calentamiento + 3 corridas de 10 min con la configuración por defecto y Edge (D-020); comprobar que no hay Kernel-Power 506 durante las corridas. Cierra el paso 9 | PENDIENTE |
+| 14 | Tanda nueva con pantalla en "Nunca" (D-017) y regla de reloj (D-019): `w32tm /resync` antes, calentamiento + 3 corridas de 10 min con la configuración por defecto y Edge (D-020); comprobar que no hay Kernel-Power 506 durante las corridas. Cierra el paso 9 | **HECHO 07/11** (4h.3): 163615, 165040 y 170224 sobre `3686feb`, válidas por reloj y sin 506; C1–C4 cumplen en las 3; C5 con los cambios del 07/11 (D-025 a D-030, borrador) |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 
 ## 10. Protocolo de corrida (repetible)
