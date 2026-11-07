@@ -55,7 +55,8 @@ NORM_CALENTAMIENTO_S = 3.0   # durante los primeros 3 s la salida normalizada va
 RANGO_MIN_VEL_RODILLA = 30.0     # grados/s
 RANGO_MIN_AMPLITUD = 100.0       # mm
 RANGO_MIN_ACC = 3000.0           # mm/s^2
-RANGO_MIN_APERTURA = 0.05        # unidades de "apertura" de manos.py
+RANGO_MIN_APERTURA = 0.015       # unidades de "apertura" de manos.py. 07/11 (MEDIDO, distancia del protocolo): abierta ≈ 0.048,
+                                 # puño ≈ 0.021 (ancho ≈ 0.027); ruido en reposo 0.001-0.006. Antes 0.05 (> ancho real: apertura01 ≤ ≈ 0.58)
 
 # Tono: REGISTRO (octava) a partir de ángulos de articulaciones (RF05: ángulos articulares -> tono)
 REGISTRO_POR_ANGULO = True        # True = ángulo de los hombros; False = altura de la muñeca izquierda (versión anterior)

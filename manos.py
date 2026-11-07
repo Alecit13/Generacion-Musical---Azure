@@ -9,7 +9,9 @@ def calcular_apertura(hand_landmarks):
         punta = hand_landmarks.landmark[idx]
         d = np.sqrt((punta.x - centro.x) ** 2 + (punta.y - centro.y) ** 2)
         distancias.append(d)
-    return np.mean(distancias)  # típicamente ~0.05 (puño) a ~0.25 (mano abierta) — ajustar viendo valores reales
+    # Medido el 07/11 a la distancia del protocolo: ≈ 0.021 (puño) a ≈ 0.048 (abierta). Está en coordenadas normalizadas de la
+    # imagen completa, así que depende de la distancia a la cámara.
+    return np.mean(distancias)
 
 
 def apertura_vigente(ult_apertura, ult_t_ap, t_ahora, hold_s):
