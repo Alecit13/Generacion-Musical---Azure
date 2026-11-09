@@ -20,7 +20,19 @@ PESO_DISTANCIA_LEJANA = 0.04   # para distancias mayores a 3 (escalas más larga
 # (sube o baja por la escala). Esta es la probabilidad de cambiar de dirección.
 PROB_CAMBIO_DIRECCION = 0.2
 
+# Cambio 2 (HU0019-2): tope explícito de notas iguales seguidas (por nombre, sin octava: muestreo no conoce la octava).
+# 2 porque lo medido sin tope fue 2-3 seguidas.
+MAX_REPETICIONES = 2
+
 _direccion = 1  # +1 sube, -1 baja
+_racha = 0      # cuántas veces seguidas ha salido la última nota devuelta (0 = aún no se sorteó ninguna)
+
+
+def reiniciar_estado():
+    """Vuelve el estado del sorteo al inicial (_direccion = 1, _racha = 0). Lo usan las pruebas unitarias
+    y la semilla (cambio 3), para que la misma semilla con la misma entrada dé la misma secuencia."""
+    global _direccion, _racha
+    _direccion, _racha = 1, 0
 
 
 def _distancia_circular(i, j, n):
@@ -45,36 +57,51 @@ def construir_tabla_pesos(notas=NOTAS):
 TABLA_PESOS = construir_tabla_pesos()
 
 
-def _nota_moda(nota_anterior, notas=NOTAS):
-    """Nota más probable. Como hay empate entre el paso de arriba y el de abajo,
-    se desempata con la dirección actual de la melodía (antes siempre ganaba
-    la primera de la lista y la melodía rebotaba entre las mismas dos notas)."""
+def _nota_moda(nota_anterior, lam_ef=1.0, notas=NOTAS):
+    """Nota más probable: un paso en la dirección actual de la melodía (desempata el paso de arriba y el de abajo).
+    Cambio 4 (HU0021-2): la dirección se invierte al azar con probabilidad PROB_CAMBIO_DIRECCION * lam_ef (con
+    variabilidad mínima, lam_ef = 0, nunca) y, al llegar a un extremo de la escala, rebota de forma fija en lugar de
+    dar la vuelta (antes Si -> Do por módulo). Siempre consume un número al azar, así la semilla avanza igual."""
     global _direccion
-    if random.random() < PROB_CAMBIO_DIRECCION:
+    if random.random() < PROB_CAMBIO_DIRECCION * lam_ef:
         _direccion *= -1
     i = notas.index(nota_anterior)
-    return notas[(i + _direccion) % len(notas)]
+    if not 0 <= i + _direccion < len(notas):
+        _direccion *= -1                       # rebote fijo en el extremo de la escala
+    return notas[i + _direccion]
 
 
-def elegir_siguiente_nota(nota_anterior, lam, tabla_pesos=TABLA_PESOS):
+def elegir_siguiente_nota(nota_anterior, lam, tabla_pesos=TABLA_PESOS, lam_min=0.05):
+    """Sortea la nota siguiente mezclando la tabla de pesos (variabilidad alta) con la nota moda (variabilidad baja).
+    Cambio 4 (HU0021-2): la variabilidad efectiva es lam_ef = (λ − lam_min) / (1 − lam_min), así que con λ en su mínimo
+    (main.py: LAMBDA_MIN = 0.05) todo el peso va a la moda y la secuencia es determinística, sea cual sea la semilla.
+    Cambio 2 (HU0019-2): si nota_anterior ya salió MAX_REPETICIONES veces seguidas, su peso pasa a 0.
+    Siempre queda otra nota posible: la moda es un paso arriba o abajo, nunca la misma nota.
+    Variables: `_racha` (veces seguidas de la última nota devuelta), `_direccion` (la cambia _nota_moda)."""
+    global _racha
     # lambda debe estar entre 0 y 1; fuera de ese rango los pesos serían negativos
     lam = min(max(float(lam), 0.0), 1.0)
+    lam_ef = min(max((lam - lam_min) / (1.0 - lam_min), 0.0), 1.0)
 
     if nota_anterior not in tabla_pesos:
         nota_anterior = NOTAS[0]
 
     fila = tabla_pesos[nota_anterior]
-    nota_moda = _nota_moda(nota_anterior)
+    nota_moda = _nota_moda(nota_anterior, lam_ef)
 
-    # lam alto (movimiento fluido) -> más variedad; lam bajo -> sigue la moda
+    # variabilidad alta (movimiento fluido) -> más variedad; baja -> sigue la moda (con lam_ef = 0, solo la moda)
     pesos_finales = {}
     for nota, peso_original in fila.items():
         peso_moda = 1.0 if nota == nota_moda else 0.0
-        pesos_finales[nota] = lam * peso_original + (1 - lam) * peso_moda
+        pesos_finales[nota] = lam_ef * peso_original + (1 - lam_ef) * peso_moda
+    if _racha >= MAX_REPETICIONES:
+        pesos_finales[nota_anterior] = 0.0
 
     notas = list(pesos_finales.keys())
     pesos = list(pesos_finales.values())
-    return random.choices(notas, weights=pesos, k=1)[0]
+    nota = random.choices(notas, weights=pesos, k=1)[0]
+    _racha = _racha + 1 if nota == nota_anterior else 1
+    return nota
 
 
 def calcular_octava(zona):

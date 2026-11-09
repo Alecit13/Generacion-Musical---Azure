@@ -14,13 +14,17 @@ import websockets
 import csv
 import json
 import queue
+import random
+import secrets
+import socket
+import subprocess
 import threading
 import time
 import sys
 from datetime import datetime
-from zona import calcular_zona
-from muestreo import elegir_siguiente_nota, calcular_octava
-from manos import calcular_apertura
+from zona import calcular_zona, zona_desde_registro
+from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
+from manos import calcular_apertura, apertura_vigente, TimbrePorManos
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
 
@@ -29,11 +33,22 @@ import servidor
 # =====================================================================
 
 # Versión: queda escrita en consola y en el nombre del CSV, para saber SIEMPRE qué código se usó
-VERSION_MAIN = "mjpg-d013-2026-11-04"
+VERSION_MAIN = "mjpg-cambios-2026-11-07"
 
 # Servidor
-HOST_WS = "localhost"
+HOST_WS = "127.0.0.1"   # cambio 7b: dirección IPv4 fija (antes "localhost", que en este equipo resuelve a ::1 y a 127.0.0.1)
 PUERTO_WS = 8765
+
+# Cambio 7b (HU0010-2): el socket de escucha se abre YA, antes de encender la Kinect y el tracker (varios segundos).
+# En Windows cada intento contra un puerto cerrado tarda 2.0 s en fallar (MEDIDO 07/11), así que la página tardaba
+# hasta ≈ 4 s en reconectar. Con el socket abierto, el navegador se conecta durante el arranque y queda esperando;
+# main() lo entrega a websockets.serve(sock=SOCK_WS) y la conexión se completa en el primer ciclo.
+SOCK_WS = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    SOCK_WS.bind((HOST_WS, PUERTO_WS))
+except OSError as e:
+    raise SystemExit(f"El puerto {PUERTO_WS} ya está en uso ({e}): ¿hay otro main.py abierto?") from None
+SOCK_WS.listen(16)
 
 # Música
 NOTA_INICIAL, OCTAVA_INICIAL = "Do", 4
@@ -52,7 +67,8 @@ NORM_CALENTAMIENTO_S = 3.0   # durante los primeros 3 s la salida normalizada va
 RANGO_MIN_VEL_RODILLA = 30.0     # grados/s
 RANGO_MIN_AMPLITUD = 100.0       # mm
 RANGO_MIN_ACC = 3000.0           # mm/s^2
-RANGO_MIN_APERTURA = 0.05        # unidades de "apertura" de manos.py
+RANGO_MIN_APERTURA = 0.015       # unidades de "apertura" de manos.py. 07/11 (MEDIDO, distancia del protocolo): abierta ≈ 0.048,
+                                 # puño ≈ 0.021 (ancho ≈ 0.027); ruido en reposo 0.001-0.006. Antes 0.05 (> ancho real: apertura01 ≤ ≈ 0.58)
 
 # Tono: REGISTRO (octava) a partir de ángulos de articulaciones (RF05: ángulos articulares -> tono)
 REGISTRO_POR_ANGULO = True        # True = ángulo de los hombros; False = altura de la muñeca izquierda (versión anterior)
@@ -108,9 +124,24 @@ LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad 
 # Cada opción solo cambia un interruptor sobre la constante de arriba; sin opciones, todo queda como está.
 # --sin-ventana (D-012) y --decod-hilo (D-015) coinciden con el valor por defecto; se aceptan para que los comandos anteriores
 # sigan valiendo.
-OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos")
+OPCIONES_VALIDAS = ("--con-ventana", "--sin-ventana", "--decod-hilo", "--sin-decod-hilo", "--swi1ms", "--sin-manos",
+                    "--tempo-medium")
+# PRUEBA (07/11, pendiente del OK de Ale): --tempo-medium exige confianza MEDIUM (2) en cadera, rodilla y tobillo para usar una
+# rodilla en el tempo; con LOW (posición inferida) esa rodilla no cuenta y, si ninguna cuenta, el tempo mantiene su valor.
+# Solo afecta al tempo: CONF_MIN_ARTICULACION (manos, intensidad, λ, n_joints_ok) no cambia.
+CONF_MIN_RODILLA_TEMPO = 1
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]       # argumentos posicionales: modo del tracker y modelo
 OPCIONES = [a for a in sys.argv[1:] if a.startswith("--")]
+# Cambio 3 (HU0021-1, HU0022-1): --seed=N fija la semilla del sorteo de notas; sin --seed se genera una. Va con "=" porque
+# un valor suelto ("--seed 42") caería en ARGS como modo del tracker. La semilla no cambia VERSION_MAIN (va en sus columnas).
+_semillas = [o for o in OPCIONES if o.startswith("--seed=")]
+OPCIONES = [o for o in OPCIONES if not o.startswith("--seed=")]
+if len(_semillas) > 1:
+    raise ValueError("--seed=N aparece más de una vez")
+try:
+    SEMILLA = int(_semillas[0].split("=", 1)[1]) if _semillas else secrets.randbelow(2**31)
+except ValueError:
+    raise ValueError(f"--seed necesita un entero: {_semillas[0]}") from None
 _desconocidas = [o for o in OPCIONES if o not in OPCIONES_VALIDAS]
 if _desconocidas:   # una errata no debe producir una corrida mal etiquetada
     raise ValueError(f"Opciones desconocidas {_desconocidas}; válidas: {', '.join(OPCIONES_VALIDAS)}")
@@ -130,6 +161,8 @@ if "--swi1ms" in OPCIONES:
     SWITCH_INTERVAL_S = 0.001
 if "--sin-manos" in OPCIONES:
     USAR_HILO_MANOS = False
+if "--tempo-medium" in OPCIONES:
+    CONF_MIN_RODILLA_TEMPO = 2
 
 if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
     raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG: con COLOR_BGRA32=True usa --sin-decod-hilo")
@@ -143,8 +176,29 @@ SUFIJO_CONFIG = "".join(s for s, activo in (
     ("-sindecodhilo", not DECODIFICAR_EN_HILO_MANOS),   # desde D-015 decodificar en el ciclo es lo que se sale del defecto
     (f"-swi{(SWITCH_INTERVAL_S or 0) * 1000:g}ms", SWITCH_INTERVAL_S is not None),
     ("-sinmanos", not USAR_HILO_MANOS),
+    ("-tempomedium", CONF_MIN_RODILLA_TEMPO == 2),
 ) if activo)
 VERSION_MAIN += SUFIJO_CONFIG
+
+
+def commit_git():
+    """Cambio 3 (HU0022-1): hash corto del commit con el que corre main.py, con "-sucio" si hay cambios sin commit en
+    archivos versionados (los archivos sin versionar, como los CSV nuevos de sesiones/, no cuentan). "desconocido" si
+    git falla. Se llama una vez al arrancar; el valor va a la cabecera de _perf.txt y a la columna `commit` del CSV."""
+    carpeta = os.path.dirname(os.path.abspath(__file__))
+    try:
+        h = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=carpeta, capture_output=True,
+                           text=True, timeout=5, check=True).stdout.strip()
+        sucio = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=carpeta,
+                               capture_output=True, text=True, timeout=5, check=True).stdout.strip()
+        return h + ("-sucio" if sucio else "")
+    except Exception:
+        return "desconocido"
+
+
+COMMIT_GIT = commit_git()
+random.seed(SEMILLA)       # el sorteo de notas (muestreo.py) usa el módulo random; numpy no sortea nada en el proyecto
+reiniciar_estado()         # dirección y racha iniciales: misma semilla + misma entrada = misma secuencia
 
 # Body tracking: dónde corre la red neuronal del esqueleto
 #   "cpu" | "directml" | "cuda"   (el sistema final usa "cuda": python main.py cuda)
@@ -278,7 +332,8 @@ ARTICULACIONES_MUNECA_CODO = {       # (muñeca, codo) de cada lado: sirven de r
 # =====================================================================
 zona_actual = ZONA_INICIAL
 contador_estable = 0      # histéresis en frames de zona.py (solo si REGISTRO_POR_ANGULO=False)
-tiempo_fuera_zona = 0.0   # D-010: segundos sostenidos fuera de la zona actual (zona_desde_registro)
+candidata_zona = None     # cambio 5: zona candidata que se está sosteniendo (None = la candidata es la zona actual)
+tiempo_candidata = 0.0    # cambio 5 (D-010): segundos continuos dentro de candidata_zona (zona.zona_desde_registro)
 nota_actual, octava_actual = NOTA_INICIAL, OCTAVA_INICIAL
 nota_id = 0          # contador de notas nuevas: el HTML toca una nota cada vez que cambia
 t_prox_tick = 0.0    # instante (perf_counter) en que toca el SIGUIENTE tick; se fija al sortear la nota anterior
@@ -305,14 +360,17 @@ log_writer.writerow(["timestamp", "zona", "lambda", "acc_media", "nota", "octava
                      "n_joints_ok", "joints_no_disp", "edad_manos_ms", "par_dt_ms", "desync_manos",
                      "roi_izq", "roi_der",   # origen del último recuadro enviado: mano | muneca | vacío (sin recuadro)
                      "lag_cam_ms",          # ms entre que el frame TERMINÓ de llegar al PC (USB) y que Python lo recibió (cola de cámara)
-                     "frames_descartados"])  # frames viejos descartados de la cola en este ciclo
+                     "frames_descartados",  # frames viejos descartados de la cola en este ciclo
+                     # cambio 3 (HU0021-1, HU0022-1): para reconstruir la secuencia de notas. lam_sorteo = λ EXACTO
+                     # (repr) que recibió elegir_siguiente_nota, solo en la fila con nota nueva (la columna lambda va redondeada)
+                     "nota_id", "lam_sorteo", "semilla", "version", "commit"])
 log_file.flush()
 # Los reportes [PERF]/[PERF-LINEA]/[CAMARA]/[FUSION]/[ROI] se guardan también en un .txt con el mismo nombre que el CSV,
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
-print(f"Versión de main.py: {VERSION_MAIN}")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | conf_rodilla_tempo={CONF_MIN_RODILLA_TEMPO} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+print(f"Versión de main.py: {VERSION_MAIN} | commit {COMMIT_GIT} | semilla {SEMILLA}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
 if not MOSTRAR_VENTANA:
@@ -357,6 +415,27 @@ aviso_lag = {"mostrado": False}
 # Cronómetros por LÍNEA (perf/ciclo-30hz): llamadas sueltas que hoy quedan dentro de una etapa agregada.
 # to_numpy está dentro de cap_imgs; print dentro de salida; imshow y waitKey dentro de dibujo.
 LINEAS = ("to_numpy", "print", "imshow", "waitKey") + (("copia_jpeg",) if DECODIFICAR_EN_HILO_MANOS else ())   # copia_jpeg: dentro de cap_imgs
+# HU0007-2 (07/11, diagnóstico solo para el log): confianza de las articulaciones de pierna por ventana de reporte.
+# No cambia el CSV ni el mapeo. conf_piernas[nombre] = [n NONE, n LOW, n MEDIUM, n HIGH]; rodillas_conf2 = ciclos con
+# 2 / 1 / 0 rodillas con confianza >= MEDIUM (lo que vería el tempo si exigiera MEDIUM en las rodillas).
+J_PIERNAS = {"cad_i": pykinect.K4ABT_JOINT_HIP_LEFT, "rod_i": pykinect.K4ABT_JOINT_KNEE_LEFT,
+             "tob_i": pykinect.K4ABT_JOINT_ANKLE_LEFT, "pie_i": pykinect.K4ABT_JOINT_FOOT_LEFT,
+             "cad_d": pykinect.K4ABT_JOINT_HIP_RIGHT, "rod_d": pykinect.K4ABT_JOINT_KNEE_RIGHT,
+             "tob_d": pykinect.K4ABT_JOINT_ANKLE_RIGHT, "pie_d": pykinect.K4ABT_JOINT_FOOT_RIGHT}
+conf_piernas = {k: [0, 0, 0, 0] for k in J_PIERNAS}
+rodillas_conf2 = [0, 0, 0]   # [ciclos con 2, con 1, con 0 rodillas >= MEDIUM]
+
+
+def anotar_conf_piernas(skeleton):
+    """Cuenta el nivel de confianza (0 NONE, 1 LOW = posición inferida/predicha, 2 MEDIUM) de cada articulación de
+    pierna en este ciclo. La llama bucle_kinect en cada ciclo con cuerpo; reportar() escribe [PIERNAS] y reinicia."""
+    J = skeleton.joints
+    for k, i in J_PIERNAS.items():
+        conf_piernas[k][min(int(J[i].confidence_level), 3)] += 1
+    n2 = sum(int(J[J_PIERNAS[k]].confidence_level) >= 2 for k in ("rod_i", "rod_d"))
+    rodillas_conf2[2 - n2] += 1
+
+
 acum_linea = dict.fromkeys(LINEAS, 0.0)   # segundos acumulados por línea desde el último reporte
 n_linea = dict.fromkeys(LINEAS, 0)        # llamadas por línea desde el último reporte
 
@@ -391,6 +470,14 @@ def reportar():
               f"| frames descartados/ciclo={np.mean(descartes) if descartes else 0:.2f}")
     else:
         _reportar_linea("[CAMARA] sin dato de timestamp del sistema")
+    n_p = sum(rodillas_conf2)
+    if n_p:   # % de ciclos con cuerpo por nivel N/L/M (NONE/LOW/MEDIUM); HIGH no lo usa el SDK
+        _reportar_linea("[PIERNAS] " + " | ".join(
+            f"{k} N{100 * c[0] / n_p:.0f} L{100 * c[1] / n_p:.0f} M{100 * (c[2] + c[3]) / n_p:.0f}" for k, c in conf_piernas.items())
+            + f" | rodillas>=MEDIUM 2:{100 * rodillas_conf2[0] / n_p:.0f}% 1:{100 * rodillas_conf2[1] / n_p:.0f}% 0:{100 * rodillas_conf2[2] / n_p:.0f}%")
+    for c in conf_piernas.values():
+        c[:] = [0, 0, 0, 0]
+    rodillas_conf2[:] = [0, 0, 0]
     perf_file.flush()
     lags_cam.clear()
     descartes.clear()
@@ -424,7 +511,12 @@ class NormalizadorAdaptativo:
         self.muestras.append((t, valor))
         while t - self.muestras[0][0] > NORM_VENTANA_S:
             self.muestras.popleft()
-        if t - self.muestras[0][0] < NORM_CALENTAMIENTO_S:
+        return self.normalizar(valor, t)
+
+    def normalizar(self, valor, t):
+        """Lleva `valor` a [0,1] con las muestras ya guardadas, SIN añadirlo (cambio 6: TimbrePorManos lo usa en los
+        ciclos sin dato nuevo de manos, para no recalibrar con valores mantenidos). actualizar() termina aquí."""
+        if not self.muestras or t - self.muestras[0][0] < NORM_CALENTAMIENTO_S:
             return 0.5                      # aún calibrando: valor neutro
         vals = np.fromiter((v for _, v in self.muestras), dtype=float)
         lo, hi = np.percentile(vals, [5, 95])
@@ -497,7 +589,7 @@ class MapeoExtremidades:
         # --- Tempo: velocidad angular media de las rodillas ---
         omegas = []
         for lado, (cad, rod, tob) in J_RODILLAS.items():
-            if self._ok(J, cad) and self._ok(J, rod) and self._ok(J, tob):
+            if all(J[i].confidence_level >= CONF_MIN_RODILLA_TEMPO for i in (cad, rod, tob)):   # 1 = igual que _ok
                 ang = angulo_articulacion(self._pos(J, cad), self._pos(J, rod), self._pos(J, tob))
                 w = self.vel_rod[lado].actualizar(ang, t)
                 if w is not None:
@@ -595,26 +687,6 @@ class RegistroPorAngulo:
         return salida
 
 
-def zona_desde_registro(registro01, zona_anterior, tiempo_fuera_s, dt_s):
-    """Convierte registro01 (0-1) en zona "grave" | "medio" | "agudo" con histéresis EN TIEMPO (D-010):
-    una zona nueva debe sostenerse UMBRAL_ESTABILIDAD_ZONA_S segundos para confirmarse (evita que el tono
-    parpadee cerca de un umbral). Es la lógica de antes, pero cada ciclo fuera de la zona actual suma su
-    duración `dt_s` (con tope DT_MAX_ZONA_S) en lugar de 1, así que no depende de la tasa de ciclos.
-    Devuelve (zona, tiempo_fuera_s); bucle_kinect guarda tiempo_fuera_s para el siguiente ciclo."""
-    if registro01 < UMBRAL_REG_GRAVE:
-        candidata = "grave"
-    elif registro01 < UMBRAL_REG_AGUDO:
-        candidata = "medio"
-    else:
-        candidata = "agudo"
-    if candidata == zona_anterior:
-        return zona_anterior, 0.0
-    tiempo_fuera_s += min(dt_s, DT_MAX_ZONA_S)
-    if tiempo_fuera_s >= UMBRAL_ESTABILIDAD_ZONA_S:
-        return candidata, 0.0
-    return zona_anterior, tiempo_fuera_s
-
-
 registro = RegistroPorAngulo()
 
 
@@ -696,20 +768,18 @@ class HiloManos:
     con `estado()` cada ciclo (los datos de la Kinect NO cruzan el hilo: bucle_kinect extrae antes
     centro 2D y profundidad de cada mano).
     Variables importantes: `trabajadores` (lista; cada uno con su `cola` de 1 hueco, su bandera
-    `ocupado` y sus `lados`), `lock` (protege los resultados compartidos), `lock_norm` (protege el
-    normalizador de apertura, que comparten los dos hilos), `ult_apertura/ult_t_ap/ult_landmarks`
-    (último dato por mano), `recuadros_lado` (último recuadro por mano), `apertura01` (RF04).
+    `ocupado` y sus `lados`), `lock` (protege los resultados compartidos), `ult_apertura/ult_t_ap/ult_landmarks`
+    (último dato por mano), `recuadros_lado` (último recuadro por mano).
+    Cambio 6: ya NO normaliza la apertura (con ALTERNAR_MANOS cada trabajo trae una sola mano y apertura01 saltaba
+    entre las dos); la normaliza bucle_kinect con TimbrePorManos sobre el promedio de las manos vigentes.
     Cada detector de MediaPipe SOLO lo toca el hilo que lo creó (MediaPipe no es seguro entre hilos)."""
 
     def __init__(self):
         self.lock = threading.Lock()
-        self.lock_norm = threading.Lock()
-        self.norm_apertura = NormalizadorAdaptativo(RANGO_MIN_APERTURA)
         self.ult_apertura = {"izq": None, "der": None}
         self.ult_t_ap = {"izq": -1e9, "der": -1e9}      # perf_counter del frame que la midió
         self.ult_landmarks = {"izq": None, "der": None}  # solo para dibujar
         self.recuadros_lado = {"izq": None, "der": None} # (recuadro, acertó) de cada mano, solo para dibujar
-        self.apertura01 = 0.5
         self._t_trabajo, self._n_trabajos = 0.0, 0
         self._t_decod = 0.0                              # DECODIFICAR_EN_HILO_MANOS: segundos decodificando (dentro de _t_trabajo)
         self._ms_decod = 0.0                             # ms de decodificación por trabajo del último reporte
@@ -749,10 +819,10 @@ class HiloManos:
 
     def estado(self):
         """Copia consistente de los resultados para leer desde bucle_kinect.
-        Devuelve (ult_apertura, ult_t_ap, ult_landmarks, recuadros, apertura01)."""
+        Devuelve (ult_apertura, ult_t_ap, ult_landmarks, recuadros)."""
         with self.lock:
             return (dict(self.ult_apertura), dict(self.ult_t_ap), dict(self.ult_landmarks),
-                    [r for r in self.recuadros_lado.values() if r is not None], self.apertura01)
+                    [r for r in self.recuadros_lado.values() if r is not None])
 
     def estadisticas_y_reiniciar(self):
         """(ms promedio por trabajo, número de trabajos) desde el último reporte. Lo usa reportar().
@@ -830,7 +900,7 @@ class HiloManos:
             lados = [t["lados"][t["ciclo"] % 2]]
         t["ciclo"] += 1
 
-        nuevos, frescos, recuadros = {}, [], {}
+        nuevos, recuadros = {}, {}
         for lado in lados:
             obj = objetivos.get(lado)
             nuevos[lado] = None
@@ -847,12 +917,6 @@ class HiloManos:
             if landmarks is not None:
                 ap = calcular_apertura(landmarks)
                 nuevos[lado] = (ap, landmarks)
-                frescos.append(ap)
-        # solo se recalibra con datos nuevos (el normalizador lo comparten los hilos: se protege con candado)
-        ap01 = None
-        if frescos:
-            with self.lock_norm:
-                ap01 = self.norm_apertura.actualizar(float(np.mean(frescos)), t_frame)
 
         with self.lock:
             for lado, r in nuevos.items():
@@ -862,11 +926,10 @@ class HiloManos:
                     self.ult_apertura[lado], self.ult_landmarks[lado] = r
                     self.ult_t_ap[lado] = t_frame
                 self.recuadros_lado[lado] = recuadros[lado]
-            if ap01 is not None:
-                self.apertura01 = ap01
 
 
 hilo_manos = HiloManos()
+timbre = TimbrePorManos(NormalizadorAdaptativo(RANGO_MIN_APERTURA))   # cambio 6: apertura01 desde el promedio de las manos
 
 
 class FusionTemporal:
@@ -1015,7 +1078,7 @@ async def bucle_kinect():
     mapeo.actualizar (tempo, intensidad, lambda) y elegir_siguiente_nota (melodía);
     envía el resultado por WebSocket a index.html. El envío va ANTES de dibujar para
     no sumar el tiempo de dibujo a la latencia. t_cap_ms marca cuándo llegó el frame."""
-    global zona_actual, contador_estable, tiempo_fuera_zona, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
+    global zona_actual, contador_estable, candidata_zona, tiempo_candidata, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
     t_prev_cuerpo = None                          # último ciclo con cuerpo, para detectar ausencias
     ciclo_global = 0
     apertura01 = 0.5
@@ -1053,6 +1116,7 @@ async def bucle_kinect():
         if num_bodies > 0:
             skeleton = body_frame.get_body_skeleton(0)
             n_joints_ok, joints_no_disp = estado_articulaciones(skeleton)   # HU0007-2
+            anotar_conf_piernas(skeleton)                                    # HU0007-2: solo para [PIERNAS] en _perf.txt
             fusion.registrar_cuerpo(t_ciclo)                                 # HU0009: frame con cuerpo
 
             # ---- Registro (tono): ángulo de los hombros (o altura de la muñeca si REGISTRO_POR_ANGULO=False) ----
@@ -1062,8 +1126,9 @@ async def bucle_kinect():
             if REGISTRO_POR_ANGULO:
                 # dt = duración de este ciclo, desde el ciclo con cuerpo anterior (t_prev_cuerpo se actualiza más abajo)
                 dt_zona = 0.0 if t_prev_cuerpo is None else t_ciclo - t_prev_cuerpo
-                zona_actual, tiempo_fuera_zona = zona_desde_registro(
-                    reg["registro01"], zona_actual, tiempo_fuera_zona, dt_zona
+                zona_actual, candidata_zona, tiempo_candidata = zona_desde_registro(
+                    reg["registro01"], zona_actual, candidata_zona, tiempo_candidata, dt_zona,
+                    UMBRAL_REG_GRAVE, UMBRAL_REG_AGUDO, UMBRAL_ESTABILIDAD_ZONA_S, DT_MAX_ZONA_S,
                 )
             else:
                 muneca = skeleton.joints[pykinect.K4ABT_JOINT_WRIST_LEFT].position.xyz
@@ -1086,11 +1151,12 @@ async def bucle_kinect():
 
             # Resultado más reciente del hilo. Si una mano se pierde, se mantiene su última
             # apertura HOLD_APERTURA_S segundos (el tiempo se compara con el del frame medido).
-            ult_apertura, ult_t_ap, ult_landmarks, recuadros_hoy, apertura01 = hilo_manos.estado()
-            efectivas = {l: v for l, v in ult_apertura.items()
-                         if v is not None and t_ciclo - ult_t_ap[l] <= HOLD_APERTURA_S}
-            # HU0008-2: sin mano vigente NO se inventa un valor: apertura_val = None (el HTML mantiene el timbre)
-            apertura_val = float(np.mean(list(efectivas.values()))) if efectivas else None
+            ult_apertura, ult_t_ap, ult_landmarks, recuadros_hoy = hilo_manos.estado()
+            # Cambio 1 (HU0008-2, P-006): sin mano vigente NO se inventa un valor: apertura_val y apertura01 = None
+            # (CSV vacío; el navegador lleva el timbre al valor neutro)
+            efectivas, apertura_val = apertura_vigente(ult_apertura, ult_t_ap, t_ciclo, HOLD_APERTURA_S)
+            # Cambio 6: apertura01 = promedio de las manos vigentes, normalizado; recalibra solo con datos nuevos
+            apertura01 = timbre.actualizar(apertura_val, max((ult_t_ap[l] for l in efectivas), default=None), t_ciclo)
             fus = fusion.actualizar(t_ciclo, ult_t_ap, bool(efectivas))      # HU0009: edad y desfase
             manos_detectadas = [h for h in ult_landmarks.values() if h is not None]
             acum["manos"] += time.perf_counter() - t
@@ -1102,6 +1168,7 @@ async def bucle_kinect():
 
             intervalo_s = 1.0 / (NOTAS_POR_SEG_MIN + m["tempo"] * (NOTAS_POR_SEG_MAX - NOTAS_POR_SEG_MIN))
             lat_tick_ms = None                       # solo tiene valor en el ciclo en que hay nota nueva
+            lam_sorteo = None                        # cambio 3: λ exacto del sorteo, solo en el ciclo con nota nueva
             reanclado = False
             # Si el cuerpo estuvo ausente >0.5 s, el reloj se re-ancla: eso es ausencia, no latencia
             if t_prev_cuerpo is not None and t_ciclo - t_prev_cuerpo > 0.5:
@@ -1110,7 +1177,8 @@ async def bucle_kinect():
             t_prev_cuerpo = t_ciclo
             if t_ciclo >= t_prox_tick:
                 es_primera = (nota_id == 0)          # la primera nota no tiene tick previo
-                nota_actual = elegir_siguiente_nota(nota_actual, lam)
+                lam_sorteo = lam
+                nota_actual = elegir_siguiente_nota(nota_actual, lam, lam_min=LAMBDA_MIN)   # cambio 4: λ mínimo = determinístico
                 octava_actual = calcular_octava(zona_actual)
                 nota_id += 1
                 if not es_primera and not reanclado:
@@ -1134,7 +1202,7 @@ async def bucle_kinect():
                 "registro": round(reg["registro01"], 3),
                 "zona": zona_actual,
                 "apertura": None if apertura_val is None else round(apertura_val, 3),
-                "apertura01": round(apertura01, 3),
+                "apertura01": None if apertura01 is None else round(apertura01, 3),
                 "apertura_izq": None if ap_izq is None else round(ap_izq, 3),
                 "apertura_der": None if ap_der is None else round(ap_der, 3),
                 "joints_ok": n_joints_ok,
@@ -1160,7 +1228,7 @@ async def bucle_kinect():
                 nota_actual, octava_actual,
                 _fmt(apertura_val), _fmt(ap_izq), _fmt(ap_der),
                 len(manos_detectadas),
-                round(m["tempo"], 3), round(m["intensidad"], 3), round(apertura01, 3),
+                round(m["tempo"], 3), round(m["intensidad"], 3), _fmt(apertura01),
                 round(m["vel_rodilla"], 1), round(m["amplitud_mm"], 1), round(t_cap_ms, 1),
                 "" if lat_tick_ms is None else round(lat_tick_ms, 1),
                 _fmt(cand["hombro_izq"]), _fmt(cand["hombro_der"]), _fmt(cand["codo_izq"]), _fmt(cand["codo_der"]),
@@ -1171,6 +1239,7 @@ async def bucle_kinect():
                 _fmt(fus["par_dt_ms"]), int(fus["desync_manos"]),
                 origen_roi["izq"] or "", origen_roi["der"] or "",
                 _fmt(lag_cam_ms), n_descartados,
+                nota_id, "" if lam_sorteo is None else repr(float(lam_sorteo)), SEMILLA, VERSION_MAIN, COMMIT_GIT,
             ])
             log_file.flush()
             acum["salida"] += time.perf_counter() - t
@@ -1211,7 +1280,7 @@ async def main():
     """Abre el servidor WebSocket y corre bucle_kinect hasta `q`, Ctrl+C o un error.
     Al terminar, si hay navegador conectado, espera ESPERA_ULTIMAS_LATENCIAS_S con el servidor abierto: el
     navegador manda sus latencias cada 0.5 s y sin esta espera el último lote no llegaría a _latencias.csv."""
-    server = await websockets.serve(manejar_cliente, HOST_WS, PUERTO_WS, ping_interval=None)
+    server = await websockets.serve(manejar_cliente, sock=SOCK_WS, ping_interval=None)   # cambio 7b: socket abierto al arrancar
     try:
         await bucle_kinect()
     finally:
