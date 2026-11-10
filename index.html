@@ -5,14 +5,49 @@
 <title>Música con movimiento</title>
 <!-- Tone.js LOCAL (RNF02: el sistema debe funcionar sin internet). Tone.js debe estar en la MISMA carpeta que este archivo -->
 <script src="Tone.js"></script>
+<script src="visual.js"></script>
+<style>
+  /* ?visual=0 (corridas base): la página de siempre */
+  body.depuracion { font-family: sans-serif; max-width: 680px; margin: 24px auto; }
+  body.depuracion #lienzo, body.depuracion .pantalla, body.depuracion #terminar { display: none; }
+  /* Visual encendido (US38): canvas a pantalla completa y pantallas de inicio y cierre */
+  body.visual { margin: 0; overflow: hidden; background: #0b0e16; color: #ebeef5; font-family: system-ui, sans-serif; }
+  body.visual #panel { display: none; }
+  #lienzo { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  .pantalla { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+              gap: 22px; background: #0b0e16; text-align: center; padding: 16px; }
+  .pantalla h1 { font-size: 40px; margin: 0; font-weight: 600; }
+  .pantalla p { font-size: 20px; margin: 0; max-width: 560px; color: #c9cfdc; }
+  .pantalla button { font-size: 24px; padding: 14px 44px; border-radius: 999px; border: 2px solid #9C8BE0;
+                     background: #9C8BE0; color: #0b0e16; font-weight: 600; cursor: pointer; }
+  .pantalla a { color: #F2B27A; font-size: 18px; }
+  .oculta { display: none !important; }
+  #terminar { position: fixed; right: 18px; bottom: 16px; font-size: 15px; padding: 6px 16px; border-radius: 999px;
+              border: 1px solid #5b6275; background: transparent; color: #c9cfdc; cursor: pointer; }
+</style>
 </head>
-<body style="font-family: sans-serif; max-width: 680px; margin: 24px auto;">
+<body>
+<canvas id="lienzo"></canvas>
+<div id="pantalla-inicio" class="pantalla">
+  <h1>Música con movimiento</h1>
+  <p>Muévete frente a la cámara: tus brazos, tus piernas y tus manos crean la música.</p>
+  <button id="empezar">Empezar</button>
+  <a id="enlace-antes" target="_blank" rel="noopener">Cuestionario de antes</a>
+</div>
+<div id="pantalla-cierre" class="pantalla oculta">
+  <h1>Gracias por moverte con la música</h1>
+  <p>Antes de irte, cuéntanos cómo te sientes ahora.</p>
+  <a id="enlace-despues" target="_blank" rel="noopener">Cuestionario de después</a>
+</div>
+<button id="terminar" class="oculta">Terminar</button>
+<div id="panel">
 <h2>Música con movimiento</h2>
 <button id="inicio">Iniciar audio</button>
 <button id="descargar">Descargar latencias (CSV)</button>
 <p id="estado">Esperando…</p>
 <pre id="datos"></pre>
 <pre id="latencia">Latencia: sin datos</pre>
+</div>
 
 <script>
 // =====================================================================
@@ -28,6 +63,31 @@ const APERTURA_NEUTRA = 0.5;                     // cambio 1 (HU0008-2): sin man
 const VOL_MIN_DB = -20, VOL_MAX_DB = -6;         // intensidad (amplitud de extremidades); -20 evita el casi-silencio en reposo
 const MAX_VENTANA = 300;                         // muestras para las estadísticas en pantalla
 const MAX_REGISTRO = 50000;                      // muestras para el CSV descargable
+// US38: ?visual=0 apaga el dibujo (corridas base, página de siempre); ?demo=1 estados falsos sin Kinect ni WebSocket
+const PARAMS = new URLSearchParams(location.search);
+const VISUAL = PARAMS.get("visual") !== "0";
+const DEMO = PARAMS.get("demo") === "1";
+// Cuestionario de estrés (US31/US32 son del otro curso; aquí solo se abren los enlaces)
+const URL_CUESTIONARIO = { antes: "[POR COMPLETAR]", despues: "[POR COMPLETAR]" };
+document.body.className = VISUAL ? "visual" : "depuracion";
+
+function medirHzPantalla() {
+  /* Frecuencia de refresco de la pantalla (Hz): mediana del intervalo entre ~60 requestAnimationFrame al cargar la
+     página (también con ?visual=0; dura ~1 s, antes de cualquier corrida). La usa ws.onopen para la fila "config".
+     null si la pestaña está oculta (el navegador frena requestAnimationFrame). */
+  return new Promise(resolver => {
+    const marcas = [];
+    const paso = (ts) => {
+      marcas.push(ts);
+      if (marcas.length < 62) { requestAnimationFrame(paso); return; }
+      const dif = marcas.slice(2).map((t, i) => t - marcas[i + 1]).sort((a, b) => a - b);
+      const mediana = dif[Math.floor(dif.length / 2)];
+      resolver(document.hidden || !(mediana > 0) ? null : Math.round(1000 / mediana));
+    };
+    requestAnimationFrame(paso);
+  });
+}
+const hzPantalla = medirHzPantalla();
 
 // =====================================================================
 // Audio: sintetizador -> filtro -> salida
@@ -41,13 +101,57 @@ synth.connect(filtro);
 let audioListo = false;
 let ultimoNotaId = null;
 
-document.getElementById("inicio").onclick = async () => {
+async function iniciarAudio() {
+  /* Gesto del usuario que exige el navegador (HU0014-2). Lo llaman "Iniciar audio" (?visual=0) y "Empezar". */
   await Tone.start();
   Tone.context.lookAhead = 0;   // Tone adelanta 100 ms por defecto; en 0 suena de inmediato
                                 // (si oyes clics, prueba 0.02)
   audioListo = true;
   document.getElementById("estado").textContent = "Audio activo";
+}
+document.getElementById("inicio").onclick = iniciarAudio;
+
+function ponerEnlace(id, url) {
+  /* Enlace al cuestionario; mientras la URL esté [POR COMPLETAR] se muestra sin destino. */
+  const a = document.getElementById(id);
+  if (url.startsWith("http")) a.href = url; else a.textContent += " (enlace por completar)";
+}
+ponerEnlace("enlace-antes", URL_CUESTIONARIO.antes);
+ponerEnlace("enlace-despues", URL_CUESTIONARIO.despues);
+
+document.getElementById("empezar").onclick = async () => {
+  /* HU0038-3: pantalla de inicio -> visual; también da el gesto del audio. */
+  await iniciarAudio();
+  document.getElementById("pantalla-inicio").classList.add("oculta");
+  document.getElementById("terminar").classList.remove("oculta");
 };
+
+document.getElementById("terminar").onclick = () => {
+  /* HU0038-3: pantalla de cierre. Deja de aplicar estados (sin sonido nuevo) y suelta la nota que suena. */
+  audioListo = false;
+  synth.triggerRelease();
+  document.getElementById("terminar").classList.add("oculta");
+  document.getElementById("pantalla-cierre").classList.remove("oculta");
+};
+
+function aplicarSonido(d) {
+  /* Aplica un estado al sonido (sin cambios respecto al onmessage anterior: C5). Lo llaman ws.onmessage y la demo.
+     Devuelve true si el estado trae una nota nueva (nota_id distinto del último). */
+  // Timbre: apertura de manos (normalizada por usuario) -> frecuencia de corte del filtro;
+  // sin mano vigente (apertura01 = null) va al valor neutro, no se queda en el último valor
+  const ap01 = (d.apertura01 === null || d.apertura01 === undefined) ? APERTURA_NEUTRA : d.apertura01;
+  filtro.frequency.rampTo(CORTE_MIN_HZ + ap01 * (CORTE_MAX_HZ - CORTE_MIN_HZ), 0.05);
+  // Intensidad: amplitud de las extremidades -> volumen
+  synth.volume.rampTo(VOL_MIN_DB + d.intensidad * (VOL_MAX_DB - VOL_MIN_DB), 0.08);
+
+  // Nota nueva (el tempo lo marca Python con nota_id e intervalo_s)
+  const esNota = (d.nota_id !== ultimoNotaId);
+  if (esNota) {
+    ultimoNotaId = d.nota_id;
+    synth.triggerAttackRelease(MAPA_NOTAS[d.nota] + d.octava, Math.max(0.1, d.intervalo_s * 0.9));
+  }
+  return esNota;
+}
 
 // =====================================================================
 // Medición de latencia
@@ -143,9 +247,16 @@ document.getElementById("descargar").onclick = () => {
 // =====================================================================
 function conectar() {
   ws = new WebSocket(URL_WS);
-  ws.onopen = () => { document.getElementById("estado").textContent = "Conectado a Python"; };
+  ws.onopen = () => {
+    document.getElementById("estado").textContent = "Conectado a Python";
+    // US38/C6: en cada conexión (una por corrida) se anota la configuración: latencia_ms = visual (1 o 0),
+    // transporte_ms = Hz de la pantalla (mediana del intervalo de requestAnimationFrame al cargar la página)
+    hzPantalla.then(hz => anotar([Date.now(), "config", VISUAL ? "1" : "0", hz === null ? "" : String(hz), "", "", ""]));
+    if (VISUAL) Visual.ponerConexion(true);
+  };
   ws.onclose = () => {
     document.getElementById("estado").textContent = "Desconectado, reintentando…";
+    if (VISUAL) Visual.ponerConexion(false);
     setTimeout(conectar, REINTENTO_MS);
   };
   ws.onmessage = (ev) => {
@@ -153,19 +264,7 @@ function conectar() {
     const d = JSON.parse(ev.data);
     if (!audioListo) return;
 
-    // Timbre: apertura de manos (normalizada por usuario) -> frecuencia de corte del filtro;
-    // sin mano vigente (apertura01 = null) va al valor neutro, no se queda en el último valor
-    const ap01 = (d.apertura01 === null || d.apertura01 === undefined) ? APERTURA_NEUTRA : d.apertura01;
-    filtro.frequency.rampTo(CORTE_MIN_HZ + ap01 * (CORTE_MAX_HZ - CORTE_MIN_HZ), 0.05);
-    // Intensidad: amplitud de las extremidades -> volumen
-    synth.volume.rampTo(VOL_MIN_DB + d.intensidad * (VOL_MAX_DB - VOL_MIN_DB), 0.08);
-
-    // Nota nueva (el tempo lo marca Python con nota_id e intervalo_s)
-    const esNota = (d.nota_id !== ultimoNotaId);
-    if (esNota) {
-      ultimoNotaId = d.nota_id;
-      synth.triggerAttackRelease(MAPA_NOTAS[d.nota] + d.octava, Math.max(0.1, d.intervalo_s * 0.9));
-    }
+    const esNota = aplicarSonido(d);
 
     // RNF02: retraso tick -> sorteo, medido en Python (solo viene en mensajes con nota nueva)
     if (d.lat_tick_ms !== null && d.lat_tick_ms !== undefined) {
@@ -176,13 +275,27 @@ function conectar() {
     // (a) frame recibido en Python -> sonido aplicado aquí; (b) = (a) + lag_cam_ms (RNF01, D-009)
     registrarLatencia(Date.now() - d.t_cap_ms, tRecv - d.t_env_ms, esNota, d.lag_cam_ms);
 
+    // US38: con el visual solo se guarda el estado (el dibujo va en requestAnimationFrame); sin él, el texto de siempre
+    if (VISUAL) { Visual.alRecibirEstado(d, esNota); return; }
     document.getElementById("datos").textContent =
       `Nota ${d.nota}${d.octava} | λ=${d.lam} | tempo=${d.tempo} | intensidad=${d.intensidad}\n` +
       `apertura=${d.apertura === null ? "sin mano (timbre neutro)" : d.apertura} (norm ${d.apertura01 === null ? "-" : d.apertura01}) | manos=${d.manos}\n` +
       `articulaciones fiables=${d.joints_ok}/32 | edad datos de manos=${d.edad_manos_ms === null ? "-" : d.edad_manos_ms} ms | desync manos=${d.desync_manos}`;
   };
 }
-conectar();
+
+if (VISUAL) {
+  // Mide (filas "cuadro" y "visual") solo con el WebSocket abierto y el audio iniciado: nada entre corridas ni en la demo
+  Visual.iniciar(document.getElementById("lienzo"), {
+    anotar, medir: () => !DEMO && audioListo && ws !== null && ws.readyState === WebSocket.OPEN,
+  });
+}
+if (DEMO) {
+  // Sin WebSocket: nunca es un segundo cliente en una corrida
+  Visual.iniciarDemo((d) => { if (!audioListo) return; Visual.alRecibirEstado(d, aplicarSonido(d)); });
+} else {
+  conectar();
+}
 </script>
 </body>
 </html>
