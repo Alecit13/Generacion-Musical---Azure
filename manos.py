@@ -29,6 +29,17 @@ def apertura_vigente(ult_apertura, ult_t_ap, t_ahora, hold_s):
     return efectivas, apertura_val
 
 
+def edades_por_mano_ms(ult_t_ap, t_ahora):
+    """P-015 (HU0008-1, D-024; solo medición): edad en ms del último dato de CADA mano, medida desde el frame actual.
+    HiloManos solo cambia ult_t_ap[lado] cuando MediaPipe detecta esa mano, así que cada vez que la edad de una mano
+    BAJA entre filas del CSV hubo un dato nuevo: contándolas offline salen las actualizaciones por mano/s sin el
+    redondeo de las columnas de apertura. Misma definición que edad_manos_ms (que es la menor de las dos).
+    Relación: la llama bucle_kinect con lo que devuelve HiloManos.estado(); el resultado solo va al CSV.
+    Variables: `ult_t_ap` {"izq"|"der": perf_counter del frame que la midió; -1e9 = nunca}, `t_ahora` (perf_counter
+    del frame actual). Devuelve {lado: ms redondeado a 0.1, o None si esa mano nunca tuvo dato}."""
+    return {l: (round((t_ahora - t) * 1000.0, 1) if t > -1e8 else None) for l, t in ult_t_ap.items()}
+
+
 class TimbrePorManos:
     """Cambio 6 (HU0017-1, D-024): apertura01 (timbre) a partir del PROMEDIO de la última apertura válida de cada mano
     (vencimiento HOLD_APERTURA_S, ver apertura_vigente). Antes la normalizaba HiloManos con la mano del trabajo y, al

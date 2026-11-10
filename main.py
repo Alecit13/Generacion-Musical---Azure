@@ -24,7 +24,7 @@ import sys
 from datetime import datetime
 from zona import calcular_zona, zona_desde_registro
 from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
-from manos import calcular_apertura, apertura_vigente, TimbrePorManos
+from manos import calcular_apertura, apertura_vigente, TimbrePorManos, edades_por_mano_ms
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
 
@@ -363,7 +363,9 @@ log_writer.writerow(["timestamp", "zona", "lambda", "acc_media", "nota", "octava
                      "frames_descartados",  # frames viejos descartados de la cola en este ciclo
                      # cambio 3 (HU0021-1, HU0022-1): para reconstruir la secuencia de notas. lam_sorteo = λ EXACTO
                      # (repr) que recibió elegir_siguiente_nota, solo en la fila con nota nueva (la columna lambda va redondeada)
-                     "nota_id", "lam_sorteo", "semilla", "version", "commit"])
+                     "nota_id", "lam_sorteo", "semilla", "version", "commit",
+                     # P-015 (HU0008-1, D-024; solo medición): edad del último dato de cada mano; si baja, hubo dato nuevo
+                     "edad_izq_ms", "edad_der_ms"])
 log_file.flush()
 # Los reportes [PERF]/[PERF-LINEA]/[CAMARA]/[FUSION]/[ROI] se guardan también en un .txt con el mismo nombre que el CSV,
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
@@ -1158,6 +1160,7 @@ async def bucle_kinect():
             # Cambio 6: apertura01 = promedio de las manos vigentes, normalizado; recalibra solo con datos nuevos
             apertura01 = timbre.actualizar(apertura_val, max((ult_t_ap[l] for l in efectivas), default=None), t_ciclo)
             fus = fusion.actualizar(t_ciclo, ult_t_ap, bool(efectivas))      # HU0009: edad y desfase
+            edades = edades_por_mano_ms(ult_t_ap, t_ciclo)                   # P-015: solo para el CSV
             manos_detectadas = [h for h in ult_landmarks.values() if h is not None]
             acum["manos"] += time.perf_counter() - t
 
@@ -1240,6 +1243,7 @@ async def bucle_kinect():
                 origen_roi["izq"] or "", origen_roi["der"] or "",
                 _fmt(lag_cam_ms), n_descartados,
                 nota_id, "" if lam_sorteo is None else repr(float(lam_sorteo)), SEMILLA, VERSION_MAIN, COMMIT_GIT,
+                _fmt(edades["izq"]), _fmt(edades["der"]),   # P-015
             ])
             log_file.flush()
             acum["salida"] += time.perf_counter() - t

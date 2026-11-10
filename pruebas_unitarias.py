@@ -3,7 +3,7 @@ No importan main.py (enciende la Kinect al importarse): prueban las funciones pu
 Uso:  python -m unittest pruebas_unitarias -v      (desde la carpeta del proyecto, con env_cv activo)"""
 import unittest
 
-from manos import apertura_vigente
+from manos import apertura_vigente, edades_por_mano_ms
 
 HOLD = 0.5   # igual que HOLD_APERTURA_S de main.py
 
@@ -37,6 +37,18 @@ class PruebaAperturaVigente(unittest.TestCase):
     def test_sin_datos_nunca(self):
         ef, val = apertura_vigente({"izq": None, "der": None}, {"izq": -1e9, "der": -1e9}, 10.0, HOLD)
         self.assertEqual((ef, val), ({}, None))
+
+
+class PruebaEdadesPorMano(unittest.TestCase):
+    """P-015 (HU0008-1): edad del último dato de cada mano, con reloj simulado."""
+
+    def test_edades_y_mano_sin_dato(self):
+        self.assertEqual(edades_por_mano_ms({"izq": 1.000, "der": -1e9}, 1.0655), {"izq": 65.5, "der": None})
+
+    def test_la_edad_baja_con_un_dato_nuevo(self):
+        antes = edades_por_mano_ms({"izq": 1.0, "der": 1.0}, 1.1)["izq"]
+        despues = edades_por_mano_ms({"izq": 1.1, "der": 1.0}, 1.133)["izq"]
+        self.assertLess(despues, antes)
 
 
 class PruebaTopeRepeticiones(unittest.TestCase):
