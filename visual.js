@@ -21,6 +21,14 @@ const Visual = (() => {
   const SIN_CUERPO_MS = 500;                // sin mensajes durante esto = no hay cuerpo (Python solo envía con cuerpo)
   const TAU_FONDO_S = 3.0;                  // suavizado del fondo (varios segundos)
   const FONDO = [11, 14, 22];               // fondo oscuro
+  // Tope de cuadros dibujados por segundo (Ale, 10/11): la pantalla va a 143 Hz y redibujarla entera en cada refresco
+  // le quitaba CPU/GPU al tracker (corrida 162510: 22.3 ciclos/s). Los refrescos de más no hacen nada.
+  // ?fps=N y ?ligero=1 (media resolución y como máximo 2 trazos) son los pasos 3 y 2 de la escalera, solo para A/B.
+  const PARAMS_V = new URLSearchParams(location.search);
+  const FPS_TOPE = Number(PARAMS_V.get("fps")) > 0 ? Number(PARAMS_V.get("fps")) : 30;
+  const LIGERO = PARAMS_V.get("ligero") === "1";
+  const PERIODO_MS = 1000 / FPS_TOPE;
+  const TOLERANCIA_MS = 3;                  // medio refresco a 143 Hz: el promedio queda en FPS_TOPE
 
   // ---------- Estado ----------
   let canvas = null, ctx = null, ancho = 0, alto = 0;
@@ -29,6 +37,7 @@ const Visual = (() => {
   const anillos = [];
   let zonaActual = "medio", colorDesde = COLOR_ZONA.medio, colorHacia = COLOR_ZONA.medio, tCambioColor = -Infinity;
   let tempoSuav = 0, intSuav = 0, fase = 0, tPrevCuadro = null, tAvisoCambio = 0, sinCuerpoPrev = true;
+  let proximoMs = 0, registrabaAntes = false;
   const COS = [], SIN = [];
   for (let i = 0; i < PUNTOS; i++) { COS.push(Math.cos(2 * Math.PI * i / PUNTOS)); SIN.push(Math.sin(2 * Math.PI * i / PUNTOS)); }
 
@@ -44,10 +53,10 @@ const Visual = (() => {
   }
 
   function ajustarTamano() {
-    const dpr = window.devicePixelRatio || 1;
+    const escala = (window.devicePixelRatio || 1) * (LIGERO ? 0.5 : 1);   // ?ligero=1: la mitad de píxeles por lado
     ancho = window.innerWidth; alto = window.innerHeight;
-    canvas.width = Math.round(ancho * dpr); canvas.height = Math.round(alto * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = Math.round(ancho * escala); canvas.height = Math.round(alto * escala);
+    ctx.setTransform(escala, 0, 0, escala, 0, 0);
   }
 
   function ponerConexion(abierta) { conectado = abierta; }
@@ -83,7 +92,10 @@ const Visual = (() => {
 
   function cuadro(ts) {
     /* Bucle de requestAnimationFrame: suaviza fondo, dibuja fondo, anillos e indicador, borra los anillos muertos
-       y mide el trabajo de dibujo de este cuadro y el intervalo desde el anterior. */
+       y mide el trabajo de dibujo de este cuadro y el intervalo desde el anterior cuadro DIBUJADO.
+       Tope: si aún no toca dibujar (FPS_TOPE), este refresco solo pide el siguiente. */
+    if (ts + TOLERANCIA_MS < proximoMs) { requestAnimationFrame(cuadro); return; }
+    proximoMs = (ts - proximoMs > PERIODO_MS) ? ts + PERIODO_MS : proximoMs + PERIODO_MS;
     const tIni = performance.now();
     const t = tIni / 1000;
     const dt = tPrevCuadro === null ? 0 : Math.min(0.1, (ts - tPrevCuadro) / 1000);
@@ -100,6 +112,9 @@ const Visual = (() => {
     // Anillos (los muertos se quitan; el dibujo marca la latencia visual de cada uno la primera vez)
     for (let i = anillos.length - 1; i >= 0; i--) if (t - anillos[i].t0 > VIDA_ANILLO_S) anillos.splice(i, 1);
     const registrar = medir();
+    // Al empezar a medir (una vez por corrida): fila config_visual, latencia_ms = tope de cuadros/s, transporte_ms = ligero
+    if (registrar && !registrabaAntes) anotar([Date.now(), "config_visual", String(FPS_TOPE), LIGERO ? "1" : "0", "", "", ""]);
+    registrabaAntes = registrar;
     for (const a of anillos) {
       dibujarAnillo(a, t);
       if (!a.dibujado) {
@@ -173,9 +188,13 @@ const Visual = (() => {
     const rMax = 0.48 * Math.min(ancho, alto);
     const r = 8 + (rMax - 8) * (1 - Math.pow(1 - p, 2));             // crece rápido al inicio y frena
     const grosor = 1.5 + 6 * a.intensidad;
-    const trazos = 1 + Math.round(2 * (1 - a.apertura));
+    const trazos = Math.min(LIGERO ? 2 : 3, 1 + Math.round(2 * (1 - a.apertura)));
     const separacion = grosor * (0.6 + 1.2 * (1 - a.apertura));
     const cx = ancho / 2, cy = alto / 2, col = a.color.map(Math.round).join(",");
+    // Forma según la apertura (Ale, 10/11): abierta = línea continua, intermedia = discontinua, puño = punteada
+    const guion = a.apertura >= 0.6 ? [] : a.apertura >= 0.4 ? [grosor * 3, grosor * 2] : [0.01, grosor * 2.6];
+    ctx.lineCap = "round";
+    ctx.setLineDash(guion);
     for (let k = 0; k < trazos; k++) {
       const desp = k === 0 ? 0 : Math.ceil(k / 2) * separacion * (k % 2 ? 1 : -1);
       ctx.strokeStyle = `rgba(${col},${(alfaBase * Math.pow(0.45, k)).toFixed(3)})`;
@@ -190,6 +209,8 @@ const Visual = (() => {
       ctx.closePath();
       ctx.stroke();
     }
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
   }
 
   function dibujarIndicador(t, sinCuerpo) {
