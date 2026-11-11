@@ -191,8 +191,9 @@ const Visual = (() => {
     const trazos = Math.min(LIGERO ? 2 : 3, 1 + Math.round(2 * (1 - a.apertura)));
     const separacion = grosor * (0.6 + 1.2 * (1 - a.apertura));
     const cx = ancho / 2, cy = alto / 2, col = a.color.map(Math.round).join(",");
-    // Forma según la apertura (Ale, 10/11): abierta = línea continua, intermedia = discontinua, puño = punteada
-    const guion = a.apertura >= 0.6 ? [] : a.apertura >= 0.4 ? [grosor * 3, grosor * 2] : [0.01, grosor * 2.6];
+    // Forma según la apertura (Ale, 10-11/11): abierta = línea continua, intermedia = discontinua, puño = punteada.
+    // Umbrales 0.25 / 0.5 (antes 0.4 / 0.6): una mano entreabierta salía punteada (observación de Ale, 10/11)
+    const guion = a.apertura >= 0.5 ? [] : a.apertura >= 0.25 ? [grosor * 3, grosor * 2] : [0.01, grosor * 2.6];
     ctx.lineCap = "round";
     ctx.setLineDash(guion);
     for (let k = 0; k < trazos; k++) {
