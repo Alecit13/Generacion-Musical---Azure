@@ -1,0 +1,27 @@
+validacion_offline.py — 11/11/2026 17:47 — Python 3.12.10 — TODO SIMULADO
+
+US12 — escalón de registro01 (hombros 20° -> 160°), RegistroPorAngulo real, 30 Hz [SIMULADO]
+  EMA_ANGULO_BRAZO = 0.5; registro01 antes 0.000 -> después 1.000
+  tiempo al 50 %: 0.0 ms  (umbral 100 ms) -> por debajo
+  cola: 63 % 33.3 ms · 90 % 100.0 ms
+  referencia teórica del EMA: retardo de grupo (1-α)/α ciclos = 33.3 ms
+  aparte (D-028, intencional): la zona pasa de grave a agudo a los 300.0 ms del escalón
+
+US12 — escalón de velocidad de rodilla (0 -> 100 °/s), VelocidadAngular real, 30 Hz [SIMULADO, informativo]
+  EMA_VEL_RODILLA = 0.4; al 50 % 33.3 ms · 63 % 33.3 ms · 90 % 133.3 ms
+
+US12 — ruido blanco por el EMA [SIMULADO, informativo]
+  EMA_ANGULO_BRAZO = 0.5: desviación −42.4 % (teoría −42.3 %)
+  EMA_VEL_RODILLA = 0.4: desviación −50.0 % (teoría −50.0 %)
+
+US28-1 — diversidad entre semillas con λ fijo (20 semillas × 300 notas) [SIMULADO]
+  λ = 0.05: notas distintas entre pares   0.0 % · entropía media 2.75 bits · trigramas distintos (media) 12
+  λ = 0.3 : notas distintas entre pares  84.8 % · entropía media 2.76 bits · trigramas distintos (media) 79
+  λ = 0.6 : notas distintas entre pares  85.0 % · entropía media 2.78 bits · trigramas distintos (media) 118
+  λ = 1.0 : notas distintas entre pares  85.4 % · entropía media 2.79 bits · trigramas distintos (media) 165
+US28-1 — secuencia real de λ (sesion_20261111_162802_mjpg-ca, 889 notas; la entrada es MEDIDA, las melodías son SIMULADAS)
+  notas distintas entre pares de semillas 85.2 % · entropía media 2.80 bits; con la semilla de la corrida se reproduce la melodía grabada: True
+US28-2 — consistencia con la misma entrada y 20 semillas [SIMULADO]
+  λ idéntico por construcción (es la entrada) · octava idéntica en todas: True · nº de notas idéntico: True · melodías distintas: 20 de 20
+Criterios fijados antes de correr (umbrales [POR CONFIRMAR] por Ale):
+  D1 λ=0.05 sin diferencias: True · D2 secuencia real ≥ 50 %: True · D3 diversidad crece con λ: True · C1 consistencia 100 %: True
