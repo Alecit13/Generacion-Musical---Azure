@@ -27,7 +27,8 @@ UMBRAL_TICK_MS = 250.0       # HU0024-1
 UMBRAL_LAG_P95 = 27.1        # C2 (D-049)
 UMBRAL_DATOS_MANO = 5.0      # C7 (D-048)
 UMBRAL_CUADRO_P95 = 16.7     # C6 (D-053)
-UMBRAL_VISUAL_P95 = 100.0    # C6, por aprobar (D-053)
+UMBRAL_VISUAL_P95 = 100.0    # C6 (D-053, D-063)
+UMBRAL_SALTOS_AP = 0.5       # HU0017-1: saltos de apertura01 > 0.3 por segundo (D-054, D-064)
 CRECIMIENTO_MAX_MS = 1.0     # C2 "sin crecimiento": p95 del último minuto − p95 del primero ≤ esto [POR CONFIRMAR]
 RANGOS_LAMBDA = [(0.05, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.0001)]   # MEDICIONES 4h.5
 CHI2_3GL_95 = 7.81
@@ -289,6 +290,8 @@ def analizar(id_corrida, ruta_procesos=None):
     m["C4"] = m["tick_n250"] == 0
     m["C6"] = (m["cuadro_p95_max"] <= UMBRAL_CUADRO_P95 and m["vis_p95"] <= UMBRAL_VISUAL_P95) if m["visual"] else None
     m["C7"] = m["datos_izq"] >= UMBRAL_DATOS_MANO and m["datos_der"] >= UMBRAL_DATOS_MANO
+    m["HU0017"] = m["saltos_ap_s"] <= UMBRAL_SALTOS_AP
+    m["dibujo"] = m["vis_n"] > 0 and not math.isnan(m["cuadro_media"]) if m["visual"] else None
     return m
 
 
@@ -365,10 +368,12 @@ def tabla(ms):
     out.append("")
     out.append("| Criterio | " + " | ".join(ids) + " |")
     out.append("|---" * (len(ms) + 1) + "|")
-    for k, txt in (("un_cliente", "Un solo cliente"), ("valida_reloj", "Reloj D-019"), ("C1", "C1 (D-023)"),
+    for k, txt in (("un_cliente", "Un solo cliente"), ("valida_reloj", "Reloj D-019"),
+                   ("dibujo", "Visual dibujó (filas cuadro y visual, D-061)"), ("C1", "C1 (D-023)"),
                    ("C1_estricto", "C1 estricto"), ("C2", f"C2 (p95 ≤ {UMBRAL_LAG_P95}, crecimiento ≤ {CRECIMIENTO_MAX_MS} ms)"),
                    ("C3", "C3 (0 de (b) > 100)"), ("C4", "C4 (100 % ≤ 250)"),
-                   ("C6", "C6 (máx p95 por lote ≤ 16.7 y visual p95 ≤ 100)"), ("C7", "C7 (≥ 5 por mano/s)")):
+                   ("C6", "C6 (máx p95 por lote ≤ 16.7 y visual p95 ≤ 100)"), ("C7", "C7 (≥ 5 por mano/s)"),
+                   ("HU0017", f"HU0017-1 (saltos de apertura01 ≤ {UMBRAL_SALTOS_AP}/s)")):
         out.append(f"| {txt} | " + " | ".join("—" if m[k] is None else "cumple" if m[k] else "NO" for m in ms) + " |")
     out.append("")
     out.append("HU0019-3, χ² (3 gl, crítico 7.81) por rango de λ: n · χ² · E mín. (obs. 0/1/2/3 pasos | esperado)")
