@@ -29,7 +29,7 @@ UMBRAL_DATOS_MANO = 5.0      # C7 (D-048)
 UMBRAL_CUADRO_P95 = 16.7     # C6 (D-053)
 UMBRAL_VISUAL_P95 = 100.0    # C6 (D-053, D-063)
 UMBRAL_SALTOS_AP = 0.5       # HU0017-1: saltos de apertura01 > 0.3 por segundo (D-054, D-064)
-CRECIMIENTO_MAX_MS = 1.0     # C2 "sin crecimiento": p95 del último minuto − p95 del primero ≤ esto [POR CONFIRMAR]
+MINUTO_MIN_S = 20.0          # C2 (D-066): solo cuentan los minutos con al menos 20 s de datos
 RANGOS_LAMBDA = [(0.05, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.0001)]   # MEDICIONES 4h.5
 CHI2_3GL_95 = 7.81
 
@@ -118,11 +118,12 @@ def config_pagina(lat):
 
 
 def por_minuto_p95(ts, xs):
-    """p95 por minuto desde la primera fila; solo minutos con ≥ 20 s de datos (≥ 600 muestras a 30 Hz)."""
+    """p95 por minuto desde la primera fila; solo minutos cuyos datos abarcan ≥ MINUTO_MIN_S (D-066)."""
     cubos = {}
     for t, x in zip(ts, xs):
-        cubos.setdefault(int((t - ts[0]) // 60), []).append(x)
-    return [pct(v, 95) for k, v in sorted(cubos.items()) if len(v) >= 600]
+        cubos.setdefault(int((t - ts[0]) // 60), []).append((t, x))
+    return [pct([x for _, x in v], 95) for k, v in sorted(cubos.items())
+            if v[-1][0] - v[0][0] >= MINUTO_MIN_S]
 
 
 def datos_nuevos(sesion, col):
@@ -285,7 +286,7 @@ def analizar(id_corrida, ruta_procesos=None):
     m["un_cliente"] = m["duplicadas"] == 0
     m["C1"] = m["cps_media"] >= 29.5 and m["vent_lt_290"] == 0 and m["cap_update"] > 0
     m["C1_estricto"] = m["vent_lt_295"] == 0
-    m["C2"] = m["lag_p95"] <= UMBRAL_LAG_P95 and m["lag_delta"] <= CRECIMIENTO_MAX_MS
+    m["C2"] = m["lag_p95"] <= UMBRAL_LAG_P95 and m["lag_min_p95_max"] <= UMBRAL_LAG_P95   # D-049, D-066
     m["C3"] = m["b_n100"] == 0 and m["b_vacias"] == 0
     m["C4"] = m["tick_n250"] == 0
     m["C6"] = (m["cuadro_p95_max"] <= UMBRAL_CUADRO_P95 and m["vis_p95"] <= UMBRAL_VISUAL_P95) if m["visual"] else None
@@ -308,7 +309,7 @@ FILAS = [  # (etiqueta, clave, decimales); decimales None = texto
     ("% ciclos > 33.3 ms", "pct_33", 1),
     ("C2: `lag_cam` media", "lag_media", 1), ("C2: `lag_cam` p95", "lag_p95", 1), ("C2: `lag_cam` máx", "lag_max", 1),
     ("C2: p95 por minuto, mín", "lag_min_p95_min", 1), ("C2: p95 por minuto, máx", "lag_min_p95_max", 1),
-    ("C2: p95 último − primer minuto", "lag_delta", 2),
+    ("C2: p95 último − primer minuto (informativo, sin umbral)", "lag_delta", 2),
     ("C3: (b) media", "b_media", 1), ("C3: (b) p95", "b_p95", 1), ("C3: (b) máx", "b_max", 1),
     ("C3: (b) n > 100", "b_n100", 0), ("(a) media", "a_media", 1), ("(a) p95", "a_p95", 1), ("(a) máx", "a_max", 1),
     ("C4: `lat_tick` media", "tick_media", 1), ("C4: `lat_tick` p95", "tick_p95", 1), ("C4: `lat_tick` máx", "tick_max", 1),
@@ -370,7 +371,7 @@ def tabla(ms):
     out.append("|---" * (len(ms) + 1) + "|")
     for k, txt in (("un_cliente", "Un solo cliente"), ("valida_reloj", "Reloj D-019"),
                    ("dibujo", "Visual dibujó (filas cuadro y visual, D-061)"), ("C1", "C1 (D-023)"),
-                   ("C1_estricto", "C1 estricto"), ("C2", f"C2 (p95 ≤ {UMBRAL_LAG_P95}, crecimiento ≤ {CRECIMIENTO_MAX_MS} ms)"),
+                   ("C1_estricto", "C1 estricto"), ("C2", f"C2 (p95 y p95 de cada minuto ≤ {UMBRAL_LAG_P95}, D-066)"),
                    ("C3", "C3 (0 de (b) > 100)"), ("C4", "C4 (100 % ≤ 250)"),
                    ("C6", "C6 (máx p95 por lote ≤ 16.7 y visual p95 ≤ 100)"), ("C7", "C7 (≥ 5 por mano/s)"),
                    ("HU0017", f"HU0017-1 (saltos de apertura01 ≤ {UMBRAL_SALTOS_AP}/s)")):
