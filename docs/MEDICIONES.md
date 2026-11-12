@@ -1,4 +1,4 @@
-# MEDICIONES — línea base, hipótesis y plan (corte: 11/11/2026; mediciones hasta el 11/11)
+# MEDICIONES — línea base, hipótesis y plan (corte: 12/11/2026; mediciones hasta el 12/11)
 
 > Este archivo CAMBIA en cada sesión. Cada cifra cita su origen. MEDIDO = salió de un CSV o log. INFERIDO = deducción no comprobada.
 > Toda cifra de latencia va con su definición (sección 0). Si dos cifras no coinciden, primero se revisa que usen la misma definición.
@@ -579,6 +579,81 @@ Condiciones: pantalla en "Nunca", enchufada, "Mejor rendimiento", `w32tm /resync
 - **(c) extremo a extremo:** el método A (celular) no se probó. Cota INFERIDA con el método B: (c) ≥ (b) + `baseLatency` = 27.5–28.2 + 10 ms de media (≥ ≈ 38 ms; p95 ≥ ≈ 50 ms), más la latencia interna del SDK y la del parlante `[POR COMPLETAR]`. No es una medida de (c).
 - **US14:** captura de la consola de Edge en `sesiones/us14_consola_edge_20261111.png` (15:48, antes de pulsar "Empezar", Python apagado): avisos de autoplay (HU0014-2) y `ScriptProcessorNode` (interno de Tone.js 14.7.77); 4 errores rojos de WebSocket rechazado porque Python no corría. **Falta la captura después de pulsar "Empezar"** (HU0014-1).
 
+## 4j. 12/11: validación con el visual encendido (D-047 a D-059) — la tanda NO es válida (MEDIDO salvo indicación)
+Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lite.*`; `gpu_visual_20261112.csv`, `cpu_visual_20261112.csv`, `procesos_visual_20261112.csv`; registro de eventos de Windows (Kernel-Power y Time-Service, leído por Code con `Get-WinEvent`). Cifras con `analisis_visual.py` (`b309282`, solo lectura), que reproduce 155202 y 160340 de 4i sin diferencias.
+**Condiciones (Ale):** rutina de siempre (30 s quieto, 1 min brazos, 1 min piernas, 30 s manos con el cuerpo quieto); pantalón largo en el calentamiento, short y polo en el resto; Edge en GPU integrada (`edge://gpu` muestra Intel: **cierra el `[POR CONFIRMAR]` de D-042 para el 12/11**; para el 11/11 sigue abierto); luz algo más baja que la habitual; ≈ 3 min entre el calentamiento y V1 (dicho por Ale; según los archivos, 143522 termina a las 14:40 y V1 empieza a las 14:48). `w32tm /resync` a las 14:30:56 (Time-Service 35/37). Sin Kernel-Power 506 durante las corridas (el último 506 fue a las 13:19:34, antes de 132848).
+**Código:** las corridas registran `commit` = `7ff47c5` (132848, 140411) y `7ff47c5-sucio` (desde 143303). `git diff 8d58820 7ff47c5` no toca ningún archivo de código (`main.py`, `index.html`, `visual.js`, `manos.py`, `muestreo.py`, `servidor.py`, `zona.py`), y sus fechas de modificación son ≤ 11/11 (MEDIDO): **el código es el de `8d58820`**. INFERIDO: el `-sucio` viene de `CLAUDE.md`, modificado a las 14:17:12, entre 140411 (limpia) y 143303 (sucia). Límite de US22: `-sucio` no dice qué archivo estaba cambiado.
+
+### 4j.1 Todas las corridas del 12/11 y la referencia con visual
+| Corrida | Configuración (fila `config` · `config_visual`) | s | Validez y uso |
+|---|---|---|---|
+| 132848 | visual 1 · tope 30 | 906 | **Fuera de protocolo.** Kernel-Power 105 (cambio de fuente de energía) a las 13:29:57, 68 s después de arrancar; 12 ventanas de 4.1–17.0 ciclos/s al inicio (`tracker` 31.8 ms en el 1er tercio); huecos de filas de 0.3–2.2 s entre 19 y 67 s; la página se reconectó a los ≈ 4 min y las filas `continuo` acaban a los 286 s (faltan 13 061). Propósito `[POR COMPLETAR]` (Ale) |
+| 140411 | visual 1 · tope 30 | 58 | Corta; hueco de 9.5 s a los 41 s (sin cuerpo, INFERIDO). Propósito `[POR COMPLETAR]` (¿US14?) |
+| 143303 | visual 1 · tope 30 | 61 | Corta; hueco de 8.2 s a los 7 s. Propósito `[POR COMPLETAR]` |
+| 143522 | visual 1 · tope 30 | 292 | Calentamiento (descartado; pantalón largo) |
+| **144817 V1** | visual 1 · tope 30 | 600 | **Invalidada por reloj (D-019):** Δ `transporte_ms` +16.07 ms. Además no cumple C1 ni C2 (abajo), que no dependen del reloj del sistema |
+| **145949 V2** | visual 1 · **sin `config_visual`** | 604 | **Invalidada por reloj (D-019):** Δ +13.22 ms. **Y el visual no dibujó:** 0 filas `cuadro_*` y `visual` |
+| **151032 control** | visual 1 · **sin `config_visual`** | 182 | **Invalidada por reloj (D-019):** Δ +2.96 ms. El visual no dibujó (0 filas `cuadro_*` y `visual`) |
+| 155202 (11/11, ref.) | visual 1 · tope 30 | 610 | Válida (4i): única corrida de 10 min válida con el visual encendido |
+- **Reloj:** `transporte_ms` sube de forma lineal ≈ 1.6 ms/min en V1 (0.7 → 16.1 por minuto), ≈ 1.4 ms/min en V2 y ≈ 1.0 ms/min en el control; en 143522 (14:35–14:40) se mantuvo plano (0.3 ms). INFERIDO: tras la sincronización de las 14:30:56 el sondeo siguiente (intervalo 1024 s, `w32tm /query /status`) cae a las ≈ 14:48 y Windows corrige la hora poco a poco desde ahí; `Date.now()` lo sigue y Python no (como en 4g.3). (a) y (b) guardadas de V1, V2 y el control **no son válidas**; como referencia INFERIDA (solo relojes de Python, sin transporte): (a) − `transporte_ms` + `lag_cam_ms`.
+- **Visual sin dibujar en V2 y el control:** la página tenía el visual encendido (fila `config` = 1) pero `requestAnimationFrame` no corrió en toda la corrida: sin `config_visual` ni filas `cuadro_*`/`visual`, `msedge` 6–7 % de un núcleo (V1: 53 %; 160340 sin visual: 21 %), y manos y `tracker` iguales a las bases sin visual. INFERIDO: la ventana de Edge estaba minimizada o tapada (Edge detiene `requestAnimationFrame` en ventanas ocultas). **No son corridas con el visual encendido (D-047)**; quedan como referencia sin visual de este día, también invalidadas por el reloj.
+
+### 4j.2 Cifras (sin la ventana #0; C2 y C1 usan solo relojes de Python y del SDK)
+| Métrica | **144817 V1** | 145949 V2 (sin dibujo) | 151032 control (sin dibujo) | 155202 (11/11) | Bases sin visual 11/11 (160340, 162802, 163902) |
+|---|---|---|---|---|---|
+| C1: media · mín · ventanas < 29.0 · < 29.5 | 29.83 · 28.3 · **7** · 40 | 29.98 · 29.3 · 0 · 2 | 29.97 · 29.2 · 0 · 2 | 29.97 · 29.2 · 0 · 1 | 29.99 · 29.5–29.7 · 0 · 0 |
+| `cap_update` · `tracker` (ms) · % ciclos > 33.3 ms | 1.9 · 26.9 · 35.7 | 8.6 · 22.0 · 9.2 | 8.4 · 22.2 · 9.6 | 4.8 · 23.8 · 12.7 | 10.0–10.7 · 20.0–20.8 · 8.6–8.7 |
+| C2: `lag_cam` p95 · p95 por minuto · último − primer minuto | 27.0 · **22.5–30.0** · **+5.9** | 17.3 · 17.2–17.4 · +0.2 | 17.4 · 17.3–17.5 · +0.0 | 17.2 · 17.0–17.7 · −0.1 | 16.9 · 16.8–17.0 · ≤ 0.02 |
+| (b) guardada media / p95 / máx · > 100 | no válida (reloj) | no válida | no válida | 33.8 / 47.6 / 84.5 · 0 | 27.5–28.2 / 40.0–41.1 / 59.2–64.0 · 0 |
+| Referencia INFERIDA (a) − transporte + `lag_cam` · > 100 | 42.4 / 59.7 / 100.4 · 1 | 30.5 / 42.8 / 78.5 · 0 | 30.7 / 43.0 / 80.7 · 0 | — | — |
+| C4: `lat_tick` media / p95 / máx · > 250 | 47.1 / 64.0 / 79.8 · 0 de 870 | 41.3 / 56.2 / 71.8 · 0 | 41.0 / 55.9 / 72.1 · 0 | 44.8 / 61.0 / 80.1 · 0 de 921 | 38.5–39.3 / 53.5–54.7 / 69.5–87.7 · 0 |
+| C7: datos nuevos por mano/s (izq / der) · trabajos/s | 9.33 / 9.04 · 19.9 | 14.13 / 13.69 · 29.7 | 14.14 / 13.70 · 29.3 | 6.92 / 6.87 · 15.0 | 13.27–14.24 / 13.79–14.31 · 29.8 |
+| C6: tiempo por cuadro media · p95 por lote mediana / máx · máx | 0.26 · 0.45 / 0.80 · 4.0 | — | — | 0.17 · 0.30 / 0.60 · 1.6 | — |
+| C6: latencia visual media / p95 / máx (n) | 55.9 / 72.5 / 285.4 (871) | — | — | 46.1 / 60.9 / 376.6 (922) | — |
+| Intervalo entre cuadros (ms) | 33.5 | — | — | 33.5 | — |
+| HU0017: saltos de `apertura01` > 0.3 por s · p5 / mediana / p95 | 0.35 · 0.00 / 0.54 / 0.97 | 0.28 · 0.00 / 0.49 / 0.96 | 0.31 · 0.00 / 0.52 / 0.98 | 0.20 · 0.00 / 0.32 / 0.94 | 0.11–0.19 · 0.00 / 0.28–0.34 / 0.96–0.98 |
+| Cambios de zona por minuto · salto de tempo p99 / máx | 16.5 · 0.397 / 1.000 | 15.0 · 0.396 / 1.000 | 16.8 · 0.437 / 0.936 | 13.3 · 0.475 / 1.000 | 12.7–14.6 · 0.403–0.454 / 0.983–1.000 |
+| Edad manos p95 · racha máx · notas reconstruidas | 112.5 · 2 · 871/871 | 64.1 · 2 · 863/863 | 64.2 · 2 · 274/274 | 144.5 · 2 · 922/922 | 48.2–64.2 · 2 · 100 % |
+| GPU SM mediana · °C máx · CPU % rendimiento / % tiempo (medianas) | 1747 · 70 · 211 / 37.0 | 1762 · 70 · 198 / 24.9 | 1762 · 70 · 199 / 25.5 | 1762 · 67 · 185 / 27.6 | 1762 · 67–69 · 198 / 23.3–23.4 |
+| `python` · `msedge` · `dwm` · `system` (% de un núcleo, media) | 198 · 53 · **46** · 36 | 173 · 6 · 20 · 22 | 176 · 7 · 21 · 25 | 189 · 38 · 8 · 21 | 163–167 · 18–21 · 1–4 · 19 |
+- **V1 frente a 155202 (los dos con el visual dibujando, días distintos):** `tracker` 26.9 frente a 23.8 ms, `cap_update` 1.9 frente a 4.8 ms, `dwm` 46 frente a 8 % de un núcleo, `lag_cam` creciente. En el calentamiento 143522 también `tracker` 27.2 y `dwm` 30. Causa `[POR COMPLETAR]`; INFERIDO sin comprobar: otra disposición de ventanas en pantalla (más composición de `dwm`) o la luz más baja. Procesos ajenos ≥ 50 % de un núcleo en V1: `system` (27 muestras, máx 191 %), `dwm` (138 muestras, máx 69 %), sueltos de `svchost`, `mousocoreworker` 50 %; las muestras > 1200 % de `svchost#N` son imposibles (artefacto del contador, INFERIDO).
+- **Criterios de V1** (aunque está invalidada por reloj): **C1 no cumple** (D-023: 7 ventanas de 28.3–28.9 < 29.0); **C2 no cumple** (p95 27.0 ≤ 27.1, pero crece 22.5 → 30.0 ms por minuto); C3 no evaluable (reloj); C4 cumple; C6 cumple (p95 por lote máx 0.80 ≤ 16.7; latencia visual p95 72.5 ≤ 100, umbral por aprobar); C7 cumple (9.3 / 9.0 ≥ 5).
+- **HU0010-2 caso A** (1ª fila `continuo` − 1ª fila de sesión, con la página abierta antes de arrancar): 0.53 / 0.19 / 0.01 / 0.19 / 0.20 / 0.19 / 0.20 s en los 7 arranques: ≤ 2 s.
+- **HU0019-3** (χ² por rango de λ, crítico 7.81): V1 0.5–2.6 en todos los rangos; 155202 0.4–5.1. En rangos con valor esperado < 5 el χ² solo orienta (151032 da 32.6 en λ < 0.2 por 1 repetición con esperado ≈ 0).
+- **Sin evidencia guardada en `sesiones/` el 12/11** de US14 (captura después de "Empezar"), US20 (respuestas de la prueba de percepción), US38 (capturas) ni de las consolas de Python: `[POR COMPLETAR]` (Ale).
+
+### 4j.3 Conclusión
+- **La tanda de D-050 no es válida:** V1, V2 y el control fallan la regla de reloj (D-019), y V2 y el control además no tuvieron el visual dibujando. Con el visual encendido solo queda **una** corrida de 10 min válida (155202), que cumple C1 (D-023), C2, C3, C4, C6 y C7; el C1 estricto no (1 ventana de 29.2).
+- **No se pone la etiqueta `validado-visual`.** Se repiten V1, V2 y el control por invalidez de protocolo (reloj; V2 y el control además por visual sin dibujar), según D-062, con D-060 (servicio de hora detenido) y D-061 (Edge al frente). Los fallos de C1 y C2 de V1 no son motivo de repetición por sí solos (D-062).
+- **Estado por historia (configuración D-047):** ver la tabla de 4j.4.
+
+### 4j.4 Estado de US07–US28 y US38 (12/11; "cumple" solo con criterio medido y binario)
+| US | Estado | Evidencia | Pendiente |
+|---|---|---|---|
+| US07 | **Parcial** | -1: 155202 cumple D-023 (n = 1 con visual); V1 no cumple (7 ventanas < 29.0, corrida invalidada por reloj). -2: piernas LOW, nunca NONE (4h.5) | Repetir V1/V2; reescritura de -2 (LOW = disponible) |
+| US08 | **Parcial** | -1 (D-048): 155202 6.92 / 6.87 datos nuevos por mano/s ≥ 5; V1 9.33 / 9.04 (invalidada). -2 cumple (D-025) | Tanda válida con visual |
+| US09 | Cumple (texto por cambiar) | `par_dt_ms = 0` por construcción | Texto en el lote de D-058 (Ale) |
+| US10 | Cumple | -1: 0 filas duplicadas ni errores de lectura en las 8 corridas. -2 caso A 0.01–0.53 s (7 arranques, 12/11); caso B (07/11, 4h.1) | Caso B con visual no medido (¿132848?) `[POR COMPLETAR]` |
+| US11 | Cumple | 4h–4j | — |
+| US12 | Cumple (SIMULADO -2) | Jitter MEDIDO (sección 5); escalón SIMULADO 0 ms ≤ 100 (D-044, 4i.6) | — |
+| US13 | Cumple (texto por cambiar) | λ 0.05–1 y cambia la melodía (4h) | Cita en el lote de D-058 |
+| US14 | **Cumple** (lectura por confirmar, Ale) | -2 cumple (4h.1). -1: captura de la consola de Edge **después** de "Empezar" con Python en marcha (`sesiones/us14_consola_edge_20261112.webp`, enviada por Ale el 12/11; la página muestra "Te veo", "Zona: grave" y "Terminar", y la pestaña indica audio): Tone.js v14.7.77 cargado; 1 aviso de `ScriptProcessorNode` (interno de Tone.js); 12 avisos de autoplay de antes del clic (HU0014-2); **1 error**: `WebSocket ... ERR_CONNECTION_REFUSED` (`index.html:249`). INFERIDO: es un intento de conexión antes de que Python abriera el socket (HU0010-2), no un error de inicialización del audio | Que Ale confirme que el error de WebSocket no cuenta para -1 |
+| US15 | **Parcial** (texto) | -2 cumple (D-028); 13.3–16.8 cambios de zona por minuto con visual | Reescritura de -1 (D-035, Ale) |
+| US16 | **Parcial** (texto) | -2 cumple; salto de tempo p99 0.397–0.475 | Reescritura de -1 con umbral de salto `[POR COMPLETAR]` |
+| US17 | **Cumple** (n = 1 corrida válida con visual) | Rango p5–p95 0.00–0.94; saltos > 0.3: 0.20/s en 155202 ≤ 0.5 (D-064); V1 0.35/s (invalidada por reloj; el valor no depende del reloj) | Confirmar en la tanda repetida |
+| US18 | **Parcial** (texto) | -2 cumple | Reescritura de -1 |
+| US19 | Cumple | -1 7 notas; -2 racha 2 en todas; -3 χ² < 7.81 por rango (155202, V1) | — |
+| US20 | **No cumple** (sin hacer) | Sin registro de la prueba | Prueba con visual y preguntas separadas (D-055), anotada |
+| US21 | Cumple | 100 % de notas reconstruidas en las 8 corridas; λ mínimo determinístico (D-031) | — |
+| US22 | Cumple, con observación | Semilla + `commit` + `lam_sorteo` reconstruyen todo; `version` = `VERSION_MAIN`, no la versión de las tablas; `-sucio` no dice qué archivo | Confirmar si basta (Ale) |
+| US23 | **Parcial** | -1: 155202 (b) 0 > 100 (n = 1 con visual); V1 no evaluable (reloj). -2: `[PERF]` y `lag_cam_ms` por etapa. (c): cota del método B (D-059) | Tanda válida con visual |
+| US24 | **Parcial** | -1: 0 % > 250 ms en todas las corridas válidas; -2: el valor queda por tick pero no se marca el incumplimiento (fase 1c) | Ale decide si -2 basta. Condiciones reales (D-059): Edge + JBL; Ale usa siempre el parlante JBL (dicho, 12/11) |
+| US25 | **Parcial** (texto) | 44/44 (`7c9e0a1`) | Texto de D-056 (Ale) |
+| US26 | **Parcial** | 155202 (10 min con visual, sin fallos de módulo) | Tanda válida; consolas de Python en `sesiones/` |
+| US27 | **No cumple** (no iniciada) | Tablas fijas en `muestreo.py` | Fases 1 y 2 |
+| US28 | Cumple (SIMULADO) | D1, D2, D3 en trigramas (D-057) y C1 (4i.6) | — |
+| US38 | **Parcial** | -1/-2/-3 implementados (`visual.js`, `index.html`); -4 sin destellos en `?demo=1` (4i.2); -5 C6 cumple en 155202 y V1 | URL de cuestionarios; capturas; tanda válida (C6 con D-063); revisión de Ale y la profesora (-6) |
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -614,7 +689,7 @@ Condiciones: pantalla en "Nunca", enchufada, "Mejor rendimiento", `w32tm /resync
 
 ## 9. Plan vigente
 Tarea 1 (auditoría de solo lectura): **HECHA el 31/10/2026** (resultados arriba).
-Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **07/11:** paso 14 HECHO (tanda sobre `3686feb`, C1–C4 cumplen) y paso 9 cerrado con él; cambios aprobados del 07/11 aplicados (D-025 a D-033); corrida de confirmación sobre `30ccbf7` (4h.5): D-023 cumple, C1 estricto 294/299. **10–11/11 (4i):** visual US38 (pasos 17–18), P-012 cerrada, P-015 aplicada, tanda final sobre `8d58820` (`congelado-11-11` = `medido-final`): C1–C4 cumplen en 3 bases de 10 min y C6 informado; US25, US12 (SIMULADO) y US28 (SIMULADO) hechos offline. **Siguiente (12/11, sin Kinect salvo indicación):** captura de US14 después de "Empezar" y US20 (Ale, con Kinect); D-024 y umbrales de US28 (Ale); refactor KISS (regla 13). Pasos 11 (método A) y 13 quedan sin hacer en TP1.
+Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **07/11:** paso 14 HECHO (tanda sobre `3686feb`, C1–C4 cumplen) y paso 9 cerrado con él; cambios aprobados del 07/11 aplicados (D-025 a D-033); corrida de confirmación sobre `30ccbf7` (4h.5): D-023 cumple, C1 estricto 294/299. **10–11/11 (4i):** visual US38 (pasos 17–18), P-012 cerrada, P-015 aplicada, tanda final sobre `8d58820` (`congelado-11-11` = `medido-final`): C1–C4 cumplen en 3 bases de 10 min y C6 informado; US25, US12 (SIMULADO) y US28 (SIMULADO) hechos offline. **12/11 (4j):** validación con el visual encendido (D-047 a D-059); la tanda (paso 26) **no es válida** (reloj y visual sin dibujar); sin etiqueta `validado-visual`. US14 hecha con captura; D-053/D-054 completadas (D-063, D-064). **Siguiente:** repetir V1, V2 y control con D-060 a D-062; US20 con evidencia guardada; refactor KISS (regla 13). Pasos 11 (método A) y 13 quedan sin hacer en TP1.
 | # | Paso | Estado |
 |---|---|---|
 | 1 | Commit del estado actual en la rama `wip-28e` | HECHO 31/10 (`368c20a`) |
@@ -642,8 +717,9 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 19 | P-012: A/B de `--tempo-medium` (3 pares, regla fijada antes) | HECHO 10/11: no se adopta (B gana 1/3; 4i.3, D-037) |
 | 20 | Tanda final: 3 bases de 10 min (`?visual=0`) + C6 (visual) + bases de control, con registros de GPU, CPU y procesos | HECHO 11/11 sobre `8d58820` (4i.5). Base 1 y 2 repetidas por procesos externos (D-046). Etiquetas `congelado-11-11` y `medido-final` (D-043) |
 | 21 | US25 (pruebas por módulo), US12 (escalón SIMULADO), US28 (escenarios con semilla, SIMULADO) | HECHO 11/11 (`7c9e0a1`, `fab4f7b`; 4i.6). Umbrales de US28 `[POR CONFIRMAR]` (P-018) |
-| 22 | US14: captura de la consola de Edge **después** de pulsar "Empezar", con Python en marcha | PENDIENTE (12/11) |
-| 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación) | PENDIENTE (12/11) |
+| 22 | US14: captura de la consola de Edge **después** de pulsar "Empezar", con Python en marcha | HECHO 12/11 (`sesiones/us14_consola_edge_20261112.webp`; 4j.4) |
+| 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación), con visual y preguntas separadas (D-055) | PENDIENTE (12/11: sin registro) |
+| 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062) |
 | 24 | Manos con el visual encendido (≈ 7 datos/mano/s frente a ≈ 14) | Limitación informada (4i.2); causa `[POR COMPLETAR]`; opciones en P-017 |
 | 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | PENDIENTE (12/11) |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
@@ -653,6 +729,10 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
    - **Pantalla:** "Apagar la pantalla tras" en **"Nunca"**. Comprobar con `powercfg /query SCHEME_CURRENT SUB_VIDEO VIDEOIDLE`: índice CA `0x00000000`. Con 5 min (`0x12c`) Windows entra en espera moderna a los ≈ 300 s y la Kinect se corta (4g).
    - **Modo de energía:** se fija con el deslizador "Modo de energía: Mejor rendimiento" de Windows (Configuración > Sistema > Energía), no con el plan de `powercfg`, que sigue mostrando "Equilibrado". Comprobar con `reg query "HKLM\SYSTEM\CurrentControlSet\Control\Power\User\PowerSchemes" /v ActiveOverlayAcPowerScheme`: debe dar `ded574b5-45a0-4f42-8737-46345c09c238`. Que ese GUID sea "Mejor rendimiento" es según la documentación de Microsoft, no verificado por Code; es el valor leído el 05/11 con el deslizador en "Mejor rendimiento".
    - **Hora:** ejecutar `w32tm /resync` (terminal de administrador, con internet) y comprobar con `w32tm /query /status` que la "Última sincronización de hora correcta" es reciente.
+   - **Interrupciones (D-051, 12/11):** "No molestar" activado; `msmpeng` y `searchindexer` en reposo antes de empezar (Administrador de tareas); la app de Claude minimizada y sin uso durante las corridas.
+   - **Visual (D-047, 12/11):** `index.html` sin parámetros en Edge en GPU integrada (comprobar en `edge://gpu`), una pestaña, "Empezar" pulsado. Después de cada corrida, `analisis_visual.py <id>` debe mostrar filas de C6 (tiempo por cuadro y latencia visual); si no las hay, el visual no dibujó (4j.1) y la corrida no cuenta. Edge maximizado y al frente toda la corrida; Ale anota cómo estaba en cada corrida (D-061).
+   - **Servicio de hora (D-060, 12/11):** al inicio de la tanda, `w32tm /resync`, comprobar con `w32tm /query /status` y luego `net stop w32time` (administrador); comprobar con `sc query w32time` que dice `STOPPED` antes de cada corrida (es un servicio que Windows puede volver a arrancar por sí solo). Al terminar la tanda, `net start w32time` y `w32tm /resync`.
+   - **Repetición (D-062, 12/11):** una corrida se repite solo por invalidez de protocolo (506, reloj, visual sin dibujar, proceso ajeno medido). Si con reloj válido y el visual dibujando no cumple, se informa como fallo y no se repite.
 1. Laptop enchufada, modo de energía de **máximo rendimiento** (requisito de operación, D-014; en Equilibrado la corrida salió más lenta, 4d), solo **Edge** (D-020; anotar el navegador en cada tanda) con **una sola pestaña** de `index.html` (ninguna otra pestaña ni navegador integrado de Code con la página abierta), misma distancia (de pie), misma luz y el mismo salón para toda la tanda. Antes de empezar, revisar en el Administrador de tareas que ningún otro proceso use la CPU de forma sostenida. Segunda terminal: `nvidia-smi --query-gpu=timestamp,clocks.sm,clocks.max.sm,temperature.gpu,power.draw,clocks_throttle_reasons.active --format=csv -l 1 -f sesiones\gpu_<tanda>.csv`. Tercera terminal (Símbolo del sistema como administrador; contadores localizados en español): `typeperf "\Información del procesador(_Total)\% de rendimiento del procesador" "\Información del procesador(_Total)\% de tiempo de procesador" -si 1 -o sesiones\cpu_<tanda>.csv`. Cuarta terminal (uso de CPU por proceso, H6; desde el 04/11): `powershell -ExecutionPolicy Bypass -File registrar_procesos.ps1 sesiones\procesos_<tanda>.csv` (columnas `t_local, proceso, pid, cpu_pct`; `cpu_pct` en % de un núcleo lógico, 12 núcleos = 1200 %). Arrancar las tres antes de la primera corrida y detenerlas con Ctrl+C al terminar la tanda.
 1b. Una corrida de calentamiento de ≈ 1 min que se descarta (31/10: la 1ª corrida de la tanda MJPG salió ≈ 7 ms más lenta en todas las etapas). Filtro: si `[PERF-LINEA]` muestra `to_numpy` ≥ 8 ms/llamada, el equipo está lento (02/11: 144008 dio 9.4 ms); esperar, revisar procesos y repetir el calentamiento.
 2. `python main.py cuda lite [--sin-decod-hilo] [--swi1ms] [--sin-manos] [--con-ventana]` (D-011; sin ventana por defecto desde D-012, `--con-ventana` solo para depurar; decodificación en el hilo por defecto desde D-015, `--sin-decod-hilo` para decodificar en el ciclo). VS Code cerrado (04/11: con VS Code abierto el ciclo empeora, 4e). Misma ropa en toda la tanda, anotada (04/11: pantalón ancho; rodillas más ruidosas, 4e); esperar 5 s (el navegador tarda hasta ≈ 5 s en reconectarse y esas filas faltan en `_latencias.csv`); rutina fija de 3 min: 30 s quieto, 60 s brazos arriba y abajo, 60 s baile amplio, 30 s abrir y cerrar manos con las dos manos visibles. No recargar la pestaña entre corridas.
@@ -693,6 +773,9 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 - 11/11 `[POR COMPLETAR]`: confirmar que Edge estaba en GPU integrada en la ronda y la tanda del 11/11; propósito de la corrida 172140 (35 s); ropa del 10/11; consolas de Python de las corridas de 10 min del 11/11 (están en el equipo de Ale; copiarlas a `sesiones/` para US26).
 - 11/11 `[POR COMPLETAR]`: estado degradado del equipo en 165523 (10/11) sin causa registrada (no había `typeperf`).
 - 11/11: (c) solo como cota INFERIDA (método B, 4i.6); el método A (celular en cámara lenta) no se probó.
+- 12/11 `[POR COMPLETAR]`: propósito de 132848, 140411 y 143303; evidencia de US20 y US38; consolas de Python. (US14: captura guardada; JBL: siempre, dicho por Ale.)
+- 12/11 `[POR COMPLETAR]`: por qué V1 (y el calentamiento) tuvieron `tracker` ≈ 27 ms y `dwm` 30–46 % frente a 23.8 ms y 8 % en 155202 (4j.2).
+- 12/11: la regla de reloj (D-019) puede fallar aunque se haga `w32tm /resync` justo antes: el sondeo siguiente (≈ 17 min después) corrigió la hora durante V1, V2 y el control (INFERIDO; 4j.1). Propuesta P-019.
 - 11/11: hallazgo de US25 sin arreglar (código congelado): `angulo_articulacion` da 179.9974° con vectores unitarios; sin efecto práctico en mm.
 - Pendiente de datos (no medido): confianza de rodillas y tobillos en el CSV. Ale observó el 31/10 más movimiento falso de piernas al subir los brazos; en las sesiones 164334/164633 la mediana de la velocidad de rodilla es 35–111 °/s con los hombros a 45–135° (11–16 °/s quieto con los brazos abajo), y eso sube el tempo.
 - Garantía FIFO del SDK al vaciar la cola: INFERIDA; las cifras de `lag_cam_ms` la respaldan.
