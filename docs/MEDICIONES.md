@@ -654,6 +654,65 @@ Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lit
 | US28 | Cumple (SIMULADO) | D1, D2, D3 en trigramas (D-057) y C1 (4i.6) | — |
 | US38 | **Parcial** | -1/-2/-3 implementados (`visual.js`, `index.html`); -4 sin destellos en `?demo=1` (4i.2); -5 C6 cumple en 155202 y V1 | URL de cuestionarios; capturas; tanda válida (C6 con D-063); revisión de Ale y la profesora (-6) |
 
+## 4k. 12/11 por la tarde: tanda con visual repetida (D-060 a D-062) — válida por protocolo; C1 y C3 no cumplen en todas (MEDIDO salvo indicación)
+Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lite.*`; registro de eventos de Windows (`Get-WinEvent`, Code). Cifras con `analisis_visual.py` (`b83511b`). **Sin registros de GPU, CPU ni procesos de esta tanda** (no hay archivos nuevos `gpu_`/`cpu_`/`procesos_` después de las 15:32 en el repositorio): no se puede comprobar ni descartar un proceso ajeno (D-051, D-062) `[POR COMPLETAR]` (Ale: si se guardaron en otro lugar).
+**Condiciones:** las de 4j (rutina de siempre, short y polo, Edge en GPU integrada, luz algo más baja, parlante JBL). Edge maximizado y al frente (Ale; anotación por corrida `[POR COMPLETAR]`). Código: encabezado `commit=1d70ce8` sin `-sucio` en las 5 corridas (MEDIDO); `git diff 8d58820 1d70ce8` no toca archivos de código (MEDIDO): **código de `8d58820`**. **Hora (D-060):** Time-Service 35/37 (resync) a las 15:50:52; ningún evento del servicio hasta 16:25:47 (158, arranque) y 16:25:58 (resync final); hoy `sc query w32time` = RUNNING (MEDIDO). Sin Kernel-Power desde las 15:20.
+
+### 4k.1 Corridas
+| Corrida | s | Uso | Validez (D-062) |
+|---|---|---|---|
+| 153900 | — | Arranque corto para comprobar el encabezado (`commit=1d70ce8`); 0 filas de sesión | No es corrida |
+| 155234 | 89 | Calentamiento (descartado) | — |
+| **155642 V1** | 601 | 10 min con visual | **Válida:** Δ `transporte_ms` +0.20 ms; visual dibujó (611 lotes de cuadro, 863 latencias visuales); un cliente; sin 506 |
+| **161012 V2** | 602 | 10 min con visual | **Válida:** Δ −0.03 ms; 599 / 908; un cliente; sin 506 |
+| **162149 control** | 180 | 3 min con visual | **Válida:** Δ +0.01 ms; 186 / 288 |
+| 155202 (11/11) | 610 | 10 min con visual (D-050) | Válida (4i) |
+
+### 4k.2 Criterios con el visual encendido (D-049, D-063, D-064, D-048)
+| Métrica | **155642 V1** | **161012 V2** | 155202 (11/11) | 162149 control | Bases sin visual 11/11 (referencia) |
+|---|---|---|---|---|---|
+| C1: media · mín · < 29.0 · < 29.5 | 29.90 · 22.2 · **7** · 12 | 29.96 · 29.0 · 0 · 5 | 29.97 · 29.2 · 0 · 1 | 29.97 · 29.1 · 0 · 1 | 29.99 · 29.5–29.7 · 0 · 0 |
+| `cap_update` · `tracker` · % ciclos > 33.3 ms | 3.1 · 25.5 · 19.7 | 2.3 · 26.2 · 25.5 | 4.8 · 23.8 · 12.7 | 3.3 · 25.4 · 19.3 | 10.0–10.7 · 20.0–20.8 · 8.6–8.7 |
+| C2: `lag_cam` p95 · p95 por minuto · último − primer minuto | 18.4 · 17.6–**27.3** · **+9.5** | 19.2 · 17.9–23.5 · +0.2 | 17.2 · 17.0–17.7 · −0.1 | 17.7 · 17.5–17.9 · +0.2 | 16.9 · 16.8–17.0 |
+| C3: (b) media / p95 / máx · > 100 | 37.2 / 50.6 / **206.7** · **8** | 38.5 / 51.7 / **115.7** · **4** | 33.8 / 47.6 / 84.5 · 0 | 36.3 / 49.7 / 83.7 · 0 | 27.5–28.2 / 40.0–41.1 / 59.2–64.0 · 0 |
+| (a) media / p95 / máx | 29.9 / 33.7 / 194.0 | 30.5 / 34.3 / 111.8 | 28.4 / 32.6 / 83.8 | 29.8 / 33.7 / 82.9 | 22.7–23.2 / 24.3–25.3 / 58.0–63.4 |
+| C4: `lat_tick` media / p95 / máx · > 250 | 47.1 / 64.8 / 79.9 · 0 de 862 | 47.2 / 62.8 / 95.9 · 0 de 908 | 44.8 / 61.0 / 80.1 · 0 | 47.1 / 63.6 / 97.0 · 0 | 38.5–39.3 / 53.5–54.7 / 69.5–87.7 · 0 |
+| C6: tiempo por cuadro, máx de los p95 por lote · latencia visual p95 (máx) | 0.60 · 63.9 (88.1) | 0.70 · 63.8 (72.2) | 0.60 · 60.9 (376.6) | 0.50 · 63.7 (68.9) | — |
+| C7: datos nuevos por mano/s (izq / der) | 7.18 / 6.97 | 7.26 / 6.83 | 6.92 / 6.87 | 6.92 / 6.40 | 13.27–14.24 / 13.79–14.31 |
+| HU0017: saltos de `apertura01` > 0.3 por s | 0.34 | 0.27 | 0.20 | 0.46 | 0.11–0.19 |
+| Edad manos p95 · racha máx · notas reconstruidas | 142.3 · 2 · 863/863 | 140.1 · 2 · 909/909 | 144.5 · 2 · 922/922 | 192.3 · 2 · 289/289 | 48.2–64.2 · 2 · 100 % |
+| **Resultado** | C1 **no**, C2 **no**, C3 **no**; C4, C6, C7, HU0017 sí | C3 **no**; C1 (D-023), C2, C4, C6, C7, HU0017 sí | todos sí (estricto no) | todos sí (estricto no) | — |
+- **Dónde fallan (MEDIDO):** en V1, 6 de las 8 muestras de (b) > 100 ms (112.7–206.7) y las ventanas más bajas (#288–#295: 22.2–29.2 ciclos/s, `tracker` 28–34 ms, `cap_update` 0–1 ms) caen entre 576 y 590 s, el final de la corrida; ahí el p95 de `lag_cam` del minuto 9 sube a 27.3 ms. Las otras 2 muestras (105.6 y 120.7 ms) están sueltas (207 y 402 s). En V2, 4 muestras sueltas de 110.6–115.7 ms (104, 196, 369 y 558 s). **Causa `[POR COMPLETAR]`:** sin registro de procesos no se puede atribuir (INFERIDO, sin comprobar: carga del equipo; Ale se acerca a cerrar solo al llegar a 600 s).
+- **C2 de V1:** el p95 de la corrida (18.4) cumple ≤ 27.1; falla por "sin crecimiento" con la definición operativa de `analisis_visual.py` (último − primer minuto ≤ 1 ms, `[POR CONFIRMAR]`, P-021) y también porque el minuto 9 supera 27.1.
+- **Equipo hoy:** `tracker` 25.4–26.2 ms con el visual en las 4 corridas de la tarde, frente a 23.8 en 155202 (11/11). INFERIDO: estado del equipo distinto entre días (sin registro de procesos para comprobarlo).
+- **D-062:** V1 y V2 son válidas por protocolo; sus fallos de C1, C2 y C3 se informan y **no se repiten**.
+- **Registro oficial (D-065, Ale, 12/11):** esta tanda queda como registro oficial de la validación con visual, con los fallos de C1, C2 y C3 tal como salieron.
+- **Limitación:** sin registros de GPU, CPU y procesos, **la causa de los fallos es `[POR COMPLETAR]`** y **no se pudo aplicar la invalidación por proceso ajeno** (D-051, D-062): no se sabe si hubo un proceso ajeno durante las caídas de V1 (576–590 s) ni durante las muestras sueltas de V1 y V2.
+- **Etiqueta:** `medido-visual` (anotada) en `1d70ce8`, el commit que registran las corridas; código idéntico a `8d58820`. No se usa `validado-visual`.
+
+### 4k.3 Resultado de la tanda D-050 (155202, 155642, 161012; control 162149)
+| Criterio | 155202 | V1 | V2 | Tanda |
+|---|---|---|---|---|
+| C1 (D-023) | cumple | **no** | cumple | **no cumple** (2/3) |
+| C2 | cumple | **no** | cumple | **no cumple** (2/3) |
+| C3 (0 de (b) > 100) | cumple | **no** (8) | **no** (4) | **no cumple** (1/3) |
+| C4 | cumple | cumple | cumple | cumple |
+| C6 (D-063) | cumple | cumple | cumple | cumple |
+| C7 (D-048) | cumple | cumple | cumple | cumple |
+| HU0017-1 (D-064) | cumple | cumple | cumple | cumple |
+
+### 4k.4 Estado de US07–US28 y US38 tras la tanda (reemplaza a 4j.4 en estas filas; el resto sigue igual que 4j.4)
+| US | Estado | Evidencia | Pendiente |
+|---|---|---|---|
+| US07 | **No cumple** (-1 con visual) | C1 (D-023) falla en V1 (7 ventanas < 29.0, mín. 22.2); cumple en 155202 y V2. -2 parcial (4h.5) | Ale decide (P-004); causa de las ventanas bajas `[POR COMPLETAR]` |
+| US08 | **Cumple** | -1 (D-048): 6.83–7.26 datos nuevos por mano/s ≥ 5 en las 3 corridas; -2 (D-025) | — |
+| US14 | **Cumple** | -1: segunda captura (`sesiones/us14_consola_edge_20261112b.png`, Ale, 12/11): página tras "Empezar" ("No te veo", "Terminar"), consola con **0 errores**: Tone.js v14.7.77, 1 aviso de `ScriptProcessorNode` y 12 de autoplay de antes del clic. Primera captura (`…_20261112.webp`): 1 error de WebSocket antes de que Python abriera el socket. -2 (4h.1) | — |
+| US17 | **Cumple** | Saltos 0.20 / 0.34 / 0.27 por s ≤ 0.5 (D-064); rango p5–p95 0.00–0.94/0.97 | — |
+| US23 | **No cumple** (-1 con visual) | C3: 8 (V1) y 4 (V2) muestras de (b) > 100 ms; 155202 0. -2: `[PERF]` y `lag_cam_ms` por etapa (cumple) | Ale decide (P-004, D-059); causa `[POR COMPLETAR]` |
+| US24 | **Parcial** | -1: 0 % > 250 ms en las 3 corridas (Edge + JBL, D-059). -2: sin marca de incumplimiento (fase 1c) | Ale decide si -2 basta |
+| US26 | **Parcial** | 3 corridas de 10 min con visual sin fallos de módulo (cierre normal; consolas no guardadas) | Consolas de Python en `sesiones/` |
+| US38 | **Parcial** | -5 C6 cumple en las 3 corridas (D-063); -1/-2/-3 implementados (las capturas de US14 muestran "Te veo" / "No te veo", "Terminar" y anillos); -4 destellos en `?demo=1` | URL de cuestionarios; -6 revisión de Ale y la profesora |
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -689,7 +748,7 @@ Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lit
 
 ## 9. Plan vigente
 Tarea 1 (auditoría de solo lectura): **HECHA el 31/10/2026** (resultados arriba).
-Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **07/11:** paso 14 HECHO (tanda sobre `3686feb`, C1–C4 cumplen) y paso 9 cerrado con él; cambios aprobados del 07/11 aplicados (D-025 a D-033); corrida de confirmación sobre `30ccbf7` (4h.5): D-023 cumple, C1 estricto 294/299. **10–11/11 (4i):** visual US38 (pasos 17–18), P-012 cerrada, P-015 aplicada, tanda final sobre `8d58820` (`congelado-11-11` = `medido-final`): C1–C4 cumplen en 3 bases de 10 min y C6 informado; US25, US12 (SIMULADO) y US28 (SIMULADO) hechos offline. **12/11 (4j):** validación con el visual encendido (D-047 a D-059); la tanda (paso 26) **no es válida** (reloj y visual sin dibujar); sin etiqueta `validado-visual`. US14 hecha con captura; D-053/D-054 completadas (D-063, D-064). **Siguiente:** repetir V1, V2 y control con D-060 a D-062; US20 con evidencia guardada; refactor KISS (regla 13). Pasos 11 (método A) y 13 quedan sin hacer en TP1.
+Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el protocolo de la sección 10. Orden del 02/11 (7 → 10 → 5 → 5b): **HECHO**. Ale decidió D-012 (sin ventana), D-013 (decodificación en el hilo; condición cumplida con reservas el 04/11), D-014 (máximo rendimiento) y D-015 (decodificación en el hilo por defecto). Paso 9 corrido el 04/11 (4e y 4f), pero **las corridas tienen evento 506 y quedan fuera de protocolo (D-018, 05/11)**: el paso 9 vuelve a PENDIENTE. Prueba A HECHA el 05/11 (4g). **07/11:** paso 14 HECHO (tanda sobre `3686feb`, C1–C4 cumplen) y paso 9 cerrado con él; cambios aprobados del 07/11 aplicados (D-025 a D-033); corrida de confirmación sobre `30ccbf7` (4h.5): D-023 cumple, C1 estricto 294/299. **10–11/11 (4i):** visual US38 (pasos 17–18), P-012 cerrada, P-015 aplicada, tanda final sobre `8d58820` (`congelado-11-11` = `medido-final`): C1–C4 cumplen en 3 bases de 10 min y C6 informado; US25, US12 (SIMULADO) y US28 (SIMULADO) hechos offline. **12/11 (4j):** validación con el visual encendido (D-047 a D-059); la tanda (paso 26) **no es válida** (reloj y visual sin dibujar); sin etiqueta `validado-visual`. US14 hecha con captura; D-053/D-054 completadas (D-063, D-064). **12/11 por la tarde (4k):** tanda repetida, válida por protocolo; con el visual encendido US08, US14 y US17 cumplen; US07 (C1) y US23 (C3) no cumplen. Registro oficial (D-065), etiqueta `medido-visual` en `1d70ce8`. **Siguiente:** decisión de Ale sobre US07/US23 (P-004) y P-021; US20 con evidencia guardada; refactor KISS (regla 13). Pasos 11 (método A) y 13 quedan sin hacer en TP1.
 | # | Paso | Estado |
 |---|---|---|
 | 1 | Commit del estado actual en la rama `wip-28e` | HECHO 31/10 (`368c20a`) |
@@ -719,7 +778,7 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 21 | US25 (pruebas por módulo), US12 (escalón SIMULADO), US28 (escenarios con semilla, SIMULADO) | HECHO 11/11 (`7c9e0a1`, `fab4f7b`; 4i.6). Umbrales de US28 `[POR CONFIRMAR]` (P-018) |
 | 22 | US14: captura de la consola de Edge **después** de pulsar "Empezar", con Python en marcha | HECHO 12/11 (`sesiones/us14_consola_edge_20261112.webp`; 4j.4) |
 | 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación), con visual y preguntas separadas (D-055) | PENDIENTE (12/11: sin registro) |
-| 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062) |
+| 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062). **Repetida 12/11 por la tarde (4k):** 155642, 161012 y 162149 válidas por protocolo (sin registros de procesos); C4, C6, C7 y HU0017 cumplen; C1 y C2 fallan en V1 y C3 en V1 y V2. **Registro oficial (D-065)**; etiqueta `medido-visual` en `1d70ce8` (sin `validado-visual`) |
 | 24 | Manos con el visual encendido (≈ 7 datos/mano/s frente a ≈ 14) | Limitación informada (4i.2); causa `[POR COMPLETAR]`; opciones en P-017 |
 | 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | PENDIENTE (12/11) |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
@@ -775,6 +834,7 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 - 11/11: (c) solo como cota INFERIDA (método B, 4i.6); el método A (celular en cámara lenta) no se probó.
 - 12/11 `[POR COMPLETAR]`: propósito de 132848, 140411 y 143303; evidencia de US20 y US38; consolas de Python. (US14: captura guardada; JBL: siempre, dicho por Ale.)
 - 12/11 `[POR COMPLETAR]`: por qué V1 (y el calentamiento) tuvieron `tracker` ≈ 27 ms y `dwm` 30–46 % frente a 23.8 ms y 8 % en 155202 (4j.2).
+- 12/11 `[POR COMPLETAR]`: registros de GPU, CPU y procesos de la tanda repetida (155642, 161012, 162149) — no están en `sesiones/`; causa de las ventanas bajas y de las muestras de (b) > 100 ms de V1 (576–590 s) y V2 (4j/4k).
 - 12/11: la regla de reloj (D-019) puede fallar aunque se haga `w32tm /resync` justo antes: el sondeo siguiente (≈ 17 min después) corrigió la hora durante V1, V2 y el control (INFERIDO; 4j.1). Propuesta P-019.
 - 11/11: hallazgo de US25 sin arreglar (código congelado): `angulo_articulacion` da 179.9974° con vectores unitarios; sin efecto práctico en mm.
 - Pendiente de datos (no medido): confianza de rodillas y tobillos en el CSV. Ale observó el 31/10 más movimiento falso de piernas al subir los brazos; en las sesiones 164334/164633 la mediana de la velocidad de rodilla es 35–111 °/s con los hombros a 45–135° (11–16 °/s quieto con los brazos abajo), y eso sube el tempo.
