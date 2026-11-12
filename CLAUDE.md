@@ -74,15 +74,15 @@ Un solo bucle secuencial en `bucle_kinect`, en el hilo del event loop:
 12. **Visual (US38):** solo en el navegador; Canvas 2D, sin WebGL, sin desenfoques ni sombras costosas; como máximo 200 elementos vivos (anillos y estrellas juntos); el dibujo va en `requestAnimationFrame`, nunca en `onmessage`; sin destellos (no más de 3 cambios bruscos de luz por segundo), sin rojo, sin puntajes ni cronómetros; el color no es la única señal (también cambian borde, forma o texto). No se toca el ciclo de Python por el visual; si hace falta un campo nuevo en el mensaje (identificador de nota nueva, cuerpo detectado), se propone con su costo medido y se espera la aprobación de Ale. Que el visual reduzca el estrés es una **hipótesis** (INFERIDO), no un resultado; se evalúa en el otro curso.
 13. **Refactor (KISS):** solo al final, después de todas las mediciones. Se etiqueta el commit medido (`medido-final`) y se trabaja en la rama `refactor/kiss`. Un módulo por commit, sin cambiar comportamiento, sin clases ni capas nuevas salvo que quiten duplicación; funciones cortas, constantes en un solo lugar, nombres coherentes. No se toca `bucle_kinect` salvo orden explícita de Ale. Se valida con una corrida con semilla (mismas notas) y una de 10 min con C1–C5. Las cifras del paper citan el commit medido, no el refactorizado.
 
-## 7. Criterios de aceptación del trabajo de ciclo (binarios; corrida de 10 min con `python main.py cuda lite`, visual apagado)
-- C1. Ciclos/s ≥ 29.5 sostenidos y `cap_update` > 0 ms (Python espera a la cámara). Regla D-023 (borrador aprobado por Ale, 07/11) para HU0007-1: media ≥ 29.5 y ninguna ventana (sin #0) < 29.0. Se reporta además el resultado estricto (todas las ventanas) y las caídas aparte.
-- C2. Espera de cámara: p95 ≤ línea base y sin crecimiento durante los 10 min.
-- C3. Latencia (b) `latencia_llegada_ms`: media, p95 y máx no peores que la línea base vigente de `docs/MEDICIONES.md` (misma definición); se informa (a) y se compara con la prueba de 100 ms de HU0023-1. El máximo es una sola muestra y varía entre corridas iguales; se informa junto con el % de muestras > 100 ms.
-- C4. `lat_tick_ms` ≤ 250 ms en el 100% de los sorteos.
-- C5. Comportamiento musical igual al aprobado en `docs/DECISIONES.md` (cambios solo con decisión escrita).
-- **C6 (informativo; visual encendido; no bloquea el Done de US07, US23 ni US24).** En una corrida de 10 min con el visual encendido (valor por defecto del sistema final) se informan C1–C4, el tiempo por cuadro (p95; objetivo ≤ 16.7 ms, por aprobar) y la latencia visual. Si con el visual encendido C1 o C3 empeoran, se informa tal cual. Razón: los criterios de US07, US23 y US24 describen el pipeline hasta los parámetros; el dibujo ocurre después, en el navegador (INFERIDO: comparte CPU y GPU con el tracker, por eso se mide aparte).
-- Si C1 no se cumple, reporta el porcentaje de ciclos > 33.3 ms y qué etapa los causa. No declares "hecho".
-- Si el ciclo se ralentiza durante la corrida, reporta la tendencia (inicio frente a final) y el uso de CPU por proceso (`registrar_procesos.ps1`), no solo el promedio.
+## 7. Criterios de aceptación (binarios; corrida de 10 min con `python main.py cuda lite`, visual encendido por defecto, D-042; Edge en GPU integrada; una pestaña)
+- C1. D-023: media ≥ 29.5 ciclos/s y ninguna ventana (sin #0) < 29.0; `cap_update` > 0 ms. Se informa también el estricto (todas ≥ 29.5).
+- C2. `lag_cam` p95 ≤ 27.1 ms y sin crecimiento durante los 10 min.
+- C3. Latencia (b): 0 muestras > 100 ms (HU0023-1). Media, p95 y máx y la latencia (a) se informan junto a las bases sin visual.
+- C4. `lat_tick_ms` ≤ 250 ms en el 100 % de los sorteos.
+- C5. Comportamiento musical igual al aprobado en DECISIONES.
+- C6. Visual: tiempo por cuadro p95 ≤ 16.7 ms; latencia visual p95 ≤ 100 ms (por aprobar); sin destellos (≤ 3/s).
+- C7. Manos (HU0008-1, D-048): ≥ 5 datos nuevos por mano/s (media, cada mano).
+- Las corridas con `?visual=0` son referencia de comparación; se siguen registrando.
 
 ## 8. Cierre de sesión (Ale lo pega al terminar)
 `Cierra la sesión: (1) actualiza docs/MEDICIONES.md con lo medido hoy, separando MEDIDO de INFERIDO y citando el CSV o log de origen; (2) si hubo una decisión, añádela a docs/DECISIONES.md con fecha y razón, y deja como "por aprobar" lo que decide Ale; (3) marca en el plan lo hecho y lo pendiente; (4) muéstrame solo los fragmentos cambiados. No toques CLAUDE.md ni docs/HISTORIAS.md.`
