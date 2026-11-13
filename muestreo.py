@@ -3,12 +3,7 @@ import random
 # =====================================================================
 # PARÁMETROS
 # =====================================================================
-ESCALAS = {
-    "pentatonica": ["Do", "Re", "Mi", "Sol", "La"],
-    "mayor": ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"],
-}
-ESCALA_ACTIVA = "mayor"   # cambia a "pentatonica" para volver a la escala original
-NOTAS = ESCALAS[ESCALA_ACTIVA]
+NOTAS = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"]   # escala de Do mayor (HU0019-1)
 
 # Pesos por distancia (en pasos de la escala). Valores ILUSTRATIVOS de partida:
 # pasos cercanos más probables, repetir la misma nota menos probable.
