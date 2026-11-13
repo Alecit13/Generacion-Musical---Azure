@@ -80,7 +80,6 @@ TAMANO_MANO_M = 0.45             # tamaño del recuadro en metros (mano + margen
 ROI_MIN_PX, ROI_MAX_PX = 96, 400 # límites del recuadro en píxeles
 RESPALDO_MUNECA = True            # si la Kinect marca la MANO como NONE, centra el recuadro con la MUÑECA y el CODO
 FACTOR_RESPALDO_MUNECA = 0.35    # cuánto se avanza más allá de la muñeca, como fracción del antebrazo (codo->muñeca) en píxeles
-MOSTRAR_RECUADROS = False        # True = dibuja el recuadro de cada mano (útil para depurar)
 
 # Ventana de vídeo
 MOSTRAR_VENTANA = False          # D-012: sin ventana de OpenCV en evaluaciones (no dibuja ni llama a waitKey; se cierra con Ctrl+C)
@@ -897,9 +896,6 @@ async def bucle_kinect():
             display = cv2.cvtColor(cv2.imdecode(color_image, -1) if DECODIFICAR_EN_HILO_MANOS else color_image,
                                    cv2.COLOR_BGRA2BGR)
             if num_bodies > 0:
-                if MOSTRAR_RECUADROS:
-                    for rec, ok in recuadros_hoy:
-                        cv2.rectangle(display, rec[:2], rec[2:], (0, 255, 0) if ok else (0, 0, 255), 2)
                 display = body_frame.draw_bodies(display, pykinect.K4A_CALIBRATION_TYPE_COLOR)
                 for h in manos_detectadas:
                     mp_drawing.draw_landmarks(display, h, mp_hands.HAND_CONNECTIONS)
