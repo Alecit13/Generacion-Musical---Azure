@@ -793,18 +793,19 @@ Cálculo con `analisis_visual.py` (`b769fff`, solo lectura) sobre los archivos `
 - **HU0007-1 por tanda:**
   - Tanda oficial D-065 (155202, V1, V2): D-023 2/3 y D-069 2/3 → **no cumple** con ninguna regla, por V1.
   - Tanda Intel (I1, I2, I3): D-023 0/3 → no cumple; D-069 3/3 → **cumple**.
-  - Cuál cuenta para US07 lo decide Ale (P-023). Con D-069 el resultado depende de esa elección: hay que informarlo así.
+  - **Cuenta la tanda oficial (D-071, P-023 cerrada):** US07 **no Done**; las corridas Intel son evidencia adicional. En total 5 de 6 corridas largas con visual cumplen D-069; V1 no (22.2). Decide el asesor. Dato informativo, no criterio: con un piso de 15 ciclos/s V1 también cumpliría.
+- **I1–I3 (MEDIDO, sin atribuir causa):** `cap_update` 0.7–0.9 ms (frente a 2.3–4.8 en 155202, V1 y V2) y `lag_cam` p95 ≈ 30 ms (29.3–30.5; frente a 17.2–19.2).
 - **D-069 es a posteriori (aviso):** los mínimos de ventana de las 6 corridas ya se conocían (4k, 4l) cuando se propuso el umbral de 25.0; la única corrida que lo cruza es V1 (22.2 y 24.2, ventanas #293–#294, al final de la corrida). La aprobación del asesor del 30/10 la cuenta Ale; no hay registro escrito en el repositorio `[POR COMPLETAR]`.
 
 ### 4m.2 Estado final de US07–US22 (con el visual encendido, D-047)
 | US | Criterio vigente | Estado | Evidencia (en `sesiones/` salvo indicación) | Decisión o texto que falta |
 |---|---|---|---|---|
-| US07 | -1 D-069 (media ≥ 29.5, ninguna ventana < 25.0); -2 articulación perdida = "no disponible" | **-1 depende de P-023** (oficial: no cumple; Intel: cumple). -2 pendiente de texto | 4m.1; `[PIERNAS]` de `sesion_20261107_174555_*_perf.txt` (4h.5) | P-023; texto de HU0007-1 con D-069; reescritura de HU0007-2 ("LOW cuenta como disponible y su confianza queda en el log") |
+| US07 | -1 D-069 (media ≥ 29.5, ninguna ventana < 25.0) sobre la tanda oficial (D-071); -2 articulación perdida = "no disponible" | **No Done.** -1: tanda oficial 2/3 (V1 no, 22.2); 5 de 6 corridas largas con visual cumplen; decide el asesor. -2 pendiente de texto | 4m.1; `[PIERNAS]` de `sesion_20261107_174555_*_perf.txt` (4h.5) | Decisión del asesor; texto de HU0007-1 con D-069; reescritura de HU0007-2 ("LOW cuenta como disponible y su confianza queda en el log") |
 | US08 | -1 D-048 (≥ 5 datos nuevos por mano/s); -2 D-025 | **Cumple** | 4m.1 (6.5–7.3/s en 6 corridas); `sesion_20261107_155040_*` (4h.2) | — |
 | US09 | Mismo frame, `par_dt_ms = 0` | **Cumple; pendiente de texto** | Columna `par_dt_ms` en todas las sesiones | Reescritura de HU0009-1/-2 (lote D-058) |
 | US10 | -1 JSON sin errores; -2 reconecta ≤ 2 s / sigue sin cliente | **Cumple** | Caso A 0.01–0.53 s (4j.2); caso B `sesion_20261107_150413_*` (4h.1) | — |
 | US11 | Amplitud normalizada, ventana de 2 s | **Cumple** | Columnas `intensidad`, `amplitud_mm` | — |
-| US12 | -1 jitter; -2 retardo al 50 % ≤ 100 ms (D-044) | **Cumple** (-2 SIMULADO) | `validacion_offline_20261111.txt` (4i.6) | — |
+| US12 | -1 jitter; -2 retardo al 50 % ≤ 100 ms (D-044) | **-1 cumple; -2 pendiente**: D-044 define qué retardo se compara, pero **no dice** que la simulación cuente como evidencia de HU0012-2 (la columna "Falta para Done" de HISTORIAS menciona "simularlo con un escalón y marcarlo SIMULADO" como opción) | Jitter (sección 5); `validacion_offline_20261111.txt` (4i.6, SIMULADO: 0 ms ≤ 100) | Que Ale decida si el SIMULADO cuenta para HU0012-2 |
 | US13 | λ según Piana 2016 / Camurri 2016 | **Cumple; pendiente de texto** | 4h | Cita en HU0013-1 (lote D-058) |
 | US14 | -1 sin errores de inicio; -2 autoplay | **Cumple** | `us14_consola_edge_20261112b.png` (0 errores); 4h.1 | — |
 | US15 | -1 zona por postura; -2 250 ms (D-028) | **-2 cumple; -1 pendiente de texto** | 4h.2; 4l.4 | Reescritura de HU0015-1 (D-035, normalización de 20 s) |
@@ -890,7 +891,7 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 22 | US14: captura de la consola de Edge **después** de pulsar "Empezar", con Python en marcha | HECHO 12/11 (`sesiones/us14_consola_edge_20261112.webp`; 4j.4) |
 | 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación), con visual y preguntas separadas (D-055) | HECHO 12/11 (4l.3): sonido 4.5, visual 4; cumple (D-068) |
 | 27 | Últimas corridas con el Kinect: 3 × 10 min con Edge en Intel (D-067) | HECHO 12/11 (4l): 174808, 180008, 181157 válidas; las 3 fallan C1 (D-023), C2 y C3. Hipótesis Intel no apoyada; Intel queda como propuesta de diseño sin ventaja demostrada (D-070) |
-| 28 | Cierre de los Sprints 2 y 3 con los CSV (4m): tabla por corrida, D-069 (HU0007-1, a posteriori), estado de US07–US22 y mejoras | HECHO 12/11. Pendiente: P-023 y los textos de US07, US09, US13, US15, US16, US18, US20 y US22 (Ale) |
+| 28 | Cierre de los Sprints 2 y 3 con los CSV (4m): tabla por corrida, D-069 (HU0007-1, a posteriori), estado de US07–US22 y mejoras | HECHO 12/11. P-023 cerrada (D-071): US07 no Done (decide el asesor); US12-2 pendiente (¿cuenta el SIMULADO?); US23 abierta (Sprint 4). Pendientes los textos de US07, US09, US13, US15, US16, US18, US20 y US22 (Ale) |
 | 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062). **Repetida 12/11 por la tarde (4k):** 155642, 161012 y 162149 válidas por protocolo (sin registros de procesos); C4, C6, C7 y HU0017 cumplen; C1 y C2 fallan en V1 y C3 en V1 y V2. **Registro oficial (D-065)**; etiqueta `medido-visual` en `1d70ce8` (sin `validado-visual`) |
 | 24 | Manos con el visual encendido (≈ 7 datos/mano/s frente a ≈ 14) | Limitación informada (4i.2); causa `[POR COMPLETAR]`; opciones en P-017 |
 | 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | PENDIENTE (12/11) |
