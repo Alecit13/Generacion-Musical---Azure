@@ -48,15 +48,20 @@
 ## Fuera de TP1 (otro curso)
 US29–US37 (protocolo con estudiantes, interacción libre, PSS-10, SAM, SUS, parlante JBL con participantes, inicio y parada autónomos, consolidación de resultados y conclusiones con datos de participantes). Decisión de Ale, 10/11/2026. US34 y US35 tocan el código; se agregan aquí si entran a un sprint de TP1.
 
-## Reescrituras propuestas (por aprobar; no vigentes hasta que Ale las acepte)
-Cada cambio de criterio exige razón escrita (y consulta con el asesor, P-004).
-- **HU0007-2:** "Una articulación sin dato (confianza NONE) se marca no disponible sin detener el resto; una articulación inferida por el SDK (LOW) cuenta como disponible y su confianza queda en el log." *Razón:* MEDIDO en `[PIERNAS]`: las piernas nunca salen NONE, solo LOW; el criterio original no distingue entre "perdida" e "inferida".
-- **HU0009-1/-2:** "El sistema obtiene esqueleto y apertura de manos del mismo frame (diferencia de tiempo 0 por construcción) y mantiene la última apertura válida de cada mano hasta 0.5 s; pasado ese tiempo reporta ausencia." *Razón:* el módulo de fusión y la cola compartida ya no existen; `par_dt_ms = 0` (MEDIDO) y D-025/D-029.
-- **HU0013-1:** igual, pero citando la definición en "Piana et al. (2016) y Camurri et al. (2016)". *Razón:* Camurri et al. (2024) es una aplicación, no la definición (ver `articulos_resumen.md`).
-- **HU0015-1:** "Asigna zona grave/media/aguda según el ángulo de los hombros, normalizado con los últimos 20 s de cada estudiante." *Razón:* D-035; la normalización adaptativa hace la zona relativa a la postura reciente.
-- **HU0016-1:** "El tempo (1 a 4 notas/s) cambia en proporción a la velocidad angular normalizada con los últimos 20 s; sin saltos mayores a `[POR COMPLETAR]`." *Razón:* D-035 y el salto medido (p99 0.56–0.60).
-- **HU0018-1:** "El volumen refleja la amplitud del desplazamiento en la ventana de 2 s, normalizada con los últimos 20 s." *Razón:* el código usa amplitud, no energía acumulada (LEÍDO).
-- **HU0020-1:** "El estudiante que prueba el sistema percibe transiciones fluidas (prueba de percepción; participantes: `[POR COMPLETAR]`)." *Razón:* decisión de Ale (10/11); la autovalidación del desarrollador es una limitación que se declara.
+## Criterios reescritos (vigentes desde el 12/11/2026; cada uno con su razón en DECISIONES)
+- **HU0007-1 (D-052, D-069):** "El módulo publica las 32 articulaciones a ~30 Hz con el sistema final (visual encendido): media ≥ 29.5 ciclos/s y ninguna ventana de 60 ciclos (sin la de arranque) < 25.0 ciclos/s."
+- **HU0007-2:** "Una articulación sin dato (confianza NONE) se marca no disponible sin detener el resto; una articulación inferida por el SDK (LOW) cuenta como disponible y su confianza queda en el log."
+- **HU0008-1 (D-048, D-052):** "Con el sistema final (visual encendido), el módulo entrega datos nuevos de cada mano con marca de tiempo, al menos 5 por segundo en promedio por mano." `[POR COMPLETAR]` decidir si se mantiene "21 puntos por mano (42)": no está medido.
+- **HU0009-1/-2:** "El sistema obtiene esqueleto y apertura de manos del mismo frame (diferencia de tiempo 0 por construcción) y mantiene la última apertura válida de cada mano hasta 0.5 s; pasado ese tiempo reporta ausencia."
+- **HU0012-2 (D-044, D-072):** "El retardo del filtro, medido con el filtro real ante un escalón ideal (SIMULADO), no supera 100 ms al 50 % del escalón; el 90 % se informa aparte."
+- **HU0013-1:** "…calcula la fluidez según Piana et al. (2016) y Camurri et al. (2016)…"
+- **HU0015-1 (D-035):** "Asigna zona grave/media/aguda según el ángulo de los hombros, normalizado con los últimos 20 s de cada estudiante."
+- **HU0016-1 (D-035):** "El tempo (1 a 4 notas/s) cambia en proporción a la velocidad angular normalizada con los últimos 20 s; sin saltos mayores a [POR COMPLETAR]."
+- **HU0017-1 (D-064):** "El timbre cambia en proporción a la apertura de manos, con no más de 0.5 saltos por segundo de `apertura01` mayores a 0.3."
+- **HU0018-1 (D-035):** "El volumen refleja la amplitud del desplazamiento en la ventana de 2 s, normalizada con los últimos 20 s."
+- **HU0020-1 (D-055, D-068):** "El estudiante percibe transiciones fluidas del sonido: pregunta 1 (sonido) ≥ 4 de 5; el visual se pregunta aparte. Limitación: n = 1, autovalidación del desarrollador."
+- **HU0023-1, HU0024-1, HU0026-1 (D-052):** se agrega al criterio "con el sistema final (visual encendido)".
+- **HU0025-1 (D-056), BORRADOR mío:** "Cada módulo y clase probable de forma aislada produce el comportamiento esperado (44/44 pruebas unitarias); el bucle con la Kinect, el hilo de manos, `index.html` y `visual.js` se validan por integración (US26) y por las corridas."
 
 ## Lo que esto implica para el plan de ciclo
 - Un desvío frente a US07 (~30 Hz) y US08 (30 FPS) es un desvío frente a un criterio de aceptación escrito. Cambiarlo requiere una decisión argumentada en `DECISIONES.md` (P-004) y consulta con el asesor.
