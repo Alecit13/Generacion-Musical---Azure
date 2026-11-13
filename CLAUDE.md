@@ -48,7 +48,7 @@ Un solo bucle secuencial en `bucle_kinect`, en el hilo del event loop:
 2. Color: por defecto (D-015) el ciclo solo copia los bytes JPEG y `HiloManos` los decodifica; con `--sin-decod-hilo` se decodifica con `to_numpy()` en el ciclo (≈ 6 ms). El formato BGRA32 se probó y se descartó (D-008): el SDK entrega el frame más tarde.
 3. `body_tracker.update()` (GPU, ≈ 21–24 ms según el estado del equipo; es el piso del ciclo).
 4. Registro: ángulo de elevación de los hombros combinado con la media de ambos (D-002); histéresis de **250 ms sostenidos** (`UMBRAL_ESTABILIDAD_ZONA_S`, D-010), con tope `DT_MAX_ZONA_S` por ciclo para que un hueco de cuerpo no cuente. Ya no cuenta ciclos.
-5. Manos: se ofrece el frame a `HiloManos` (cola de 1 hueco + bandera `ocupado`; si está ocupado, el frame se salta, nunca se acumula). El recuadro (ROI) sale de las articulaciones del Kinect. Cuerpo y manos salen del mismo frame (`par_dt_ms = 0`). El hilo alterna las manos (`ALTERNAR_MANOS=True`).
+5. Manos: se ofrece el frame a `HiloManos` (cola de 1 hueco + bandera `ocupado`; si está ocupado, el frame se salta, nunca se acumula). El recuadro (ROI) sale de las articulaciones del Kinect. Cuerpo y manos salen del mismo frame (`par_dt_ms = 0`). El hilo alterna las manos, una por trabajo.
 6. `mapeo.actualizar` (tempo, intensidad, λ) y tick de nota (una evaluación por ciclo).
 7. `await enviar_a_todos(...)` + `print` + escritura del CSV con `flush()`.
 8. Dibujo OpenCV (1 de cada `DIBUJAR_CADA` ciclos), después del envío; no se ejecuta salvo con `--con-ventana` (D-012).
