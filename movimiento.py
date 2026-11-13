@@ -119,6 +119,12 @@ def angulo_articulacion(a, b, c):
     return float(np.degrees(np.arccos(np.clip(cos, -1.0, 1.0))))
 
 
+def posicion(joints, i):
+    """Posición (mm) de la articulación i como array numpy [x, y, z]. La usan MapeoExtremidades y RegistroPorAngulo."""
+    p = joints[i].position.xyz
+    return np.array([p.x, p.y, p.z], dtype=float)
+
+
 class MapeoExtremidades:
     """Traduce el esqueleto a los parámetros musicales de la tabla del TI (RF05):
          velocidad angular de rodillas       -> tempo       (0-1)
@@ -143,11 +149,6 @@ class MapeoExtremidades:
         self.vel_rodilla, self.amplitud_mm, self.acc_mm = 0.0, 0.0, 0.0
 
     @staticmethod
-    def _pos(joints, i):
-        p = joints[i].position.xyz
-        return np.array([p.x, p.y, p.z], dtype=float)
-
-    @staticmethod
     def _ok(joints, i):
         return joints[i].confidence_level >= CONF_MIN_ARTICULACION
 
@@ -167,7 +168,7 @@ class MapeoExtremidades:
         omegas = []
         for lado, (cad, rod, tob) in J_RODILLAS.items():
             if all(J[i].confidence_level >= self.conf_min_rodilla_tempo for i in (cad, rod, tob)):   # 1 = igual que _ok
-                ang = angulo_articulacion(self._pos(J, cad), self._pos(J, rod), self._pos(J, tob))
+                ang = angulo_articulacion(posicion(J, cad), posicion(J, rod), posicion(J, tob))
                 w = self.vel_rod[lado].actualizar(ang, t)
                 if w is not None:
                     omegas.append(w)
@@ -180,8 +181,8 @@ class MapeoExtremidades:
         media normalizada en VENTANA_FLUIDEZ_S). Comparten el historial `hist`; actualiza amplitud_mm, intensidad,
         acc_mm y lam."""
         if self._ok(J, J_PELVIS) and all(self._ok(J, i) for i in J_EXTREMIDADES):
-            pelvis = self._pos(J, J_PELVIS)
-            self.hist.append((t, np.stack([self._pos(J, i) - pelvis for i in J_EXTREMIDADES])))
+            pelvis = posicion(J, J_PELVIS)
+            self.hist.append((t, np.stack([posicion(J, i) - pelvis for i in J_EXTREMIDADES])))
             while t - self.hist[0][0] > VENTANA_INTENSIDAD_S:
                 self.hist.popleft()
 
@@ -211,7 +212,7 @@ class RegistroPorAngulo:
     tiene menos rango, o es zurdo, igual recorre todo el registro) y luego se promedian los brazos
     vigentes (D-002). Además calcula los 8 ángulos candidatos (hombro, codo,
     cadera, rodilla; izq/der) SOLO para guardarlos en el CSV y poder analizarlos después.
-    Relación con el resto: reutiliza angulo_articulacion y MapeoExtremidades._pos; su salida
+    Relación con el resto: reutiliza angulo_articulacion y posicion; su salida
     `registro01` la convierte en zona zona_desde_registro, y calcular_octava (muestreo.py) la
     vuelve octava. Se llama una vez por ciclo desde bucle_kinect, igual que `mapeo`.
     Variables importantes: `reg01` (0-1 por brazo), `t_ok` (cuándo fue fiable cada brazo; sirve para
@@ -229,8 +230,7 @@ class RegistroPorAngulo:
         J = skeleton.joints
         for lado, (cad, hom, cod) in J_BRAZOS.items():
             if all(J[i].confidence_level >= CONF_MIN_ANGULO_BRAZO for i in (cad, hom, cod)):
-                ang = angulo_articulacion(MapeoExtremidades._pos(J, cad), MapeoExtremidades._pos(J, hom),
-                                          MapeoExtremidades._pos(J, cod))
+                ang = angulo_articulacion(posicion(J, cad), posicion(J, hom), posicion(J, cod))
                 prev = self.ang_suav[lado]
                 self.ang_suav[lado] = ang if prev is None else EMA_ANGULO_BRAZO * ang + (1 - EMA_ANGULO_BRAZO) * prev
                 self.reg01[lado] = self.norm[lado].actualizar(self.ang_suav[lado], t)
@@ -252,8 +252,7 @@ class RegistroPorAngulo:
         salida = {}
         for nombre, (a, b, c) in J_ANGULOS.items():
             if all(J[i].confidence_level >= CONF_MIN_ARTICULACION for i in (a, b, c)):
-                salida[nombre] = angulo_articulacion(MapeoExtremidades._pos(J, a), MapeoExtremidades._pos(J, b),
-                                                     MapeoExtremidades._pos(J, c))
+                salida[nombre] = angulo_articulacion(posicion(J, a), posicion(J, b), posicion(J, c))
             else:
                 salida[nombre] = None
         return salida
