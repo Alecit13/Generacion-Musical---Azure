@@ -93,8 +93,6 @@ DECODIFICAR_EN_HILO_MANOS = True   # D-013/D-015: el ciclo solo copia el JPEG (M
                                    # el color); --sin-decod-hilo vuelve a to_numpy() en el ciclo (reversible)
 SWITCH_INTERVAL_S = None         # DIAGNÓSTICO (paso 5b): None = valor de Python (5 ms); 0.001 = sys.setswitchinterval(0.001)
                                  # (el hilo principal recupera antes el GIL cuando el hilo de manos ejecuta Python)
-LEER_PROFUNDIDAD_NUMPY = False   # False = NO descarga la imagen de profundidad a numpy (el tracker usa el capture directamente; solo se comprueba que exista)
-                                 # True  = comportamiento anterior (copia ~0.7 MB por ciclo solo para verificar)
 
 # Opciones de línea de comandos para los experimentos (así no se edita main.py entre corridas):
 #   python main.py cuda lite                     (--sin-decod-hilo para decodificar en el ciclo; --con-ventana para depurar)
@@ -698,10 +696,7 @@ def leer_frame(capture, t_upd):
     que time.perf_counter()) = tiempo que el frame esperó en la cola del SDK. None si el dato no es válido.
     Nota: to_numpy() ya devuelve una copia propia, por eso NO se hace otra .copy()."""
     img_color = capture.get_color_image_object()
-    if LEER_PROFUNDIDAD_NUMPY:
-        ok_depth, _ = capture.get_depth_image()
-    else:
-        ok_depth = bool(capture.get_depth_image_object().is_valid())    # solo comprueba que haya profundidad
+    ok_depth = bool(capture.get_depth_image_object().is_valid())    # solo comprueba que haya profundidad (sin copiarla a numpy)
     t0 = time.perf_counter()
     if DECODIFICAR_EN_HILO_MANOS:
         # Solo se copian los bytes del JPEG (el buffer del SDK se libera con el capture); los decodifica HiloManos
