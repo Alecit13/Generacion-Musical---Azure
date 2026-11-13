@@ -73,11 +73,7 @@ DT_MAX_ZONA_S = 0.1               # tope del tiempo que suma un ciclo: tras una 
 # Manos (MediaPipe sobre un recorte alrededor de cada mano) -> configuración A elegida
 CONFIANZA_DETECCION_MANO = 0.5   # bájalo a 0.4 si se pierden manos
 COMPLEJIDAD_MODELO = 0           # 0 = rápido (lite), 1 = más preciso
-HILO_POR_MANO = False            # True = un hilo para cada mano (las dos se procesan EN PARALELO en cada ciclo; ignora ALTERNAR_MANOS)
-                                 # perf/ciclo-30hz: False porque con 2 hilos el ciclo subió de 38.4 a 42.0 ms (sesiones 28d vs 28e)
-                                 # False = un solo hilo para las dos manos (comportamiento de v6)
 USAR_HILO_MANOS = True           # DIAGNÓSTICO (paso 5b): False = sin hilo de manos ni MediaPipe (sin timbre: apertura siempre "sin mano")
-ALTERNAR_MANOS = True            # solo con HILO_POR_MANO=False: True = una mano por trabajo, alternando | False = las 2 manos del mismo frame
 HOLD_APERTURA_S = 0.5            # si se pierde una mano, se mantiene su última apertura este tiempo
 FOCAL_COLOR_PX = 610             # focal aprox. de la cámara de color a 720p
 TAMANO_MANO_M = 0.45             # tamaño del recuadro en metros (mano + margen); antes 0.35: más grande compensa el desfase del modelo lite
@@ -396,8 +392,7 @@ def reportar():
     _reportar_linea(f"[FUSION] {fusion.resumen_y_reiniciar()}")
     _reportar_linea(f"[ROI] aciertos de MediaPipe por origen del recuadro -> {hilo_manos.estadisticas_roi_y_reiniciar()}")
     _reportar_linea(f"[PERF] {n / dur:.1f} ciclos/s | ciclo={dur / n * 1000:.0f}ms | {etapas} "
-          f"| hilo_manos={ms_hilo:.0f}ms ({n_hilo / dur:.1f} trab/s"
-          f"{f', {n_hilo / dur / hilo_manos.n_hilos:.1f} por hilo' if hilo_manos.n_hilos > 1 else ''})"
+          f"| hilo_manos={ms_hilo:.0f}ms ({n_hilo / dur:.1f} trab/s)"
           f"{f' | decod_hilo={hilo_manos._ms_decod:.2f}ms/trabajo' if DECODIFICAR_EN_HILO_MANOS else ''}")
     _reportar_linea("[PERF-LINEA] " + " | ".join(
         f"{l}={acum_linea[l] / n_linea[l] * 1000:.2f}ms/llamada ({acum_linea[l] / n * 1000:.2f}ms/ciclo, {n_linea[l]} llamadas)"
@@ -509,8 +504,7 @@ class HiloManos:
     """Corre MediaPipe de las manos en HILOS APARTE, para que el ciclo principal
     (captura -> esqueleto -> mapeo -> envío) no espere por ellas.
     Analogía: el cocinero (ciclo principal) no se queda mirando el horno; deja la masa
-    (el frame) en la repisa y sigue cocinando. Con HILO_POR_MANO=True hay DOS ayudantes,
-    uno por mano, que hornean a la vez; con False hay uno solo (como en v6).
+    (el frame) en la repisa y sigue cocinando. Hay un solo ayudante para las dos manos (D-003).
     Relación con el resto: bucle_kinect le ofrece un frame con `enviar` solo si `libre()`;
     cada hilo usa detectar_mano + calcular_apertura y guarda su resultado; bucle_kinect lo lee
     con `estado()` cada ciclo (los datos de la Kinect NO cruzan el hilo: bucle_kinect extrae antes
@@ -518,7 +512,7 @@ class HiloManos:
     Variables importantes: `trabajadores` (lista; cada uno con su `cola` de 1 hueco, su bandera
     `ocupado` y sus `lados`), `lock` (protege los resultados compartidos), `ult_apertura/ult_t_ap/ult_landmarks`
     (último dato por mano), `recuadros_lado` (último recuadro por mano).
-    Cambio 6: ya NO normaliza la apertura (con ALTERNAR_MANOS cada trabajo trae una sola mano y apertura01 saltaba
+    Cambio 6: ya NO normaliza la apertura (cada trabajo trae una sola mano, alternando, y apertura01 saltaba
     entre las dos); la normaliza bucle_kinect con TimbrePorManos sobre el promedio de las manos vigentes.
     Cada detector de MediaPipe SOLO lo toca el hilo que lo creó (MediaPipe no es seguro entre hilos)."""
 
@@ -532,13 +526,12 @@ class HiloManos:
         self._t_decod = 0.0                              # DECODIFICAR_EN_HILO_MANOS: segundos decodificando (dentro de _t_trabajo)
         self._ms_decod = 0.0                             # ms de decodificación por trabajo del último reporte
         self.roi = {"mano": [0, 0], "muneca": [0, 0]}   # origen del recuadro -> [intentos, aciertos de MediaPipe]
-        grupos = [("izq",), ("der",)] if HILO_POR_MANO else [("izq", "der")]
+        grupos = [("izq", "der")]
         if not USAR_HILO_MANOS:         # sin trabajadores: libre() es False (nunca se envía) y estado() queda "sin mano"
             grupos = []
         self.trabajadores = []
         for lados in grupos:
             self.trabajadores.append({"lados": lados, "cola": queue.Queue(maxsize=1), "ocupado": False, "ciclo": 0})
-        self.n_hilos = len(self.trabajadores)
         for t in self.trabajadores:
             t["hilo"] = threading.Thread(target=self._correr, args=(t,), name="hilo-manos-" + "-".join(t["lados"]), daemon=True)
             t["hilo"].start()
@@ -573,8 +566,7 @@ class HiloManos:
                     [r for r in self.recuadros_lado.values() if r is not None])
 
     def estadisticas_y_reiniciar(self):
-        """(ms promedio por trabajo, número de trabajos) desde el último reporte. Lo usa reportar().
-        Con HILO_POR_MANO cada trabajo es UNA mano, así que `n` cuenta las dos manos juntas."""
+        """(ms promedio por trabajo, número de trabajos) desde el último reporte. Lo usa reportar()."""
         with self.lock:
             n, t = self._n_trabajos, self._t_trabajo
             self._n_trabajos, self._t_trabajo = 0, 0.0
@@ -630,9 +622,8 @@ class HiloManos:
                 d.close()
 
     def _procesar(self, trabajo, detectores, t):
-        """Un trabajo: detecta la(s) mano(s) de este hilo, mide la apertura y publica el resultado.
-        Un hilo con una sola mano la hace siempre; un hilo con las dos hace las dos (o una por trabajo,
-        alternando, si ALTERNAR_MANOS=True)."""
+        """Un trabajo: detecta una mano (alterna izquierda y derecha entre trabajos), mide su apertura y publica
+        el resultado."""
         color_rgb, objetivos, t_frame = trabajo
         if DECODIFICAR_EN_HILO_MANOS:   # llegaron los bytes del JPEG: mismas llamadas que to_numpy + bucle_kinect, aquí
             t0 = time.perf_counter()
@@ -642,10 +633,7 @@ class HiloManos:
             color_rgb = cv2.cvtColor(bgr, cv2.COLOR_BGRA2RGB)
             with self.lock:
                 self._t_decod += time.perf_counter() - t0
-        if len(t["lados"]) == 1 or not ALTERNAR_MANOS:
-            lados = list(t["lados"])
-        else:
-            lados = [t["lados"][t["ciclo"] % 2]]
+        lados = [t["lados"][t["ciclo"] % 2]]
         t["ciclo"] += 1
 
         nuevos, recuadros = {}, {}
