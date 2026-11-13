@@ -152,9 +152,18 @@ class MapeoExtremidades:
         return joints[i].confidence_level >= CONF_MIN_ARTICULACION
 
     def actualizar(self, skeleton, t):
+        """Una vez por ciclo: tempo y después intensidad y λ (mismo orden que antes del refactor). Devuelve el dict
+        de parámetros; cada uno conserva su último valor si sus articulaciones no son fiables en este ciclo."""
         J = skeleton.joints
+        self._tempo(J, t)
+        self._intensidad_y_lambda(J, t)
+        return {
+            "tempo": self.tempo, "intensidad": self.intensidad, "lam": self.lam,
+            "vel_rodilla": self.vel_rodilla, "amplitud_mm": self.amplitud_mm, "acc_mm": self.acc_mm,
+        }
 
-        # --- Tempo: velocidad angular media de las rodillas ---
+    def _tempo(self, J, t):
+        """Tempo: velocidad angular media de las rodillas fiables, normalizada (RF04). Actualiza vel_rodilla y tempo."""
         omegas = []
         for lado, (cad, rod, tob) in J_RODILLAS.items():
             if all(J[i].confidence_level >= self.conf_min_rodilla_tempo for i in (cad, rod, tob)):   # 1 = igual que _ok
@@ -166,7 +175,10 @@ class MapeoExtremidades:
             self.vel_rodilla = float(np.mean(omegas))
             self.tempo = self.n_tempo.actualizar(self.vel_rodilla, t)
 
-        # --- Intensidad y lambda: las 4 extremidades relativas a la pelvis ---
+    def _intensidad_y_lambda(self, J, t):
+        """Intensidad (amplitud de las 4 extremidades relativas a la pelvis en VENTANA_INTENSIDAD_S) y λ (1 − aceleración
+        media normalizada en VENTANA_FLUIDEZ_S). Comparten el historial `hist`; actualiza amplitud_mm, intensidad,
+        acc_mm y lam."""
         if self._ok(J, J_PELVIS) and all(self._ok(J, i) for i in J_EXTREMIDADES):
             pelvis = self._pos(J, J_PELVIS)
             self.hist.append((t, np.stack([self._pos(J, i) - pelvis for i in J_EXTREMIDADES])))
@@ -190,11 +202,6 @@ class MapeoExtremidades:
                 self.acc_mm = float(np.linalg.norm(A, axis=2).mean())    # aceleración mm/s^2
                 acc01 = self.n_acc.actualizar(self.acc_mm, t)
                 self.lam = max(1.0 - acc01, LAMBDA_MIN)
-
-        return {
-            "tempo": self.tempo, "intensidad": self.intensidad, "lam": self.lam,
-            "vel_rodilla": self.vel_rodilla, "amplitud_mm": self.amplitud_mm, "acc_mm": self.acc_mm,
-        }
 
 
 class RegistroPorAngulo:
