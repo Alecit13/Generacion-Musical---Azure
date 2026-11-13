@@ -9,8 +9,7 @@ Cobertura (11/11):
              servidor.py (enviar_a_todos, manejar_cliente)
              movimiento.py: NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion, MapeoExtremidades, RegistroPorAngulo
   sin cubrir main.py: bucle_kinect, HiloManos, FusionTemporal, guardar_latencias, arranque y cierre de la Kinect
-             (necesitan el dispositivo: los cubre la prueba de integración US26); zona.calcular_zona (solo con
-             REGISTRO_POR_ANGULO=False); index.html y visual.js (sin entorno de pruebas de JavaScript; probados con
+             (necesitan el dispositivo: los cubre la prueba de integración US26); index.html y visual.js (sin entorno de pruebas de JavaScript; probados con
              ?demo=1 y un servidor WebSocket falso)
 Uso:  python -m unittest pruebas_unitarias -v      (desde la carpeta del proyecto, con env_cv activo)"""
 import unittest

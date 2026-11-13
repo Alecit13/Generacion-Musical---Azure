@@ -20,7 +20,7 @@ import threading
 import time
 import sys
 from datetime import datetime
-from zona import calcular_zona, zona_desde_registro
+from zona import zona_desde_registro
 from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
 from manos import calcular_apertura, apertura_vigente, TimbrePorManos, edades_por_mano_ms
 from servidor import manejar_cliente, enviar_a_todos
@@ -64,11 +64,10 @@ RANGO_MIN_APERTURA = 0.015       # unidades de "apertura" de manos.py. 07/11 (ME
                                  # puño ≈ 0.021 (ancho ≈ 0.027); ruido en reposo 0.001-0.006. Antes 0.05 (> ancho real: apertura01 ≤ ≈ 0.58)
 
 # Tono: REGISTRO (octava) a partir de ángulos de articulaciones (RF05: ángulos articulares -> tono)
-REGISTRO_POR_ANGULO = True        # True = ángulo de los hombros; False = altura de la muñeca izquierda (versión anterior)
 UMBRAL_REG_GRAVE = 0.33           # registro01 < esto -> "grave" (octava 3)
 UMBRAL_REG_AGUDO = 0.66           # registro01 >= esto -> "agudo" (octava 5); en medio -> "medio" (octava 4)
 UMBRAL_ESTABILIDAD_ZONA_S = 0.250 # D-010 (HU0015-2): segundos que debe sostenerse una zona candidata antes de confirmarla
-                                  # (antes 6 ciclos: ≈ 235 ms a 25.5 Hz, ≈ 200 ms a 30 Hz; zona.py sigue en frames)
+                                  # (antes 6 ciclos: ≈ 235 ms a 25.5 Hz, ≈ 200 ms a 30 Hz)
 DT_MAX_ZONA_S = 0.1               # tope del tiempo que suma un ciclo: tras una ausencia del cuerpo, el hueco no cuenta como "sostenido"
 
 # Manos (MediaPipe sobre un recorte alrededor de cada mano) -> configuración A elegida
@@ -293,7 +292,6 @@ ARTICULACIONES_MUNECA_CODO = {       # (muñeca, codo) de cada lado: sirven de r
 # Estado entre frames
 # =====================================================================
 zona_actual = ZONA_INICIAL
-contador_estable = 0      # histéresis en frames de zona.py (solo si REGISTRO_POR_ANGULO=False)
 candidata_zona = None     # cambio 5: zona candidata que se está sosteniendo (None = la candidata es la zona actual)
 tiempo_candidata = 0.0    # cambio 5 (D-010): segundos continuos dentro de candidata_zona (zona.zona_desde_registro)
 nota_actual, octava_actual = NOTA_INICIAL, OCTAVA_INICIAL
@@ -750,11 +748,11 @@ def leer_frame(capture, t_upd):
 
 async def bucle_kinect():
     """Un ciclo: captura -> esqueleto -> manos -> mapeo -> nota -> ENVÍO -> dibujo.
-    Une todo: usa calcular_zona (registro), detectar_mano+calcular_apertura (timbre),
+    Une todo: usa zona_desde_registro (registro), detectar_mano+calcular_apertura (timbre),
     mapeo.actualizar (tempo, intensidad, lambda) y elegir_siguiente_nota (melodía);
     envía el resultado por WebSocket a index.html. El envío va ANTES de dibujar para
     no sumar el tiempo de dibujo a la latencia. t_cap_ms marca cuándo llegó el frame."""
-    global zona_actual, contador_estable, candidata_zona, tiempo_candidata, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
+    global zona_actual, candidata_zona, tiempo_candidata, nota_actual, octava_actual, nota_id, t_prox_tick, lat_tick_ms
     t_prev_cuerpo = None                          # último ciclo con cuerpo, para detectar ausencias
     ciclo_global = 0
     apertura01 = 0.5
@@ -795,24 +793,16 @@ async def bucle_kinect():
             anotar_conf_piernas(skeleton)                                    # HU0007-2: solo para [PIERNAS] en _perf.txt
             fusion.registrar_cuerpo(t_ciclo)                                 # HU0009: frame con cuerpo
 
-            # ---- Registro (tono): ángulo de los hombros (o altura de la muñeca si REGISTRO_POR_ANGULO=False) ----
+            # ---- Registro (tono): ángulo de los hombros ----
             t = time.perf_counter()
             reg = registro.actualizar(skeleton, t_ciclo)         # siempre se calcula (queda en el CSV)
             cand = registro.angulos_candidatos(skeleton)
-            if REGISTRO_POR_ANGULO:
-                # dt = duración de este ciclo, desde el ciclo con cuerpo anterior (t_prev_cuerpo se actualiza más abajo)
-                dt_zona = 0.0 if t_prev_cuerpo is None else t_ciclo - t_prev_cuerpo
-                zona_actual, candidata_zona, tiempo_candidata = zona_desde_registro(
-                    reg["registro01"], zona_actual, candidata_zona, tiempo_candidata, dt_zona,
-                    UMBRAL_REG_GRAVE, UMBRAL_REG_AGUDO, UMBRAL_ESTABILIDAD_ZONA_S, DT_MAX_ZONA_S,
-                )
-            else:
-                muneca = skeleton.joints[pykinect.K4ABT_JOINT_WRIST_LEFT].position.xyz
-                hombro = skeleton.joints[pykinect.K4ABT_JOINT_SHOULDER_LEFT].position.xyz
-                cadera = skeleton.joints[pykinect.K4ABT_JOINT_HIP_LEFT].position.xyz
-                zona_actual, contador_estable = calcular_zona(
-                    muneca.y, hombro.y, cadera.y, zona_actual, contador_estable
-                )
+            # dt = duración de este ciclo, desde el ciclo con cuerpo anterior (t_prev_cuerpo se actualiza más abajo)
+            dt_zona = 0.0 if t_prev_cuerpo is None else t_ciclo - t_prev_cuerpo
+            zona_actual, candidata_zona, tiempo_candidata = zona_desde_registro(
+                reg["registro01"], zona_actual, candidata_zona, tiempo_candidata, dt_zona,
+                UMBRAL_REG_GRAVE, UMBRAL_REG_AGUDO, UMBRAL_ESTABILIDAD_ZONA_S, DT_MAX_ZONA_S,
+            )
             acum["mapeo"] += time.perf_counter() - t
 
             # ---- Manos (timbre): se ofrecen al hilo; aquí NO se espera su resultado ----
