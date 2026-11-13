@@ -72,7 +72,6 @@ RANGO_MIN_APERTURA = 0.015       # unidades de "apertura" de manos.py. 07/11 (ME
 
 # Tono: REGISTRO (octava) a partir de ángulos de articulaciones (RF05: ángulos articulares -> tono)
 REGISTRO_POR_ANGULO = True        # True = ángulo de los hombros; False = altura de la muñeca izquierda (versión anterior)
-COMBINACION_BRAZOS = "media"      # "media" = promedio de los 2 brazos | "max" = manda el brazo más levantado
 CONF_MIN_ANGULO_BRAZO = 2         # confianza mínima para usar el ángulo de un brazo (2 = MEDIUM; 1 = LOW = pose "predicha")
 EMA_ANGULO_BRAZO = 0.5            # suavizado del ángulo del hombro (0-1; más alto = menos suavizado)
 RANGO_MIN_ANGULO_BRAZO = 60.0     # grados: rango mínimo para normalizar (evita que 20° de movimiento ya sea "agudo")
@@ -82,8 +81,6 @@ UMBRAL_REG_AGUDO = 0.66           # registro01 >= esto -> "agudo" (octava 5); en
 UMBRAL_ESTABILIDAD_ZONA_S = 0.250 # D-010 (HU0015-2): segundos que debe sostenerse una zona candidata antes de confirmarla
                                   # (antes 6 ciclos: ≈ 235 ms a 25.5 Hz, ≈ 200 ms a 30 Hz; zona.py sigue en frames)
 DT_MAX_ZONA_S = 0.1               # tope del tiempo que suma un ciclo: tras una ausencia del cuerpo, el hueco no cuenta como "sostenido"
-if COMBINACION_BRAZOS not in ("media", "max"):
-    raise ValueError('COMBINACION_BRAZOS debe ser "media" o "max"')
 
 # Manos (MediaPipe sobre un recorte alrededor de cada mano) -> configuración A elegida
 CONFIANZA_DETECCION_MANO = 0.5   # bájalo a 0.4 si se pierden manos
@@ -638,8 +635,8 @@ class RegistroPorAngulo:
     """Tono (REGISTRO) a partir de ÁNGULOS ARTICULARES (RF05): usa el ángulo de elevación de cada
     hombro (cadera-hombro-codo: ~0° con el brazo colgando, ~90° horizontal, ~180° arriba).
     Cada brazo se normaliza por separado con su propio NormalizadorAdaptativo (RF04: así quien
-    tiene menos rango, o es zurdo, igual recorre todo el registro) y luego se combinan los dos con
-    COMBINACION_BRAZOS ("media" o "max"). Además calcula los 8 ángulos candidatos (hombro, codo,
+    tiene menos rango, o es zurdo, igual recorre todo el registro) y luego se promedian los brazos
+    vigentes (D-002). Además calcula los 8 ángulos candidatos (hombro, codo,
     cadera, rodilla; izq/der) SOLO para guardarlos en el CSV y poder analizarlos después.
     Relación con el resto: reutiliza angulo_articulacion y MapeoExtremidades._pos; su salida
     `registro01` la convierte en zona zona_desde_registro, y calcular_octava (muestreo.py) la
@@ -667,7 +664,7 @@ class RegistroPorAngulo:
                 self.t_ok[lado] = t
         vigentes = [v for l, v in self.reg01.items() if v is not None and t - self.t_ok[l] <= HOLD_ANGULO_S]
         if vigentes:
-            self.registro01 = float(np.mean(vigentes)) if COMBINACION_BRAZOS == "media" else float(max(vigentes))
+            self.registro01 = float(np.mean(vigentes))
         return {
             "registro01": self.registro01,
             "reg01_izq": self.reg01["izq"], "reg01_der": self.reg01["der"],
