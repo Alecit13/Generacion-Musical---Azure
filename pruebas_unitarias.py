@@ -537,5 +537,56 @@ class PruebaRegistroPorAngulo(unittest.TestCase):
         self.assertEqual(despues, antes)
 
 
+class PruebaCabeceraCSV(unittest.TestCase):
+    """salidas.py (refactor KISS). Apoya HU0022-1: el CSV de sesión y el _latencias.csv tienen las mismas columnas que
+    en 8d58820 (código medido), y la fila que arma bucle_kinect tiene tantos valores como columnas la cabecera."""
+
+    # Copiadas de main.py en 8d58820 (log_writer.writerow de la cabecera y guardar_latencias)
+    SESION_8D58820 = ["timestamp", "zona", "lambda", "acc_media", "nota", "octava", "apertura", "apertura_izq",
+                      "apertura_der", "manos", "tempo", "intensidad", "apertura01", "vel_rodilla", "amplitud_mm",
+                      "t_cap_ms", "lat_tick_ms", "ang_hombro_izq", "ang_hombro_der", "ang_codo_izq", "ang_codo_der",
+                      "ang_cadera_izq", "ang_cadera_der", "ang_rodilla_izq", "ang_rodilla_der", "conf_hombro_izq",
+                      "conf_hombro_der", "reg01_izq", "reg01_der", "registro01", "n_joints_ok", "joints_no_disp",
+                      "edad_manos_ms", "par_dt_ms", "desync_manos", "roi_izq", "roi_der", "lag_cam_ms",
+                      "frames_descartados", "nota_id", "lam_sorteo", "semilla", "version", "commit", "edad_izq_ms",
+                      "edad_der_ms"]
+    LATENCIAS_8D58820 = ["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms",
+                         "latencia_llegada_ms"]
+
+    def test_cabeceras_iguales_a_8d58820(self):
+        import salidas
+        self.assertEqual(salidas.COLUMNAS_SESION, self.SESION_8D58820)
+        self.assertEqual(len(salidas.COLUMNAS_SESION), 46)
+        self.assertEqual(salidas.COLUMNAS_LATENCIAS, self.LATENCIAS_8D58820)
+
+    def test_fila_de_bucle_kinect_con_tantos_valores_como_columnas(self):
+        """Cuenta los elementos de la lista que bucle_kinect pasa a log_writer.writerow (sin ejecutar main.py)."""
+        import ast
+        import pathlib
+        import salidas
+        arbol = ast.parse(pathlib.Path(__file__).with_name("main.py").read_text(encoding="utf-8"))
+        bucle = next(n for n in arbol.body if isinstance(n, ast.AsyncFunctionDef) and n.name == "bucle_kinect")
+        filas = [n.args[0] for n in ast.walk(bucle)
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "writerow"
+                 and isinstance(n.func.value, ast.Name) and n.func.value.id == "log_writer"]
+        self.assertEqual(len(filas), 1)
+        self.assertEqual(len(filas[0].elts), len(salidas.COLUMNAS_SESION))
+
+    def test_abrir_csv_escribe_la_misma_cabecera(self):
+        import csv
+        import io
+        import os
+        import tempfile
+        import salidas
+        ruta = os.path.join(tempfile.mkdtemp(), "prueba.csv")
+        archivo, _ = salidas.abrir_csv(ruta, salidas.COLUMNAS_SESION)
+        archivo.close()
+        esperado = io.StringIO(newline="")
+        csv.writer(esperado).writerow(self.SESION_8D58820)
+        with open(ruta, newline="") as f:
+            self.assertEqual(f.read(), esperado.getvalue())
+        os.remove(ruta)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

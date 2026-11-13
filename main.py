@@ -11,7 +11,6 @@ import os
 os.environ["PATH"] = r"C:\Program Files\Azure Kinect Body Tracking SDK\tools;" + os.environ["PATH"]
 import pykinect_azure as pykinect
 import websockets
-import csv
 import json
 import queue
 import random
@@ -27,6 +26,7 @@ from muestreo import elegir_siguiente_nota, calcular_octava, reiniciar_estado
 from manos import calcular_apertura, apertura_vigente, TimbrePorManos, edades_por_mano_ms
 from servidor import manejar_cliente, enviar_a_todos
 import servidor
+from salidas import COLUMNAS_LATENCIAS, COLUMNAS_SESION, abrir_csv
 from movimiento import (CONF_MIN_ARTICULACION, CONF_MIN_RODILLA_TEMPO, LAMBDA_MIN, MapeoExtremidades,
                         NormalizadorAdaptativo, RegistroPorAngulo, estado_articulaciones)
 
@@ -307,28 +307,7 @@ CARPETA_SESIONES = "sesiones"
 os.makedirs(CARPETA_SESIONES, exist_ok=True)
 ruta_log = os.path.join(CARPETA_SESIONES, f"sesion_{datetime.now():%Y%m%d_%H%M%S}_{VERSION_MAIN}_{MODO_BODY_TRACKER}-{modelo_en_uso}.csv")
 
-log_file = open(ruta_log, "w", newline="")
-log_writer = csv.writer(log_file)
-# Las 10 primeras columnas conservan el orden anterior (grafico.py sigue funcionando)
-log_writer.writerow(["timestamp", "zona", "lambda", "acc_media", "nota", "octava", "apertura",
-                     "apertura_izq", "apertura_der", "manos",
-                     "tempo", "intensidad", "apertura01", "vel_rodilla", "amplitud_mm", "t_cap_ms",
-                     "lat_tick_ms",
-                     # candidatos de ángulo para decidir/justificar el mapeo del tono (grados)
-                     "ang_hombro_izq", "ang_hombro_der", "ang_codo_izq", "ang_codo_der",
-                     "ang_cadera_izq", "ang_cadera_der", "ang_rodilla_izq", "ang_rodilla_der",
-                     "conf_hombro_izq", "conf_hombro_der",     # 0=NONE 1=LOW 2=MEDIUM 3=HIGH
-                     "reg01_izq", "reg01_der", "registro01",
-                     # HU0007-2 (articulaciones) y HU0009 (fusión): columnas nuevas, al final
-                     "n_joints_ok", "joints_no_disp", "edad_manos_ms", "par_dt_ms", "desync_manos",
-                     "roi_izq", "roi_der",   # origen del último recuadro enviado: mano | muneca | vacío (sin recuadro)
-                     "lag_cam_ms",          # ms entre que el frame TERMINÓ de llegar al PC (USB) y que Python lo recibió (cola de cámara)
-                     "frames_descartados",  # frames viejos descartados de la cola en este ciclo
-                     # cambio 3 (HU0021-1, HU0022-1): para reconstruir la secuencia de notas. lam_sorteo = λ EXACTO
-                     # (repr) que recibió elegir_siguiente_nota, solo en la fila con nota nueva (la columna lambda va redondeada)
-                     "nota_id", "lam_sorteo", "semilla", "version", "commit",
-                     # P-015 (HU0008-1, D-024; solo medición): edad del último dato de cada mano; si baja, hubo dato nuevo
-                     "edad_izq_ms", "edad_der_ms"])
+log_file, log_writer = abrir_csv(ruta_log, COLUMNAS_SESION)   # cabecera en salidas.py
 log_file.flush()
 # Los reportes [PERF]/[PERF-LINEA]/[CAMARA]/[FUSION]/[ROI] se guardan también en un .txt con el mismo nombre que el CSV,
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
@@ -358,10 +337,7 @@ def guardar_latencias(mensaje):
     if not isinstance(datos, dict) or datos.get("tipo") != "latencias":
         return
     if lat_file is None:
-        lat_file = open(ruta_latencias, "w", newline="")
-        lat_writer = csv.writer(lat_file)
-        lat_writer.writerow(["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms",
-                             "latencia_llegada_ms"])   # D-009: latencia_ms + lag_cam_ms (columna nueva, al final)
+        lat_file, lat_writer = abrir_csv(ruta_latencias, COLUMNAS_LATENCIAS)   # cabecera en salidas.py
         print(f"Guardando las latencias del navegador en: {ruta_latencias}")
     lat_writer.writerows(datos["filas"])
     lat_file.flush()
