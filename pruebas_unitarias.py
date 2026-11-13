@@ -1,13 +1,13 @@
 """Pruebas unitarias SIN dispositivo (HU0025-1). Cada clase dice qué criterio APOYA (una prueba aislada no declara
 que una historia "cumple": eso lo decide la medición).
-No importan main.py (abre el puerto 8765 y la Kinect al importarse): sus clases se cargan con cargar_de_main, que
-ejecuta solo esas definiciones del archivo tal cual (11/11: código congelado, no se modifica).
+No importan main.py (abre el puerto 8765 y la Kinect al importarse): las clases del movimiento se cargan de
+movimiento.py con cargar_de_main (refactor KISS; hasta 8d58820 se leían de main.py con ast).
 Cobertura (11/11):
   cubiertos  manos.py (calcular_apertura, apertura_vigente, edades_por_mano_ms, TimbrePorManos)
              muestreo.py (elegir_siguiente_nota, calcular_octava, escala activa)
              zona.py (zona_desde_registro)
              servidor.py (enviar_a_todos, manejar_cliente)
-             main.py: NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion, MapeoExtremidades, RegistroPorAngulo
+             movimiento.py: NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion, MapeoExtremidades, RegistroPorAngulo
   sin cubrir main.py: bucle_kinect, HiloManos, FusionTemporal, guardar_latencias, arranque y cierre de la Kinect
              (necesitan el dispositivo: los cubre la prueba de integración US26); zona.calcular_zona (solo con
              REGISTRO_POR_ANGULO=False); index.html y visual.js (sin entorno de pruebas de JavaScript; probados con
@@ -256,29 +256,16 @@ from types import SimpleNamespace
 
 
 def cargar_de_main(*nombres):
-    """Carga de main.py SOLO las definiciones pedidas (clases, funciones y asignaciones de nivel superior), en el orden del
-    archivo, sin ejecutar el resto (importar main.py abriría el puerto 8765 y la Kinect). Así se prueba el código
-    congelado sin tocarlo. Relación: lo usan las pruebas de NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion,
-    MapeoExtremidades y RegistroPorAngulo. Variables: `nombres` (lo que se pide, incluidas las constantes de las que
-    dependen); el espacio de nombres solo trae numpy, collections y pykinect_azure (se importa sin el dispositivo).
-    Devuelve un SimpleNamespace con lo pedido; LookupError si alguno no existe en main.py."""
-    import ast
-    import collections
-    import pathlib
-    import numpy as np
-    import pykinect_azure as pykinect
-    arbol = ast.parse(pathlib.Path(__file__).with_name("main.py").read_text(encoding="utf-8"))
-    quiero, nodos, vistos = set(nombres), [], set()
-    for nodo in arbol.body:
-        if isinstance(nodo, (ast.ClassDef, ast.FunctionDef)) and nodo.name in quiero:
-            nodos.append(nodo); vistos.add(nodo.name)
-        elif isinstance(nodo, ast.Assign) and all(isinstance(t, ast.Name) and t.id in quiero for t in nodo.targets):
-            nodos.append(nodo); vistos.update(t.id for t in nodo.targets)
-    if quiero - vistos:
-        raise LookupError(f"no están en main.py: {sorted(quiero - vistos)}")
-    ns = {"np": np, "collections": collections, "pykinect": pykinect}
-    exec(compile(ast.Module(body=nodos, type_ignores=[]), "main.py", "exec"), ns)
-    return SimpleNamespace(**{k: ns[k] for k in nombres})
+    """Devuelve las clases, funciones y constantes pedidas de movimiento.py (refactor KISS: antes vivían en main.py y se
+    leían con ast, porque importar main.py abre el puerto 8765 y la Kinect; movimiento.py se importa sin el dispositivo).
+    Se conserva el nombre y la interfaz para no tocar las pruebas. Relación: lo usan las pruebas de NormalizadorAdaptativo,
+    VelocidadAngular, angulo_articulacion, MapeoExtremidades y RegistroPorAngulo, y validacion_offline.py.
+    Variables: `nombres` (lo que se pide). Devuelve un SimpleNamespace; LookupError si alguno no existe."""
+    import movimiento
+    faltan = sorted(k for k in nombres if not hasattr(movimiento, k))
+    if faltan:
+        raise LookupError(f"no están en movimiento.py: {faltan}")
+    return SimpleNamespace(**{k: getattr(movimiento, k) for k in nombres})
 
 
 CONST_NORM = ("NORM_VENTANA_S", "NORM_CALENTAMIENTO_S")

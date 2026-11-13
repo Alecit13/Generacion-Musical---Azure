@@ -1,6 +1,6 @@
 """Validación offline SIN dispositivo (11/11/2026). TODO lo que imprime es SIMULADO (no MEDIDO con la Kinect).
   US12 (HU0012-2): retardo del filtro EMA ante un escalón, con las clases reales de main.py (cargadas con
-        pruebas_unitarias.cargar_de_main, sin tocar main.py).
+        pruebas_unitarias.cargar_de_main, desde movimiento.py).
   US28 (HU0028-1, HU0028-2): diversidad de la melodía entre semillas y consistencia de los parámetros continuos.
 Los criterios de abajo se fijaron ANTES de la primera ejecución (11/11). Los umbrales de US28 los propuso Code y están
 [POR CONFIRMAR] por Ale; no se cambian después de ver el resultado.
