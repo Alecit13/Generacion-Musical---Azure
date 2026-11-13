@@ -715,6 +715,115 @@ Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lit
 | US26 | **Parcial** | 3 corridas de 10 min con visual sin fallos de módulo (cierre normal; consolas no guardadas) | Consolas de Python en `sesiones/` |
 | US38 | **Parcial** | -5 C6 cumple en las 3 corridas (D-063); -1/-2/-3 implementados (las capturas de US14 muestran "Te veo" / "No te veo", "Terminar" y anillos); -4 destellos en `?demo=1` | URL de cuestionarios; -6 revisión de Ale y la profesora |
 
+## 4l. 12/11 por la noche: últimas corridas con el Kinect — Edge en Intel (D-067), US20 y estado de los Sprints 2 y 3 (MEDIDO salvo indicación)
+Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lite.*`; `gpu_intel_20261112.csv`, `cpu_intel_20261112.csv`, `procesos_intel_20261112.csv` (17:44–18:22); `gpu_opcional.csv`, `cpu_opcional.csv`, `procesos_opcional.csv` (16:48–17:20); captura `edge_gpu_intel_20261112.png` (`edge://gpu`, 18:23: `GL_RENDERER = ANGLE (Intel, Intel(R) UHD Graphics (0x0000A7A8) Direct3D11 …, D3D11-32.0.101.7088)`). Cifras con `analisis_visual.py` (`b769fff`).
+**Condiciones:** Edge en Intel (D-067; captura de 18:23, después de I3; la GPU durante cada corrida la anotó Ale `[POR COMPLETAR]` la anotación por corrida), rutina de siempre, short y polo, JBL. Encabezado `commit=4ee1ca9` sin `-sucio` (código de `8d58820`: `git diff` sin archivos de código). **Hora (D-060):** Time-Service 158/37/35 a las 17:42:32–17:42:42 (resync) y luego nada hasta 18:23:03–18:23:08 (arranque y resync final). **Sin Kernel-Power 506 durante las corridas**; hubo 105, 506 y 507 a las 18:28, durante la corrida extra 182458 (fuera del análisis).
+
+### 4l.1 Corridas
+| Corrida | Commit | s | Uso | Validez (D-062) |
+|---|---|---|---|---|
+| 165028 | `b769fff` | 55 | `[POR COMPLETAR]` (Ale): no se mencionó; registros `*_opcional` | Corta |
+| 165228 | `b769fff` | 606 | `[POR COMPLETAR]` (Ale): 10 min, no se mencionó; GPU de Edge `[POR COMPLETAR]` | Válida por reloj (−0.04), dibujo y un cliente |
+| 170347 | `b769fff` | 607 | `[POR COMPLETAR]` (Ale): 10 min, no se mencionó; GPU de Edge `[POR COMPLETAR]` | Válida (+0.01) |
+| 174445 | `4ee1ca9` | — | Calentamiento: 51 ventanas `[PERF]` (≈ 100 s) y **0 filas de sesión** (sin cuerpo detectado, INFERIDO) | Descartado |
+| **174808 I1** | `4ee1ca9` | 607 | Edge en Intel | **Válida:** Δ −0.03 ms; 930 latencias visuales; un cliente |
+| **180008 I2** | `4ee1ca9` | 604 | Edge en Intel | **Válida:** Δ −0.07 ms; 865 |
+| **181157 I3** | `4ee1ca9` | 603 | Edge en Intel | **Válida:** Δ +0.03 ms; 920 |
+| 182458 | `4ee1ca9` | 59 | Corrida extra para una foto del montaje (Ale): **se excluye** | — |
+
+### 4l.2 Criterios: Intel (hoy) frente a NVIDIA (4k)
+| Métrica | 174808 I1 | 180008 I2 | 181157 I3 | 155642 V1 (NVIDIA) | 161012 V2 (NVIDIA) | 165228 / 170347 (GPU `[POR COMPLETAR]`) |
+|---|---|---|---|---|---|---|
+| C1: media · mín · < 29.0 | 29.78 · 28.1 · **11** | 29.75 · 25.8 · **10** | 29.80 · 26.9 · **8** | 29.90 · 22.2 · **7** | 29.96 · 29.0 · 0 | 29.94 · 28.5 · **3** / 29.94 · 28.8 · **1** |
+| `cap_update` · `tracker` · % ciclos > 33.3 ms | 0.7 · 26.9 · 45.5 | 0.9 · 26.8 · 43.1 | 0.9 · 26.8 · 43.8 | 3.1 · 25.5 · 19.7 | 2.3 · 26.2 · 25.5 | 2.3 · 26.1 · 27.9 / 2.3 · 26.2 · 26.8 |
+| C2: `lag_cam` p95 · p95 por minuto | **30.5** · 25.9–32.6 | **29.3** · 24.4–32.6 | **29.7** · 26.1–32.3 | 18.4 · 17.6–**27.3** | 19.2 · 17.9–23.5 | 21.3 · 19.3–24.1 / 20.6 · 19.3–22.2 |
+| C3: (b) media / p95 / máx · > 100 | 47.6 / 63.8 / 132.7 · **3** | 46.2 / 62.8 / 140.8 · **3** | 46.6 / 62.9 / 128.0 · **1** | 37.2 / 50.6 / 206.7 · **8** | 38.5 / 51.7 / 115.7 · **4** | 39.8 / 54.4 / 132.5 · **3** / 39.4 / 53.5 / 108.4 · **1** |
+| C4: `lat_tick` máx · > 250 | 80.3 · 0 | 79.2 · 0 | 78.9 · 0 | 79.9 · 0 | 95.9 · 0 | 84.6 · 0 / 85.0 · 0 |
+| C6: máx p95 por lote · latencia visual p95 | 0.80 · 62.8 | 0.70 · 63.5 | 1.10 · 62.7 | 0.60 · 63.9 | 0.70 · 63.8 | 0.70 · 63.2 / 1.00 · 63.6 |
+| C7: datos nuevos por mano/s (izq / der) | 6.82 / 6.54 | 6.95 / 6.77 | 6.96 / 6.79 | 7.18 / 6.97 | 7.26 / 6.83 | 7.15 / 6.85 · 7.29 / 7.06 |
+| HU0017: saltos > 0.3 por s | 0.48 | 0.36 | 0.39 | 0.34 | 0.27 | 0.47 / 0.33 |
+| Racha máx · notas reconstruidas | 2 · 931/931 | 2 · 866/866 | 2 · 921/921 | 2 · 863/863 | 2 · 909/909 | 2 · 888/888 / 2 · 913/913 |
+| **No cumple** | C1, C2, C3 | C1, C2, C3 | C1, C2, C3 | C1, C2, C3 | C3 | C1, C3 / C1, C3 |
+| GPU NVIDIA W (mediana) · CPU % tiempo · `msedge` / `dwm` (% de un núcleo) | 34.0 · 32.7 · 37 / 26 | 33.3 · 32.5 · 69 / 25 | 33.4 · 32.3 · 38 / 25 | — (sin registros) | — | 34.3 · 29.6 · 32 / 23 · 34.7 · 30.0 · 34 / 23 |
+- **D-067 (hipótesis Intel): no la apoyan los datos MEDIDOS.** Intel: 0 de 3 corridas cumplen los 7 criterios; las 3 fallan C1, C2 y C3. NVIDIA: 0 de 2 (V1 falla C1, C2 y C3; V2 solo C3). En `tracker`, `lag_cam`, % de ciclos > 33.3 ms y (b) media/p95, las corridas Intel salen peores que V1 y V2. Por número de muestras de (b) > 100 ms, Intel tiene menos (1–3 frente a 4–8). No se aprobó antes de correr una regla de "mejor" (la regla con desempates que propuso Code no se incluyó en D-067), así que **no se declara ganador**; decide Ale (P-023).
+- **Orden y hora (INFERIDO):** las corridas Intel fueron las últimas del día (17:48–18:22) y las NVIDIA a las 15:56–16:20; el estado del equipo puede explicar parte de la diferencia. En las Intel la degradación es pareja en toda la corrida (p95 de `lag_cam` por minuto 24–33 ms), no solo al final como en V1.
+- **Procesos ajenos ≥ 50 % de un núcleo durante las Intel:** `system` (26–63 muestras, máx 158–213 %), `svchost#25` (≈ 100 %), `tiworker` (6 muestras, 100 %, en I2: instalador de actualizaciones de Windows), `claude` (1 muestra de 52–189 %), `mousocoreworker` ≈ 60 %. Por D-067 la invalidación por proceso ajeno no se aplica (no hay registros de las NVIDIA); se informa.
+- **165228 y 170347** (16:52 y 17:03, `b769fff`, con registros `*_opcional`): no se mencionaron; su GPU y su propósito están `[POR COMPLETAR]`. La potencia de la NVIDIA es ≈ 0.3–1.4 W mayor que en las Intel (INFERIDO, débil: compatible con Edge en NVIDIA).
+- **HU0019-3:** χ² < 7.81 en todos los rangos con valor esperado ≥ 5; en λ < 0.2 hay rangos con χ² alto (180008: 47.7) por 2 repeticiones con valor esperado ≈ 0: con E < 5 el χ² solo orienta (como en 4j).
+
+### 4l.3 US20 (HU0020-1), respuestas de Ale (12/11, después de I3, con Edge en Intel; literales)
+- Pregunta 1, sonido (1–5): **4.5** ("los cambios de sonido sí se sienten fluidos").
+- Pregunta 2, visual (1–5): **4**.
+- Pregunta 3: "no noté un salto o corte; realmente el corte se puede llegar a sentir cuando se sale del encuadre, pero dentro del encuadre y la sesión todo se escuchó sin cortes".
+- **Criterio fijado antes (D-068): pregunta 1 ≥ 4 → cumple.** Limitaciones: n = 1, autovalidación del desarrollador (D-045), sin prueba a ciegas, respuestas sin corrida dedicada (después de las corridas Intel).
+
+### 4l.4 Estado final de los Sprints 2 y 3 (con el visual encendido, D-047)
+| US | Estado | Evidencia | Pendiente (sin Kinect) |
+|---|---|---|---|
+| US07 | **No cumple** (-1) | C1 (D-023) falla en 4 de 5 corridas de 10 min del 12/11 con visual (V1, I1, I2, I3); cumple en V2 y 155202. -2: piernas LOW, nunca NONE (4h.5) | P-004/P-023; reescritura de -2 (LOW = disponible) |
+| US08 | **Cumple** | C7: 6.5–7.3 datos nuevos por mano/s en las 8 corridas de 10 min; -2 (D-025) | — |
+| US09 | Cumple (texto) | `par_dt_ms = 0` | Lote D-058 |
+| US10 | Cumple | Caso A ≤ 2 s; caso B 07/11 | — |
+| US11 | Cumple | 4h–4l | — |
+| US12 | Cumple (-2 SIMULADO) | D-044, 4i.6 | — |
+| US13 | Cumple (texto) | 4h | Cita en el lote D-058 |
+| US14 | **Cumple** | Capturas tras "Empezar" (`us14_consola_edge_20261112b.png`, 0 errores) | — |
+| US15 | Parcial (texto) | -2 (D-028); 15.7–20.3 cambios de zona por minuto | Reescritura de -1 (D-035) |
+| US16 | Parcial (texto) | -2; salto de tempo p99 0.40–0.55 | Reescritura de -1 con umbral de salto `[POR COMPLETAR]` |
+| US17 | **Cumple** | Saltos 0.27–0.48 por s ≤ 0.5 (D-064) en las 8 corridas (I1 0.48: cerca del umbral); rango p5–p95 0.00–0.94/0.99 | — |
+| US18 | Parcial (texto) | -2 | Reescritura de -1 |
+| US19 | **Cumple** | 7 notas; racha 2 en todas; χ² (4h.5, 4j–4l) | — |
+| US20 | **Cumple** (n = 1, autovalidación) | 4l.3 (D-068) | — |
+| US21 | **Cumple** | 100 % de notas reconstruidas en todas las corridas | — |
+| US22 | Cumple, con observación | `version` ≠ versión de las tablas; `-sucio` no dice qué archivo | Confirmación de Ale |
+
+## 4m. Cierre de los Sprints 2 y 3 con los CSV existentes (12/11; sin Kinect desde aquí)
+Cálculo con `analisis_visual.py` (`b769fff`, solo lectura) sobre los archivos `sesiones/sesion_2026111[12]_<id>_*cuda-lite.*`. Ventanas `[PERF]` de 60 ciclos sin la #0 (D-016). (b) = `latencia_llegada_ms` (D-009). Tiempo por cuadro: media · máximo de los p95 por lote (D-063). Latencia visual: p95 de todas las muestras (D-063).
+
+### 4m.1 Tabla por corrida (MEDIDO)
+| Corrida (GPU de Edge) | Ciclos/s media | Ventana mín. | % ventanas < 29.5 · < 29.0 · < 25.0 | `lag_cam` p95 | (b) media / p95 / máx · > 100 | `tracker` | Datos nuevos por mano/s (izq / der) | `cap_update` | Tiempo por cuadro | Latencia visual p95 | Saltos de apertura/s | HU0007-1 D-023 | HU0007-1 D-069 (propuesta a posteriori aprobada por el asesor, 30/10, asesoría de clase) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 155202 (Intel, dicho por Ale, sin verificar) | 29.97 | 29.2 | 0.3 (1/309) · 0.0 · 0.0 | 17.2 | 33.8 / 47.6 / 84.5 · 0 | 23.8 | 6.92 / 6.87 | 4.8 | 0.17 · 0.60 | 60.9 | 0.20 | cumple | cumple |
+| 155642 V1 (NVIDIA, dicho) | 29.90 | **22.2** | 3.9 (12/308) · 2.3 (7) · **0.6 (2)** | 18.4 | 37.2 / 50.6 / 206.7 · **8** | 25.5 | 7.18 / 6.97 | 3.1 | 0.15 · 0.60 | 63.9 | 0.34 | **no** | **no** |
+| 161012 V2 (NVIDIA, dicho) | 29.96 | 29.0 | 1.7 (5/303) · 0.0 · 0.0 | 19.2 | 38.5 / 51.7 / 115.7 · **4** | 26.2 | 7.26 / 6.83 | 2.3 | 0.16 · 0.70 | 63.8 | 0.27 | cumple | cumple |
+| 174808 I1 (Intel, captura de 18:23) | 29.78 | 28.1 | 18.2 (55/302) · 3.6 (11) · 0.0 | **30.5** | 47.6 / 63.8 / 132.7 · **3** | 26.9 | 6.82 / 6.54 | 0.7 | 0.18 · 0.80 | 62.8 | 0.48 | **no** | cumple |
+| 180008 I2 (Intel) | 29.75 | 25.8 | 20.7 (62/300) · 3.3 (10) · 0.0 | **29.3** | 46.2 / 62.8 / 140.8 · **3** | 26.8 | 6.95 / 6.77 | 0.9 | 0.18 · 0.70 | 63.5 | 0.36 | **no** | cumple |
+| 181157 I3 (Intel) | 29.80 | 26.9 | 15.0 (45/301) · 2.7 (8) · 0.0 | **29.7** | 46.6 / 62.9 / 128.0 · **1** | 26.8 | 6.96 / 6.79 | 0.9 | 0.18 · 1.10 | 62.7 | 0.39 | **no** | cumple |
+| *162149 control, 3 min (NVIDIA, dicho)* | *29.97* | *29.1* | *1.1 (1/93) · 0.0 · 0.0* | *17.7* | *36.3 / 49.7 / 83.7 · 0* | *25.4* | *6.92 / 6.40* | *3.3* | *0.16 · 0.50* | *63.7* | *0.46* | *cumple* | *cumple* |
+- **HU0007-1 por tanda:**
+  - Tanda oficial D-065 (155202, V1, V2): D-023 2/3 y D-069 2/3 → **no cumple** con ninguna regla, por V1.
+  - Tanda Intel (I1, I2, I3): D-023 0/3 → no cumple; D-069 3/3 → **cumple**.
+  - Cuál cuenta para US07 lo decide Ale (P-023). Con D-069 el resultado depende de esa elección: hay que informarlo así.
+- **D-069 es a posteriori (aviso):** los mínimos de ventana de las 6 corridas ya se conocían (4k, 4l) cuando se propuso el umbral de 25.0; la única corrida que lo cruza es V1 (22.2 y 24.2, ventanas #293–#294, al final de la corrida). La aprobación del asesor del 30/10 la cuenta Ale; no hay registro escrito en el repositorio `[POR COMPLETAR]`.
+
+### 4m.2 Estado final de US07–US22 (con el visual encendido, D-047)
+| US | Criterio vigente | Estado | Evidencia (en `sesiones/` salvo indicación) | Decisión o texto que falta |
+|---|---|---|---|---|
+| US07 | -1 D-069 (media ≥ 29.5, ninguna ventana < 25.0); -2 articulación perdida = "no disponible" | **-1 depende de P-023** (oficial: no cumple; Intel: cumple). -2 pendiente de texto | 4m.1; `[PIERNAS]` de `sesion_20261107_174555_*_perf.txt` (4h.5) | P-023; texto de HU0007-1 con D-069; reescritura de HU0007-2 ("LOW cuenta como disponible y su confianza queda en el log") |
+| US08 | -1 D-048 (≥ 5 datos nuevos por mano/s); -2 D-025 | **Cumple** | 4m.1 (6.5–7.3/s en 6 corridas); `sesion_20261107_155040_*` (4h.2) | — |
+| US09 | Mismo frame, `par_dt_ms = 0` | **Cumple; pendiente de texto** | Columna `par_dt_ms` en todas las sesiones | Reescritura de HU0009-1/-2 (lote D-058) |
+| US10 | -1 JSON sin errores; -2 reconecta ≤ 2 s / sigue sin cliente | **Cumple** | Caso A 0.01–0.53 s (4j.2); caso B `sesion_20261107_150413_*` (4h.1) | — |
+| US11 | Amplitud normalizada, ventana de 2 s | **Cumple** | Columnas `intensidad`, `amplitud_mm` | — |
+| US12 | -1 jitter; -2 retardo al 50 % ≤ 100 ms (D-044) | **Cumple** (-2 SIMULADO) | `validacion_offline_20261111.txt` (4i.6) | — |
+| US13 | λ según Piana 2016 / Camurri 2016 | **Cumple; pendiente de texto** | 4h | Cita en HU0013-1 (lote D-058) |
+| US14 | -1 sin errores de inicio; -2 autoplay | **Cumple** | `us14_consola_edge_20261112b.png` (0 errores); 4h.1 | — |
+| US15 | -1 zona por postura; -2 250 ms (D-028) | **-2 cumple; -1 pendiente de texto** | 4h.2; 4l.4 | Reescritura de HU0015-1 (D-035, normalización de 20 s) |
+| US16 | -1 tempo proporcional sin saltos; -2 saturación | **-2 cumple; -1 pendiente de texto** | 4h.1; salto de tempo p99 0.40–0.55 (4l.4) | Reescritura de HU0016-1 con umbral de salto `[POR COMPLETAR]` |
+| US17 | -1 timbre por apertura; saltos ≤ 0.5/s (D-064) | **Cumple** | 4m.1 (0.20–0.48/s) | — |
+| US18 | -1 volumen por amplitud; -2 saturación | **-2 cumple; -1 pendiente de texto** | 4h.1 | Reescritura de HU0018-1 (amplitud en 2 s, normalizada en 20 s) |
+| US19 | -1 escala; -2 racha ≤ 2 (D-026); -3 λ cambia los pasos | **Cumple** | Racha 2 en todas; χ² 4h.5 | — |
+| US20 | -1 pregunta 1 ≥ 4 (D-068) | **Cumple** (n = 1, autovalidación) | 4l.3 | Texto de HU0020-1 con el umbral y la limitación |
+| US21 | -1 misma semilla = misma secuencia; -2 λ mínimo determinístico | **Cumple** | 100 % de notas reconstruidas (4j–4l); D-031 | — |
+| US22 | -1 el registro reconstruye la configuración | **Cumple; pendiente de confirmación** | Columnas `semilla`, `commit`, `lam_sorteo`, `version` | Confirmar que `version` (= `VERSION_MAIN`) basta aunque no sea la versión de las tablas, y que `-sucio` no dice qué archivo |
+
+### 4m.3 Mejoras a realizar (trabajo futuro; sin Kinect en TP1)
+1. **Comparación de GPU de Edge** (D-070): corridas alternadas Intel / NVIDIA (A B A B …) el mismo día, con los 3 registros abiertos, la GPU verificada en `edge://gpu` antes de cada corrida y la regla de "mejor" fijada antes de correr.
+2. **Caída de manos con el visual** (P-017): ≈ 7 frente a ≈ 14 datos nuevos por mano/s. Probar prioridad o afinidad de núcleos del proceso Python (núcleos P/E) con registros.
+3. **(c) extremo a extremo** (D-009, D-059): método A con un celular en cámara lenta, o captura de audio; hoy solo hay cota.
+4. **US20 con más participantes**: hoy n = 1 y autovalidación (D-045, D-068).
+5. **Grabaciones MKV** de sesiones reales para reproducir sin el sensor (≈ 3 GB/min, MEDIDO 4g).
+6. **Control de procesos de Windows durante las corridas**: Windows Update (`tiworker`, `mousocoreworker`), Defender, indexador y `system` aparecen ≥ 50 % de un núcleo en las corridas (4j–4l); pausar actualizaciones y registrar siempre los procesos.
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -779,7 +888,9 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 20 | Tanda final: 3 bases de 10 min (`?visual=0`) + C6 (visual) + bases de control, con registros de GPU, CPU y procesos | HECHO 11/11 sobre `8d58820` (4i.5). Base 1 y 2 repetidas por procesos externos (D-046). Etiquetas `congelado-11-11` y `medido-final` (D-043) |
 | 21 | US25 (pruebas por módulo), US12 (escalón SIMULADO), US28 (escenarios con semilla, SIMULADO) | HECHO 11/11 (`7c9e0a1`, `fab4f7b`; 4i.6). Umbrales de US28 `[POR CONFIRMAR]` (P-018) |
 | 22 | US14: captura de la consola de Edge **después** de pulsar "Empezar", con Python en marcha | HECHO 12/11 (`sesiones/us14_consola_edge_20261112.webp`; 4j.4) |
-| 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación), con visual y preguntas separadas (D-055) | PENDIENTE (12/11: sin registro) |
+| 23 | US20: prueba de percepción (Ale, autovalidación declarada como limitación), con visual y preguntas separadas (D-055) | HECHO 12/11 (4l.3): sonido 4.5, visual 4; cumple (D-068) |
+| 27 | Últimas corridas con el Kinect: 3 × 10 min con Edge en Intel (D-067) | HECHO 12/11 (4l): 174808, 180008, 181157 válidas; las 3 fallan C1 (D-023), C2 y C3. Hipótesis Intel no apoyada; Intel queda como propuesta de diseño sin ventaja demostrada (D-070) |
+| 28 | Cierre de los Sprints 2 y 3 con los CSV (4m): tabla por corrida, D-069 (HU0007-1, a posteriori), estado de US07–US22 y mejoras | HECHO 12/11. Pendiente: P-023 y los textos de US07, US09, US13, US15, US16, US18, US20 y US22 (Ale) |
 | 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062). **Repetida 12/11 por la tarde (4k):** 155642, 161012 y 162149 válidas por protocolo (sin registros de procesos); C4, C6, C7 y HU0017 cumplen; C1 y C2 fallan en V1 y C3 en V1 y V2. **Registro oficial (D-065)**; etiqueta `medido-visual` en `1d70ce8` (sin `validado-visual`) |
 | 24 | Manos con el visual encendido (≈ 7 datos/mano/s frente a ≈ 14) | Limitación informada (4i.2); causa `[POR COMPLETAR]`; opciones en P-017 |
 | 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | PENDIENTE (12/11) |
@@ -837,6 +948,8 @@ Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 - 12/11 `[POR COMPLETAR]`: propósito de 132848, 140411 y 143303; evidencia de US20 y US38; consolas de Python. (US14: captura guardada; JBL: siempre, dicho por Ale.)
 - 12/11 `[POR COMPLETAR]`: por qué V1 (y el calentamiento) tuvieron `tracker` ≈ 27 ms y `dwm` 30–46 % frente a 23.8 ms y 8 % en 155202 (4j.2).
 - 12/11 `[POR COMPLETAR]`: registros de GPU, CPU y procesos de la tanda repetida (155642, 161012, 162149) — no están en `sesiones/`; causa de las ventanas bajas y de las muestras de (b) > 100 ms de V1 (576–590 s) y V2 (4j/4k).
+- 12/11 `[POR COMPLETAR]`: propósito y GPU de Edge de 165028, 165228 y 170347 (`b769fff`, registros `*_opcional`); anotación de la GPU por corrida de I1–I3.
+- 12/11: ya no hay Kinect. Quedan sin medir en TP1: (c) por el método A, P-017, US10 caso B con visual, US12-2 en vivo.
 - 12/11: la regla de reloj (D-019) puede fallar aunque se haga `w32tm /resync` justo antes: el sondeo siguiente (≈ 17 min después) corrigió la hora durante V1, V2 y el control (INFERIDO; 4j.1). Propuesta P-019.
 - 11/11: hallazgo de US25 sin arreglar (código congelado): `angulo_articulacion` da 179.9974° con vectores unitarios; sin efecto práctico en mm.
 - Pendiente de datos (no medido): confianza de rodillas y tobillos en el CSV. Ale observó el 31/10 más movimiento falso de piernas al subir los brazos; en las sesiones 164334/164633 la mediana de la velocidad de rodilla es 35–111 °/s con los hombros a 45–135° (11–16 °/s quieto con los brazos abajo), y eso sube el tempo.
