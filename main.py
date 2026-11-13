@@ -89,9 +89,6 @@ DIBUJAR_CADA = 3                # dibuja/muestra 1 de cada N ciclos (con 2 costa
 DESCARTAR_COLA_CAMARA = True     # True = si hay frames viejos en la cola del SDK, se descartan y se usa el MÁS RECIENTE (medido: la cola añadía ~220 ms)
                                  # False = comportamiento anterior (procesa todos los frames en orden, aunque lleguen con retraso)
 MAX_DESCARTE_POR_CICLO = 10      # tope de frames que se descartan en un ciclo (seguridad)
-COLOR_BGRA32 = False             # EXPERIMENTO (D-007, P-005): desactivado por defecto desde el 01/11 (D-008); con BGRA32 la espera de cámara sube ≈ 22 ms
-                                 # True = el SDK entrega el color YA decodificado en BGRA (decodifica en su propio hilo, fuera del ciclo)
-                                 # False = MJPG: Python decodifica el JPEG en cada ciclo con cv2.imdecode (medido: to_numpy ≈ 6 ms)
 DECODIFICAR_EN_HILO_MANOS = True   # D-013/D-015: el ciclo solo copia el JPEG (MJPG) y lo decodifica HiloManos (el tracker no usa
                                    # el color); --sin-decod-hilo vuelve a to_numpy() en el ciclo (reversible)
 SWITCH_INTERVAL_S = None         # DIAGNÓSTICO (paso 5b): None = valor de Python (5 ms); 0.001 = sys.setswitchinterval(0.001)
@@ -144,8 +141,6 @@ if "--sin-manos" in OPCIONES:
 if "--tempo-medium" in OPCIONES:
     CONF_MIN_RODILLA_TEMPO = 2
 
-if DECODIFICAR_EN_HILO_MANOS and COLOR_BGRA32:
-    raise ValueError("DECODIFICAR_EN_HILO_MANOS solo sirve con MJPG: con COLOR_BGRA32=True usa --sin-decod-hilo")
 if SWITCH_INTERVAL_S is not None:
     sys.setswitchinterval(SWITCH_INTERVAL_S)
 
@@ -226,7 +221,7 @@ pykinect.initialize_libraries(track_body=True)
 
 device_config = pykinect.default_configuration
 device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_720P
-device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_BGRA32 if COLOR_BGRA32 else pykinect.K4A_IMAGE_FORMAT_COLOR_MJPG
+device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_MJPG
 device_config.depth_mode = pykinect.K4A_DEPTH_MODE_NFOV_UNBINNED
 device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
 device_config.wired_sync_mode = pykinect.K4A_WIRED_SYNC_MODE_STANDALONE
@@ -306,7 +301,7 @@ log_file.flush()
 # porque la consola se pierde (Start-Transcript de PowerShell no graba la salida de python)
 ruta_perf = ruta_log[:-4] + "_perf.txt"
 perf_file = open(ruta_perf, "w", encoding="utf-8")
-perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color={'BGRA32' if COLOR_BGRA32 else 'MJPG'} | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | conf_rodilla_tempo={CONF_MIN_RODILLA_TEMPO} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
+perf_file.write(f"# {VERSION_MAIN} | tracker={MODO_BODY_TRACKER} modelo={modelo_en_uso} | color=MJPG | ventana={'si' if MOSTRAR_VENTANA else 'no'} | decodif={'hilo' if DECODIFICAR_EN_HILO_MANOS else 'ciclo'} | switchinterval={sys.getswitchinterval() * 1000:g}ms | manos={'hilo' if USAR_HILO_MANOS else 'no'} | conf_rodilla_tempo={CONF_MIN_RODILLA_TEMPO} | semilla={SEMILLA} | commit={COMMIT_GIT} | inicio={datetime.now():%Y-%m-%d %H:%M:%S}\n")
 print(f"Versión de main.py: {VERSION_MAIN} | commit {COMMIT_GIT} | semilla {SEMILLA}")
 print(f"Guardando la sesión en: {ruta_log}")
 print(f"Guardando los reportes [PERF] en: {ruta_perf}")
@@ -715,7 +710,7 @@ def leer_frame(capture, t_upd):
                        if ok_color else None)
         linea = "copia_jpeg"
     else:
-        ok_color, color_image = img_color.to_numpy()  # MJPG: incluye cv2.imdecode (BGR, 3 canales) | BGRA32: solo copia (BGRA, 4 canales)
+        ok_color, color_image = img_color.to_numpy()  # MJPG: incluye cv2.imdecode (BGR, 3 canales)
         linea = "to_numpy"
     acum_linea[linea] += time.perf_counter() - t0
     n_linea[linea] += 1
