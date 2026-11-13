@@ -768,14 +768,15 @@ Fuentes en `sesiones/`: `sesion_20261112_<hora>_mjpg-cambios-2026-11-07_cuda-lit
 | US12 | Cumple (-2 SIMULADO) | D-044, 4i.6 | — |
 | US13 | Cumple (texto) | 4h | Cita en el lote D-058 |
 | US14 | **Cumple** | Capturas tras "Empezar" (`us14_consola_edge_20261112b.png`, 0 errores) | — |
-| US15 | Parcial (texto) | -2 (D-028); 15.7–20.3 cambios de zona por minuto | Reescritura de -1 (D-035) |
-| US16 | Parcial (texto) | -2; salto de tempo p99 0.40–0.55 | Reescritura de -1 con umbral de salto `[POR COMPLETAR]` |
+| US15 | **Completado** (D-076) | -2 (D-028); 15.7–20.3 cambios de zona por minuto; texto de -1 reescrito | — |
+| US16 | **Completado** (D-076) | -2; salto de tempo p99 0.40–0.55 ≤ 0.60 (D-073, 4n); texto de -1 reescrito | — |
 | US17 | **Cumple** | Saltos 0.27–0.48 por s ≤ 0.5 (D-064) en las 8 corridas (I1 0.48: cerca del umbral); rango p5–p95 0.00–0.94/0.99 | — |
-| US18 | Parcial (texto) | -2 | Reescritura de -1 |
+| US18 | **Completado** (D-076) | -2; texto de -1 reescrito | — |
 | US19 | **Cumple** | 7 notas; racha 2 en todas; χ² (4h.5, 4j–4l) | — |
 | US20 | **Cumple** (n = 1, autovalidación) | 4l.3 (D-068) | — |
 | US21 | **Cumple** | 100 % de notas reconstruidas en todas las corridas | — |
-| US22 | Cumple, con observación | `version` ≠ versión de las tablas; `-sucio` no dice qué archivo | Confirmación de Ale |
+| US22 | **Completado** (D-076) | Semilla + `commit` + `lam_sorteo` reconstruyen la configuración | Limitación: `version` ≠ versión de las tablas; `-sucio` no dice qué archivo |
+| US24 (Sprint 4) | **Completado** (D-076) | 0 % de `lat_tick_ms` > 250 ms en todas las corridas con visual (Edge + JBL, D-059); -2 aceptado: el valor queda por tick | Limitación: el incumplimiento no se marca como evento |
 
 ## 4m. Cierre de los Sprints 2 y 3 con los CSV existentes (12/11; sin Kinect desde aquí)
 Cálculo con `analisis_visual.py` (`b769fff`, solo lectura) sobre los archivos `sesiones/sesion_2026111[12]_<id>_*cuda-lite.*`. Ventanas `[PERF]` de 60 ciclos sin la #0 (D-016). (b) = `latencia_llegada_ms` (D-009). Tiempo por cuadro: media · máximo de los p95 por lote (D-063). Latencia visual: p95 de todas las muestras (D-063).
@@ -809,14 +810,15 @@ Cálculo con `analisis_visual.py` (`b769fff`, solo lectura) sobre los archivos `
 | US12 (dato secundario) | Velocidad de rodilla (`VelocidadAngular` real, `EMA_VEL_RODILLA` 0.4) ante un escalón ideal de 0 → 100 °/s | **Informativo, sin umbral:** D-044 y D-072 aplican **solo a `registro01`**. **50 % = 33.3 ms · 90 % = 133.3 ms** (63 % = 33.3 ms), SIMULADO | `validacion_offline_20261111.txt` (4i.6) | — |
 | US13 | λ según Piana 2016 / Camurri 2016 | **Cumple; pendiente de texto** | 4h | Cita en HU0013-1 (lote D-058) |
 | US14 | -1 sin errores de inicio; -2 autoplay | **Cumple** | `us14_consola_edge_20261112b.png` (0 errores); 4h.1 | — |
-| US15 | -1 zona por postura; -2 250 ms (D-028) | **-2 cumple; -1 pendiente de texto** | 4h.2; 4l.4 | Reescritura de HU0015-1 (D-035, normalización de 20 s) |
-| US16 | -1 tempo proporcional; salto entre filas p99 ≤ 0.60 (D-073); -2 saturación | **Cumple** (-1 con D-073, a posteriori; -2) | 4h.1; 4n (p99 0.401–0.554 en las 8 corridas de 10 min) | — |
+| US15 | -1 zona por postura, normalizada con los últimos 20 s (D-035); -2 250 ms (D-028) | **Completado** (D-076; texto de HU0015-1 reescrito) | 4h.2; 4l.4 | — |
+| US16 | -1 tempo proporcional; salto entre filas p99 ≤ 0.60 (D-073); -2 saturación | **Completado** (D-076; -1 con D-073, a posteriori; -2) | 4h.1; 4n (p99 0.401–0.554 en las 8 corridas de 10 min) | — |
 | US17 | -1 timbre por apertura; saltos ≤ 0.5/s (D-064) | **Cumple** | 4m.1 (0.20–0.48/s) | — |
-| US18 | -1 volumen por amplitud; -2 saturación | **-2 cumple; -1 pendiente de texto** | 4h.1 | Reescritura de HU0018-1 (amplitud en 2 s, normalizada en 20 s) |
+| US18 | -1 volumen por amplitud en 2 s, normalizada con los últimos 20 s; -2 saturación | **Completado** (D-076; texto de HU0018-1 reescrito) | 4h.1 | — |
 | US19 | -1 escala; -2 racha ≤ 2 (D-026); -3 λ cambia los pasos | **Cumple** | Racha 2 en todas; χ² 4h.5 | — |
 | US20 | -1 pregunta 1 ≥ 4 (D-068) | **Cumple** (n = 1, autovalidación) | 4l.3 | Texto de HU0020-1 con el umbral y la limitación |
 | US21 | -1 misma semilla = misma secuencia; -2 λ mínimo determinístico | **Cumple** | 100 % de notas reconstruidas (4j–4l); D-031 | — |
-| US22 | -1 el registro reconstruye la configuración | **Cumple; pendiente de confirmación** | Columnas `semilla`, `commit`, `lam_sorteo`, `version` | Confirmar que `version` (= `VERSION_MAIN`) basta aunque no sea la versión de las tablas, y que `-sucio` no dice qué archivo |
+| US22 | -1 el registro reconstruye la configuración | **Completado** (D-076) | Columnas `semilla`, `commit`, `lam_sorteo`, `version`; 100 % de notas reconstruidas | Limitación: `version` (= `VERSION_MAIN`) no es la versión de las tablas y `-sucio` no dice qué archivo cambió |
+| US24 (Sprint 4) | -1 `lat_tick_ms` ≤ 250 ms (Edge + JBL, D-059); -2 el registro por tick permite detectar el incumplimiento | **Completado** (D-076) | 0 % > 250 ms en todas las corridas de 10 min con visual (4k–4m; máx 79.2–95.9 ms) | Limitación: el incumplimiento no se marca como evento; se detecta en el registro por tick |
 
 ### 4m.3 Mejoras a realizar (trabajo futuro; sin Kinect en TP1)
 1. **Comparación de GPU de Edge** (D-070): corridas alternadas Intel / NVIDIA (A B A B …) el mismo día, con los 3 registros abiertos, la GPU verificada en `edge://gpu` antes de cada corrida y la regla de "mejor" fijada antes de correr.

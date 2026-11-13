@@ -1,7 +1,7 @@
 # HISTORIAS — qué debe cumplir el sistema (US07–US28 y US38) y cómo se relaciona con el código
 
-> Fuente de los criterios: `Plantilla_01 – Historias de Usuario y Criterios de Aceptación v1.0` (archivo del 28/10/2026; puede no ser la última versión). Los criterios de esta tabla son los vigentes hasta que Ale apruebe una reescritura (sección "Reescrituras propuestas").
-> Fuente del estado: Product Backlog (`Anexo5_PB_07-11`, propuesta de estado del 07/11/2026; Ale decide), `docs/DECISIONES.md` (D-001 a D-035; D-023 a D-034 son borradores aprobados por Ale con texto por confirmar) y `docs/MEDICIONES.md` (corte 07/11, sección 4h).
+> Fuente de los criterios: `Plantilla_01 – Historias de Usuario y Criterios de Aceptación v1.0` (archivo del 28/10/2026; puede no ser la última versión). Los criterios vigentes son los de la sección "Criterios reescritos" (12/11/2026) y, para el resto, los de las tablas.
+> Fuente del estado: ESTADO_ACTUAL y Product Backlog (`Anexo5_PB_12-11`), corte 12/11/2026; Ale decide. Decisiones: `docs/DECISIONES.md` (D-001 a D-075). Mediciones: `docs/MEDICIONES.md` (corte 12/11, secciones 4i a 4n).
 > HU0007 = US07, etc. "Hecho" es binario: todos los criterios de la historia cumplen, medidos.
 > Este archivo no se edita por cuenta de Code. Si un cambio contradice un criterio, se detiene y se avisa a Ale.
 > Alcance de TP1: US01–US28 y US38. **US29–US37 pasan al otro curso** (decisión de Ale, 10/11/2026).
@@ -51,19 +51,19 @@ US29–US37 (protocolo con estudiantes, interacción libre, PSS-10, SAM, SUS, pa
 ## Criterios reescritos (vigentes desde el 12/11/2026; cada uno con su razón en DECISIONES)
 - **HU0007-1 (D-052, D-069):** "El módulo publica las 32 articulaciones a ~30 Hz con el sistema final (visual encendido): media ≥ 29.5 ciclos/s y ninguna ventana de 60 ciclos (sin la de arranque) < 25.0 ciclos/s."
 - **HU0007-2:** "Una articulación sin dato (confianza NONE) se marca no disponible sin detener el resto; una articulación inferida por el SDK (LOW) cuenta como disponible y su confianza queda en el log."
-- **HU0008-1 (D-048, D-052):** "Con el sistema final (visual encendido), el módulo entrega datos nuevos de cada mano con marca de tiempo, al menos 5 por segundo en promedio por mano." `[POR COMPLETAR]` decidir si se mantiene "21 puntos por mano (42)": no está medido.
+- **HU0008-1 (D-048, D-052):** "Con el sistema final (visual encendido), el módulo procesa los frames RGB con MediaPipe Hands (21 puntos por mano, salida del modelo) y entrega datos nuevos de cada mano con marca de tiempo, al menos 5 por segundo en promedio por mano en una corrida de 10 min."
 - **HU0009-1/-2:** "El sistema obtiene esqueleto y apertura de manos del mismo frame (diferencia de tiempo 0 por construcción) y mantiene la última apertura válida de cada mano hasta 0.5 s; pasado ese tiempo reporta ausencia."
 - **HU0012-2 (D-044, D-072):** "El retardo del filtro, medido con el filtro real ante un escalón ideal (SIMULADO), no supera 100 ms al 50 % del escalón; el 90 % se informa aparte."
 - **HU0013-1:** "…calcula la fluidez según Piana et al. (2016) y Camurri et al. (2016)…"
 - **HU0015-1 (D-035):** "Asigna zona grave/media/aguda según el ángulo de los hombros, normalizado con los últimos 20 s de cada estudiante."
-- **HU0016-1 (D-035):** "El tempo (1 a 4 notas/s) cambia en proporción a la velocidad angular normalizada con los últimos 20 s; sin saltos mayores a [POR COMPLETAR]."
+- **HU0016-1 (D-035):** "El tempo (1 a 4 notas/s) cambia en proporción a la velocidad angular de las rodillas, normalizada con los últimos 20 s; entre filas consecutivas (≈ 33 ms) el salto de tempo tiene p99 ≤ 0.60 en una corrida de 10 min (el máximo se informa aparte)."
 - **HU0017-1 (D-064):** "El timbre cambia en proporción a la apertura de manos, con no más de 0.5 saltos por segundo de `apertura01` mayores a 0.3."
 - **HU0018-1 (D-035):** "El volumen refleja la amplitud del desplazamiento en la ventana de 2 s, normalizada con los últimos 20 s."
 - **HU0020-1 (D-055, D-068):** "El estudiante percibe transiciones fluidas del sonido: pregunta 1 (sonido) ≥ 4 de 5; el visual se pregunta aparte. Limitación: n = 1, autovalidación del desarrollador."
 - **HU0023-1, HU0024-1, HU0026-1 (D-052):** se agrega al criterio "con el sistema final (visual encendido)".
-- **HU0025-1 (D-056), BORRADOR mío:** "Cada módulo y clase probable de forma aislada produce el comportamiento esperado (44/44 pruebas unitarias); el bucle con la Kinect, el hilo de manos, `index.html` y `visual.js` se validan por integración (US26) y por las corridas."
+- **HU0025-1 (D-056), BORRADOR mío:** "Cada módulo y cada clase probados de forma aislada producen el comportamiento esperado (44/44 pruebas unitarias); el bucle con la Kinect, el hilo de manos, index.html y visual.js se validan por integración (US26) y por las corridas."
 
 ## Lo que esto implica para el plan de ciclo
-- Un desvío frente a US07 (~30 Hz) y US08 (30 FPS) es un desvío frente a un criterio de aceptación escrito. Cambiarlo requiere una decisión argumentada en `DECISIONES.md` (P-004) y consulta con el asesor.
+- Un desvío frente a un criterio de aceptación escrito (por ejemplo US07, ~30 Hz) exige una decisión argumentada en `DECISIONES.md`. Las tomadas hasta ahora: D-048, D-069, D-072, D-073 y D-074.
 - Todo cambio de código o medición debe decir qué criterio (HU0007-1, HU0023-2, HU0038-1, …) cumple o afecta.
-- Las corridas base (US07, US23, US24) se miden con el visual apagado; el visual encendido se informa aparte como C6 (`CLAUDE.md`, sección 7).
+- Las validaciones se hacen con el visual encendido (D-047); las corridas con `?visual=0` son referencia de comparación (`CLAUDE.md`, sección 7).
