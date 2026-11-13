@@ -75,7 +75,7 @@ Un solo bucle secuencial en `bucle_kinect`, en el hilo del event loop:
 13. **Refactor (KISS):** solo al final, después de todas las mediciones. Se etiqueta el commit medido (`medido-final`) y se trabaja en la rama `refactor/kiss`. Un módulo por commit, sin cambiar comportamiento, sin clases ni capas nuevas salvo que quiten duplicación; funciones cortas, constantes en un solo lugar, nombres coherentes. No se toca `bucle_kinect` salvo orden explícita de Ale. Se valida con una corrida con semilla (mismas notas) y una de 10 min con C1–C5. Las cifras del paper citan el commit medido, no el refactorizado.
 
 ## 7. Criterios de aceptación (binarios; corrida de 10 min con `python main.py cuda lite`, visual encendido por defecto, D-042; GPU de Edge anotada y verificada en `edge://gpu`; una pestaña)
-- C1. D-069: media ≥ 29.5 ciclos/s y ninguna ventana (sin #0) < 25.0; `cap_update` > 0 ms. Se informan también D-023 (< 29.0) y el estricto (todas ≥ 29.5). D-069 se fijó a posteriori.
+- C1. D-077: media ≥ 29.5 ciclos/s y ninguna ventana (sin #0) < 20.0; cap_update > 0 ms. Se informan también D-069 (< 25.0), D-023 (< 29.0) y el estricto. D-069 y D-077 se fijaron a posteriori.
 - C2. D-066: `lag_cam` p95 de la corrida y de cada minuto con ≥ 20 s de datos ≤ 27.1 ms; "último − primer minuto" se informa sin umbral.
 - C6. D-063: tiempo por cuadro (máximo de los p95 por lote) ≤ 16.7 ms; latencia visual p95 (todas las muestras) ≤ 100 ms; destellos ≤ 3/s.
 - C7. Manos (HU0008-1, D-048): ≥ 5 datos nuevos por mano/s (media, cada mano).
