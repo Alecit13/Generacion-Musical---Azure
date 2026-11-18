@@ -1,0 +1,257 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Acuarela en movimiento</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una hoja de papel grande (el visual) arriba; debajo, el tablero para simular el cuerpo, la ficha de diseño y la comparación con la alternativa A. Un solo look claro: es una hoja de acuarela. */
+:root{
+  color-scheme: light;
+  --papel:#f3f5f2; --hoja:#fbfcfa; --panel:#ffffff; --linea:#d5dbd6;
+  --tinta:#1f2a33; --tenue:#5d6b73;
+  --grave:#3a5fb0; --medio:#2f9c93; --agudo:#8a6cc9; --calido:#e2a94e;
+  --display:"Fraunces",Georgia,serif; --cuerpo:"Inter",system-ui,sans-serif;
+}
+body{background:var(--papel);color:var(--tinta);font-family:var(--cuerpo);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(26px,4.2vw,38px);margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 10px;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.sub{color:var(--tenue)}
+.stage{position:relative;overflow:hidden;border:1px solid var(--linea);background:var(--hoja);box-shadow:0 10px 30px rgba(31,42,51,.10)}
+canvas{display:block;width:100%;aspect-ratio:16/9;max-width:100%}
+.estado{position:absolute;left:14px;bottom:12px;font-size:13px;color:var(--tinta);background:rgba(251,252,250,.8);padding:5px 11px;border-radius:999px;border:1px solid var(--linea)}
+.inicio{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(251,252,250,.82);text-align:center;padding:16px}
+.inicio[hidden]{display:none}
+.inicio p{font-family:var(--display);font-size:clamp(17px,2.8vw,24px);color:var(--tinta)}
+button{font:inherit;color:#fff;background:var(--tinta);border:0;border-radius:999px;padding:10px 22px;font-weight:600;cursor:pointer}
+button.sec{background:transparent;color:var(--tinta);border:1px solid var(--linea)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--grave);outline-offset:3px}
+.panel{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:18px}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 22px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--tenue);min-width:0}
+label b{color:var(--tinta);font-weight:600;font-size:14px}
+input[type=range]{width:100%;accent-color:var(--medio)}
+.fila{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.tec{margin-left:auto;font-size:12.5px;color:var(--tenue);font-variant-numeric:tabular-nums}
+.tabla{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--linea);vertical-align:top}
+th{color:var(--tenue);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.07em}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+ul{margin:0;padding-left:20px;max-width:70ch} li{margin:5px 0}
+.dos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Acuarela en movimiento</h1>
+    <p class="sub">Alternativa B de retroalimentación visual: el cuerpo es un pincel. Cada nota deja una mancha de acuarela que se extiende sobre el papel y se desvanece poco a poco.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="lienzo" width="1280" height="720" aria-label="Prototipo del visual Acuarela en movimiento"></canvas>
+    <div class="estado" id="estado">Te veo</div>
+    <div class="inicio" id="inicio">
+      <p>Tu cuerpo es el pincel.<br>Muévete y pinta la música.</p>
+      <button id="empezar">Empezar</button>
+    </div>
+  </div>
+
+  <section class="panel" aria-label="Simulador del movimiento">
+    <h2>Simula el movimiento</h2>
+    <p class="sub">En el sistema real estos valores llegan desde Python por el WebSocket. Aquí los mueves a mano o dejas la demostración automática.</p>
+    <div class="ctrls" style="margin-top:14px">
+      <label><b>Hombros</b>Elevación → registro (grave, medio, agudo)<input id="reg" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+      <label><b>Rodillas</b>Velocidad → tempo (1 a 4 notas por segundo)<input id="tempo" type="range" min="0" max="1" step="0.01" value="0.25"></label>
+      <label><b>Muñecas y tobillos</b>Amplitud → volumen<input id="amp" type="range" min="0" max="1" step="0.01" value="0.45"></label>
+      <label><b>Manos</b>Apertura → timbre<input id="open" type="range" min="0" max="1" step="0.01" value="0.4"></label>
+      <label><b>Fluidez</b>Movimiento suave o brusco<input id="flu" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+    </div>
+    <div class="fila">
+      <button class="sec" id="auto" aria-pressed="true">Demostración automática: sí</button>
+      <button class="sec" id="sonido" aria-pressed="false">Sonido: no</button>
+      <button class="sec" id="fuera" aria-pressed="false">Salir del encuadre</button>
+      <span class="tec" id="tec">0 elementos · 30 cuadros/s</span>
+    </div>
+  </section>
+
+  <section class="dos">
+    <div>
+      <h2>Qué ve el estudiante</h2>
+      <div class="tabla"><table>
+        <tr><th>Movimiento</th><th>Música</th><th>En pantalla</th></tr>
+        <tr><td>Elevar los hombros</td><td>Registro</td><td>El pincel sube o baja y cambia de color: <span class="dot" style="background:var(--grave)"></span>azul, <span class="dot" style="background:var(--medio)"></span>turquesa, <span class="dot" style="background:var(--agudo)"></span>violeta</td></tr>
+        <tr><td>Mover las rodillas</td><td>Tempo</td><td>Las manchas aparecen más seguido y el pincel avanza más rápido</td></tr>
+        <tr><td>Movimientos amplios</td><td>Volumen</td><td>Manchas más grandes</td></tr>
+        <tr><td>Abrir las manos</td><td>Timbre</td><td>La mancha se extiende más, con bordes más difusos</td></tr>
+        <tr><td>Moverse con suavidad</td><td>Variedad de la melodía</td><td>Un trazo continuo une las manchas; con movimientos bruscos aparecen salpicaduras</td></tr>
+        <tr><td>Cada nota</td><td>Nota sorteada</td><td>Una mancha nueva, más arriba o más abajo según la nota</td></tr>
+      </table></div>
+    </div>
+    <div>
+      <h2>Por qué atrae y relaja</h2>
+      <ul>
+        <li><b>Se crea algo.</b> La persona no solo ve una reacción: termina con una pintura propia, distinta en cada sesión.</li>
+        <li><b>Ritmo de la tinta.</b> Cada mancha crece y se desvanece despacio, lo que invita a moverse sin prisa.</li>
+        <li><b>Fondo claro y estable.</b> El papel no cambia de brillo; solo cambia la tinta.</li>
+        <li><b>Sin metas.</b> No hay puntajes, tiempos ni una forma correcta de pintar.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Comparación con la alternativa A (Jardín de luz)</h2>
+    <div class="tabla"><table>
+      <tr><th>Aspecto</th><th>A · Jardín de luz</th><th>B · Acuarela en movimiento</th></tr>
+      <tr><td>Metáfora</td><td>El cuerpo es una flor que respira</td><td>El cuerpo es un pincel</td></tr>
+      <tr><td>Ambiente</td><td>Oscuro, nocturno</td><td>Claro, papel</td></tr>
+      <tr><td>Qué queda en pantalla</td><td>Las últimas 24 notas, como estrellas</td><td>Una pintura que se acumula y se renueva</td></tr>
+      <tr><td>Fortaleza</td><td>Se entiende de inmediato qué parte del cuerpo cambia qué</td><td>Da sensación de autoría: invita a seguir para ver el resultado</td></tr>
+      <tr><td>Riesgo</td><td>Puede sentirse repetitivo en sesiones largas</td><td>La relación entre cada parte del cuerpo y la pintura es menos evidente</td></tr>
+      <tr><td>Sala recomendada</td><td>Luz tenue</td><td>Luz normal de laboratorio</td></tr>
+      <tr><td>Costo de dibujo esperado</td><td>Menor: figuras con trazo y degradados simples</td><td>Mayor: muchas manchas con degradado y mezcla de color</td></tr>
+    </table></div>
+    <p class="sub" style="margin-top:12px">Ambas usan los mismos datos que ya envía Python y respetan los límites del visual actual: Canvas 2D, 30 cuadros por segundo, máximo de 200 elementos, sin rojo y sin cambios bruscos de brillo. El costo real sobre el ciclo y sobre los datos de manos hay que medirlo con el Kinect, y que relajen es una hipótesis para la evaluación con estudiantes.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const cv = $('lienzo'), g = cv.getContext('2d');
+const W = 1280, H = 720;
+const ids = ['reg','tempo','amp','open','flu'];
+const obj = {reg:.5,tempo:.25,amp:.45,open:.4,flu:.8};
+const s = {...obj};
+let auto = true, fuera = false, iniciado = false;
+const COL = {grave:[58,95,176], medio:[47,156,147], agudo:[138,108,201], calido:[226,169,78]};
+const lerp = (a,b,t) => a+(b-a)*t, mix = (A,B,t) => A.map((v,i)=>lerp(v,B[i],t));
+const rgba = (c,a) => `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+function tono(r){ return r<.5 ? mix(COL.grave,COL.medio,r*2) : mix(COL.medio,COL.agudo,(r-.5)*2); }
+
+// generador de notas: misma regla del sistema (pesos por distancia, modulados por la fluidez)
+const PESOS = [0.05,0.30,0.175,0.08]; let nota = 3, dir = 1, rep = 0;
+function sortear(lp){
+  let objetivo = nota + dir; if (objetivo<0||objetivo>6){ dir=-dir; objetivo = nota+dir; }
+  const p = []; let tot = 0;
+  for (let n=0;n<7;n++){ const d=Math.abs(n-nota); let w = d<4?PESOS[d]:0; if (n===nota && rep>=1) w=0; p.push(w); tot+=w; }
+  for (let n=0;n<7;n++){ p[n] = lp*(p[n]/tot) + (1-lp)*(n===objetivo?1:0); }
+  let x = Math.random(), n = 0; while (n<6 && (x-=p[n])>0) n++;
+  if (Math.random()<0.2) dir=-dir;
+  rep = n===nota ? rep+1 : 0; if (n!==nota) dir = n>nota?1:-1; nota = n; return n;
+}
+
+// sonido opcional (onda senoidal + filtro paso bajo, como el sistema)
+let ac=null, filtro=null, sonando=false;
+const ESCALA=[0,2,4,5,7,9,11];
+function tocar(n, dur){
+  if(!sonando||!ac) return;
+  const oct = s.reg<.33?3:(s.reg<.66?4:5), midi = 12*(oct+1)+ESCALA[n], f = 440*Math.pow(2,(midi-69)/12);
+  const o=ac.createOscillator(), v=ac.createGain(), t=ac.currentTime, vol = Math.pow(10,(-20+14*s.amp)/20)*0.5;
+  o.type='sine'; o.frequency.value=f; filtro.frequency.setTargetAtTime(300+2700*s.open,t,.05);
+  v.gain.setValueAtTime(0,t); v.gain.linearRampToValueAtTime(vol,t+.03); v.gain.exponentialRampToValueAtTime(.0008,t+dur);
+  o.connect(v); v.connect(filtro); o.start(t); o.stop(t+dur+.05);
+}
+
+const manchas=[], gotas=[], trazo=[];
+let proxTick = 0, tPrev = 0, tUlt = 0, t0 = performance.now(), fase = 0;
+const VIDA = 22;   // segundos que dura una mancha
+
+function demo(t){
+  const u = (t/1000)%40, w = x => .5+.5*Math.sin(x);
+  if (u<8){ obj.reg=.5; obj.tempo=.08; obj.amp=.25; obj.open=.35; obj.flu=.95; }
+  else if (u<19){ obj.reg=w(u*.7); obj.tempo=.25; obj.amp=.45+.35*w(u*.9); obj.open=.5; obj.flu=.85; }
+  else if (u<30){ obj.reg=.35+.3*w(u*.4); obj.tempo=.45+.5*w(u*.6); obj.amp=.7; obj.open=.45; obj.flu=.3+.5*w(u*.5); }
+  else { obj.reg=.6; obj.tempo=.2; obj.amp=.4; obj.open=w(u*1.4); obj.flu=.9; }
+  ids.forEach(k => $(k).value = obj[k]);
+}
+
+function cuadro(ahora){
+  requestAnimationFrame(cuadro);
+  if (ahora - tUlt < 1000/30 - 1) return;           // tope de 30 cuadros por segundo
+  const dt = Math.min(.1,(ahora - tUlt)/1000); tUlt = ahora;
+  const t = (ahora - t0)/1000;
+  if (auto && iniciado) demo(ahora - t0);
+  ids.forEach(k => s[k] = lerp(s[k], obj[k], k==='reg'?.06:.12));
+  const c = tono(s.reg);
+  let n = 0;
+
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = '#fbfcfa'; g.fillRect(0,0,W,H); n++;
+
+  // posición del pincel: avanza de lado a lado con el tempo; la altura la da el registro
+  if (!fuera && iniciado) fase += dt*(.12+.5*s.tempo);
+  const px = W*(.5+.4*Math.sin(fase)), py = H*(.78-.56*s.reg) + Math.sin(fase*2.3)*30;
+
+  // una nota por tick, con el intervalo del sistema 1/(1+3τ)
+  if (iniciado && !fuera && t >= proxTick){
+    const intervalo = 1/(1+3*s.tempo), lp = Math.max(0,(Math.max(s.flu,.05)-.05)/.95);
+    const nn = sortear(lp); proxTick = t + intervalo; tocar(nn, intervalo*.9);
+    const x = px, y = py - (nn-3)*16, R = 34+86*s.amp;
+    manchas.push({x,y,R,ext:1+.9*s.open,c:mix(c,COL.calido,nn===6?.5:0),t0:t});
+    trazo.push({x,y,t0:t,liso:s.flu}); if (trazo.length>28) trazo.shift();
+    if (s.flu<.5){ const k = 2+((1-s.flu)*4|0); for(let i=0;i<k;i++){ const a=Math.random()*6.283, d=R*(.9+Math.random()*1.1); gotas.push({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,r:3+Math.random()*7,c,t0:t}); } }
+    while (manchas.length>90) manchas.shift();
+    while (gotas.length>60) gotas.shift();
+  }
+
+  // manchas de acuarela: crecen despacio y se desvanecen; al superponerse, los colores se mezclan
+  g.globalCompositeOperation = 'multiply';
+  for (let i=manchas.length-1;i>=0;i--){
+    const m = manchas[i], e = t - m.t0;
+    if (e>VIDA){ manchas.splice(i,1); continue; }
+    const crece = 1-Math.exp(-e*1.4), r = m.R*(.45+.55*crece)*lerp(1,m.ext,crece);
+    const a = .21*Math.min(1,e*3)*(1-Math.max(0,(e-VIDA*.55)/(VIDA*.45)));
+    const gr = g.createRadialGradient(m.x,m.y,r*.15,m.x,m.y,r);
+    gr.addColorStop(0, rgba(m.c,a)); gr.addColorStop(.72, rgba(m.c,a*.8)); gr.addColorStop(1, rgba(m.c,0));
+    g.fillStyle = gr; g.beginPath(); g.arc(m.x,m.y,r,0,6.283); g.fill(); n++;
+  }
+  for (let i=gotas.length-1;i>=0;i--){
+    const d = gotas[i], e = t - d.t0;
+    if (e>VIDA*.6){ gotas.splice(i,1); continue; }
+    g.fillStyle = rgba(d.c,.35*Math.min(1,e*4)*(1-e/(VIDA*.6)));
+    g.beginPath(); g.arc(d.x,d.y,d.r,0,6.283); g.fill(); n++;
+  }
+  g.globalCompositeOperation = 'source-over';
+
+  // trazo del pincel: une las últimas notas con una curva continua
+  if (trazo.length>2){
+    for (let i=1;i<trazo.length-1;i++){
+      const a=trazo[i-1], b=trazo[i], d=trazo[i+1], e = t-b.t0;
+      const alfa = .5*Math.max(0,1-e/14)*(.25+.75*b.liso); if (alfa<=.01) continue;
+      g.beginPath(); g.moveTo((a.x+b.x)/2,(a.y+b.y)/2); g.quadraticCurveTo(b.x,b.y,(b.x+d.x)/2,(b.y+d.y)/2);
+      g.strokeStyle = `rgba(31,42,51,${alfa})`; g.lineWidth = 1.5+3.5*s.amp; g.lineCap='round'; g.stroke(); n++;
+    }
+  }
+
+  // punta del pincel
+  if (iniciado && !fuera){
+    g.strokeStyle = rgba(c,.9); g.lineWidth = 2; g.beginPath(); g.arc(px,py,8+14*s.open,0,6.283); g.stroke();
+    g.fillStyle = rgba(c,.9); g.beginPath(); g.arc(px,py,3,0,6.283); g.fill(); n+=2;
+  }
+  if (ahora-tPrev>400){ $('tec').textContent = n+' elementos · 30 cuadros/s'; tPrev = ahora; }
+}
+
+ids.forEach(k => $(k).addEventListener('input', e => { obj[k]=+e.target.value; if(auto){ auto=false; pinta(); } }));
+function pinta(){
+  $('auto').textContent = 'Demostración automática: '+(auto?'sí':'no'); $('auto').setAttribute('aria-pressed',auto);
+  $('sonido').textContent = 'Sonido: '+(sonando?'sí':'no'); $('sonido').setAttribute('aria-pressed',sonando);
+  $('fuera').textContent = fuera?'Volver al encuadre':'Salir del encuadre'; $('fuera').setAttribute('aria-pressed',fuera);
+  $('estado').textContent = fuera?'No te veo. Acércate al centro':'Te veo';
+}
+$('auto').onclick = () => { auto=!auto; pinta(); };
+$('fuera').onclick = () => { fuera=!fuera; pinta(); };
+function audio(on){
+  if (on && !ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)(); filtro = ac.createBiquadFilter(); filtro.type='lowpass'; filtro.connect(ac.destination); }catch(e){ ac=null; } }
+  if (ac && on) ac.resume();
+  sonando = !!(on && ac); pinta();
+}
+$('sonido').onclick = () => audio(!sonando);
+$('empezar').onclick = () => { iniciado = true; $('inicio').hidden = true; audio(true); };
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){ auto = false; }
+pinta(); requestAnimationFrame(cuadro);
+})();
+</script>
+
+</body></html>
