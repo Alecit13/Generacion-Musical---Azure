@@ -29,6 +29,11 @@ const Visual = (() => {
   const LIGERO = PARAMS_V.get("ligero") === "1";
   const PERIODO_MS = 1000 / FPS_TOPE;
   const TOLERANCIA_MS = 3;                  // medio refresco a 143 Hz: el promedio queda en FPS_TOPE
+  // Escenas alternativas (D-078, D-079): ?escena=jardin|acuarela. Sin el parámetro (o con uno desconocido) dibuja Ondas,
+  // que es lo medido. Cada escena vive en su archivo y se registra con registrarEscena al cargarse.
+  const ESCENAS = {};
+  const ESCENA_PEDIDA = PARAMS_V.get("escena") || "ondas";
+  let escena = null, nombreEscena = "ondas";
 
   // ---------- Estado ----------
   let canvas = null, ctx = null, ancho = 0, alto = 0;
@@ -47,6 +52,10 @@ const Visual = (() => {
        opciones.medir(): true si hay que registrar filas (WebSocket abierto y audio iniciado; nunca en ?demo=1). */
     canvas = elCanvas; ctx = canvas.getContext("2d");
     anotar = opciones.anotar; medir = opciones.medir;
+    if (ESCENA_PEDIDA !== "ondas") {
+      if (ESCENAS[ESCENA_PEDIDA]) { escena = ESCENAS[ESCENA_PEDIDA]; nombreEscena = ESCENA_PEDIDA; escena.iniciar(ctx); }
+      else console.warn(`Escena desconocida "${ESCENA_PEDIDA}": se dibuja Ondas`);
+    }
     ajustarTamano();
     window.addEventListener("resize", ajustarTamano);
     requestAnimationFrame(cuadro);
@@ -57,6 +66,28 @@ const Visual = (() => {
     ancho = window.innerWidth; alto = window.innerHeight;
     canvas.width = Math.round(ancho * escala); canvas.height = Math.round(alto * escala);
     ctx.setTransform(escala, 0, 0, escala, 0, 0);
+    if (escena) escena.redimensionar(ancho, alto);
+  }
+
+  function registrarEscena(nombre, obj) {
+    /* Lo llama cada archivo de escena al cargarse. obj = {iniciar(ctx), redimensionar(ancho, alto),
+       alEstado(d, esNota, t), dibujar(t, dt, sinCuerpo) -> {vivos, llamadas, nuevas: [t_cap_ms...]}}. */
+    ESCENAS[nombre] = obj;
+  }
+
+  function fundidoZona(paleta) {
+    /* Para las escenas: el mismo fundido de color de zona que Ondas (FUNDIDO_COLOR_S), con la paleta de la escena.
+       cambiar(zona, t) empieza el fundido; color(t) da el color actual; zonas(t) = {desde, hacia, p} (p de 0 a 1). */
+    let desde = "medio", hacia = "medio", colDesde = paleta.medio, colHacia = paleta.medio, t0 = -Infinity;
+    const p = (t) => Math.min(1, Math.max(0, (t - t0) / FUNDIDO_COLOR_S));
+    const color = (t) => { const k = p(t); return colDesde.map((c, i) => c + (colHacia[i] - c) * k); };
+    return {
+      cambiar(zona, t) {
+        if (!paleta[zona] || zona === hacia) return;
+        colDesde = color(t); desde = hacia; colHacia = paleta[zona]; hacia = zona; t0 = t;
+      },
+      color, zonas: (t) => ({ desde, hacia, p: p(t) }),
+    };
   }
 
   function ponerConexion(abierta) { conectado = abierta; }
@@ -72,6 +103,7 @@ const Visual = (() => {
        Si cambió la zona, empieza el fundido de color; si hay nota nueva, crea su anillo. */
     const t = performance.now() / 1000;
     ultimo = d; tUltimoMsg = performance.now();
+    if (escena) { escena.alEstado(d, esNota, t); return; }
     if (d.zona && d.zona !== zonaActual && COLOR_ZONA[d.zona]) {
       colorDesde = colorEn(t); colorHacia = COLOR_ZONA[d.zona]; tCambioColor = t; zonaActual = d.zona;
     }
@@ -107,32 +139,54 @@ const Visual = (() => {
     tempoSuav += ((sinCuerpo || !ultimo ? 0 : ultimo.tempo || 0) - tempoSuav) * k;
     intSuav += ((sinCuerpo || !ultimo ? 0 : ultimo.intensidad || 0) - intSuav) * k;
     fase += dt * 2 * Math.PI * (0.08 + 0.17 * tempoSuav);            // un respiro cada 12 s (quieto) a 4 s (rápido)
-    dibujarFondo(t);
 
-    // Anillos (los muertos se quitan; el dibujo marca la latencia visual de cada uno la primera vez)
-    for (let i = anillos.length - 1; i >= 0; i--) if (t - anillos[i].t0 > VIDA_ANILLO_S) anillos.splice(i, 1);
     const registrar = medir();
-    // Al empezar a medir (una vez por corrida): fila config_visual, latencia_ms = tope de cuadros/s, transporte_ms = ligero
-    if (registrar && !registrabaAntes) anotar([Date.now(), "config_visual", String(FPS_TOPE), LIGERO ? "1" : "0", "", "", ""]);
+    // Al empezar a medir (una vez por corrida): fila config_visual, latencia_ms = tope de cuadros/s, transporte_ms = ligero;
+    // y fila "escena_<nombre>" (D-078), que analisis_visual.py ignora (solo lee tipos exactos)
+    if (registrar && !registrabaAntes) {
+      anotar([Date.now(), "config_visual", String(FPS_TOPE), LIGERO ? "1" : "0", "", "", ""]);
+      anotar([Date.now(), "escena_" + nombreEscena, "", "", "", "", ""]);
+    }
     registrabaAntes = registrar;
-    for (const a of anillos) {
-      dibujarAnillo(a, t);
-      if (!a.dibujado) {
-        a.dibujado = true;
-        if (registrar && a.tCap !== undefined) anotar([Date.now(), "visual", (Date.now() - a.tCap).toFixed(1), "", "", "", ""]);
+    let vivos, llamadas;                                              // elementos vivos y llamadas de dibujo (D-078)
+    if (escena) {
+      // Escena alternativa: dibuja todo menos el indicador y devuelve los t_cap_ms de las notas dibujadas por 1ª vez
+      const r = escena.dibujar(t, dt, sinCuerpo);
+      vivos = r.vivos; llamadas = r.llamadas;
+      if (registrar) for (const tCap of r.nuevas) anotar([Date.now(), "visual", (Date.now() - tCap).toFixed(1), "", "", "", ""]);
+    } else {
+      dibujarFondo(t);
+      // Anillos (los muertos se quitan; el dibujo marca la latencia visual de cada uno la primera vez)
+      for (let i = anillos.length - 1; i >= 0; i--) if (t - anillos[i].t0 > VIDA_ANILLO_S) anillos.splice(i, 1);
+      vivos = anillos.length; llamadas = 2;                           // fondo: 2 rellenos
+      for (const a of anillos) {
+        llamadas += dibujarAnillo(a, t);
+        if (!a.dibujado) {
+          a.dibujado = true;
+          if (registrar && a.tCap !== undefined) anotar([Date.now(), "visual", (Date.now() - a.tCap).toFixed(1), "", "", "", ""]);
+        }
       }
     }
-    dibujarIndicador(t, sinCuerpo);
+    llamadas += dibujarIndicador(t, sinCuerpo);
+    ultimosVivos = vivos;
 
     const trabajo = performance.now() - tIni;
-    if (tPrevCuadro !== null) { hist.trabajo[hist.i % HIST] = trabajo; hist.intervalo[hist.i % HIST] = ts - tPrevCuadro; hist.i++; }
-    if (registrar && tPrevCuadro !== null) { lote.trabajo.push(trabajo); lote.intervalo.push(ts - tPrevCuadro); }
+    if (tPrevCuadro !== null) {
+      const j = hist.i % HIST;
+      hist.trabajo[j] = trabajo; hist.intervalo[j] = ts - tPrevCuadro; hist.vivos[j] = vivos; hist.llamadas[j] = llamadas; hist.i++;
+    }
+    if (registrar && tPrevCuadro !== null) {
+      lote.trabajo.push(trabajo); lote.intervalo.push(ts - tPrevCuadro);
+      lote.vivosMax = Math.max(lote.vivosMax, vivos); lote.llamadasMax = Math.max(lote.llamadasMax, llamadas);
+    }
     if (tIni - lote.t0 >= LOTE_MS) {
       if (registrar && lote.trabajo.length > 0) {
         anotar(filaLote("cuadro_trabajo", lote.trabajo));
         anotar(filaLote("cuadro_intervalo", lote.intervalo));
+        // D-078: máximo de elementos vivos y de llamadas de dibujo del lote; base_latency_ms = n cuadros, como las otras
+        anotar([Date.now(), "cuadro_elementos", String(lote.vivosMax), String(lote.llamadasMax), "", String(lote.trabajo.length), ""]);
       }
-      lote.trabajo = []; lote.intervalo = []; lote.t0 = tIni;      // sin medir, el lote se descarta
+      lote.trabajo = []; lote.intervalo = []; lote.vivosMax = 0; lote.llamadasMax = 0; lote.t0 = tIni;   // sin medir, se descarta
     }
     tPrevCuadro = ts;
     requestAnimationFrame(cuadro);
@@ -142,7 +196,7 @@ const Visual = (() => {
   // tipo "cuadro_trabajo" y "cuadro_intervalo", con latencia_ms = media, transporte_ms = p95,
   // output_latency_ms = máximo y base_latency_ms = n (cuadros del lote). El p95 de toda la corrida se aproxima offline.
   const LOTE_MS = 1000;
-  const lote = { trabajo: [], intervalo: [], t0: performance.now() };
+  const lote = { trabajo: [], intervalo: [], vivosMax: 0, llamadasMax: 0, t0: performance.now() };
   function filaLote(tipo, valores) {
     const v = [...valores].sort((a, b) => a - b), n = v.length;
     const media = v.reduce((s, x) => s + x, 0) / n;
@@ -151,16 +205,21 @@ const Visual = (() => {
 
   // Últimos HIST cuadros en memoria, para revisar en la consola sin Python (Visual.estadisticas(); también en ?demo=1)
   const HIST = 1800;
-  const hist = { trabajo: new Float32Array(HIST), intervalo: new Float32Array(HIST), i: 0 };
+  const hist = { trabajo: new Float32Array(HIST), intervalo: new Float32Array(HIST),
+                 vivos: new Uint16Array(HIST), llamadas: new Uint16Array(HIST), i: 0 };
+  let ultimosVivos = 0;
   function estadisticas() {
-    /* {n, trabajo: {media, p95, max}, intervalo: {...}, vivos} de los últimos HIST cuadros (ms). Solo diagnóstico. */
+    /* {n, trabajo: {media, p95, max}, intervalo: {...}, vivos, vivosMax, llamadasMax, escena} de los últimos HIST cuadros
+       (ms). Solo diagnóstico; es la puerta de la demo de D-078 (vivos = los del último cuadro). */
     const n = Math.min(hist.i, HIST);
     const resumen = (arr) => {
       const v = Array.from(arr.subarray(0, n)).sort((a, b) => a - b);
       return { media: +(v.reduce((s, x) => s + x, 0) / n).toFixed(2), p95: +v[Math.floor(0.95 * (n - 1))].toFixed(2),
                max: +v[n - 1].toFixed(2) };
     };
-    return n === 0 ? { n } : { n, trabajo: resumen(hist.trabajo), intervalo: resumen(hist.intervalo), vivos: anillos.length };
+    const max = (arr) => arr.subarray(0, n).reduce((m, x) => Math.max(m, x), 0);
+    return n === 0 ? { n, escena: nombreEscena } : { n, trabajo: resumen(hist.trabajo), intervalo: resumen(hist.intervalo),
+      vivos: ultimosVivos, vivosMax: max(hist.vivos), llamadasMax: max(hist.llamadas), escena: nombreEscena };
   }
 
   function dibujarFondo(t) {
@@ -184,7 +243,7 @@ const Visual = (() => {
     const edad = t - a.t0, p = edad / VIDA_ANILLO_S;
     const entrada = Math.min(1, edad / ENTRADA_S);
     const alfaBase = (0.35 + 0.55 * a.intensidad) * entrada * Math.pow(1 - p, 1.5);
-    if (alfaBase <= 0.003) return;
+    if (alfaBase <= 0.003) return 0;
     const rMax = 0.48 * Math.min(ancho, alto);
     const r = 8 + (rMax - 8) * (1 - Math.pow(1 - p, 2));             // crece rápido al inicio y frena
     const grosor = 1.5 + 6 * a.intensidad;
@@ -212,6 +271,7 @@ const Visual = (() => {
     }
     ctx.setLineDash([]);
     ctx.lineCap = "butt";
+    return trazos;                                                   // llamadas de dibujo (D-078)
   }
 
   function dibujarIndicador(t, sinCuerpo) {
@@ -219,6 +279,7 @@ const Visual = (() => {
        mensaje amable, que aparecen y desaparecen en 0.4 s. Sin conexión con Python: "Conectando…". */
     const transicion = Math.min(1, (t - tAvisoCambio) / 0.4);
     const aviso = sinCuerpo ? transicion : 1 - transicion;
+    let llamadas = 2;                                                // círculo y texto "Te veo" (D-078: se cuentan)
     ctx.font = "600 20px system-ui, sans-serif";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "rgba(235,238,245,0.9)";
@@ -231,6 +292,7 @@ const Visual = (() => {
       ctx.font = "500 18px system-ui, sans-serif";
       ctx.fillStyle = "rgba(235,238,245,0.75)";
       ctx.fillText(`Zona: ${NOMBRE_ZONA[zonaActual]}`, 26, alto - 30);
+      llamadas++;
     }
     if (aviso > 0.01) {
       ctx.save();
@@ -247,7 +309,9 @@ const Visual = (() => {
                                : ["Esperando al sistema…"];
       lineas.forEach((l, i) => ctx.fillText(l, ancho / 2, alto / 2 + (i - (lineas.length - 1) / 2) * tam * 1.4));
       ctx.textAlign = "start";
+      llamadas += 1 + lineas.length;                                 // marco y líneas del mensaje
     }
+    return llamadas;
   }
 
   function iniciarDemo(alEstado) {
@@ -267,11 +331,13 @@ const Visual = (() => {
       alEstado({
         nota: notas[iNota], octava: { grave: 3, medio: 4, agudo: 5 }[zona], nota_id: notaId,
         intervalo_s: intervalo, lam: 0.5 + 0.5 * Math.sin(s / 11), tempo, zona,
+        // registro01 coherente con la zona (bandas 0.33 / 0.66), para las escenas; Ondas no lo lee
+        registro: { grave: 0.165, medio: 0.5, agudo: 0.835 }[zona] + 0.1 * Math.sin(s / 2),
         intensidad: 0.5 + 0.5 * Math.sin(s / 5), apertura01: (s % 20 > 18) ? null : 0.5 + 0.5 * Math.sin(s / 3),
         t_cap_ms: Date.now() - 25,
       });
     }, 1000 / 30);
   }
 
-  return { iniciar, ponerConexion, alRecibirEstado, iniciarDemo, estadisticas };
+  return { iniciar, ponerConexion, alRecibirEstado, iniciarDemo, estadisticas, registrarEscena, fundidoZona };
 })();
