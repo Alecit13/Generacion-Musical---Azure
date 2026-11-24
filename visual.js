@@ -29,10 +29,12 @@ const Visual = (() => {
   const LIGERO = PARAMS_V.get("ligero") === "1";
   const PERIODO_MS = 1000 / FPS_TOPE;
   const TOLERANCIA_MS = 3;                  // medio refresco a 143 Hz: el promedio queda en FPS_TOPE
-  // Escenas alternativas (D-078, D-079): ?escena=jardin|acuarela. Sin el parámetro (o con uno desconocido) dibuja Ondas,
-  // que es lo medido. Cada escena vive en su archivo y se registra con registrarEscena al cargarse.
+  // Escenas (D-078, D-079, D-082): sin parámetro dibuja Jardín; ?visual=ondas vuelve a Ondas (la versión medida en
+  // 8d58820); ?escena=jardin|ondas se sigue aceptando. Con una escena desconocida o sin cargar, dibuja Ondas.
+  // ?visual=0 (sin dibujo) lo decide index.html. Cada escena vive en su archivo y se registra con registrarEscena.
   const ESCENAS = {};
-  const ESCENA_PEDIDA = PARAMS_V.get("escena") || "ondas";
+  const V_PARAM = PARAMS_V.get("visual");
+  const ESCENA_PEDIDA = V_PARAM === "ondas" ? "ondas" : (PARAMS_V.get("escena") || "jardin");
   let escena = null, nombreEscena = "ondas";
 
   // ---------- Estado ----------
