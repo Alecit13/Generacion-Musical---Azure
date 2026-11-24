@@ -110,10 +110,15 @@ def validez(sesion, lat):
 def config_pagina(lat):
     cfg = next((r for r in lat if r["tipo"] == "config"), None)
     cv = next((r for r in lat if r["tipo"] == "config_visual"), None)
+    # D-078 / D-082: escena dibujada (fila "escena_<nombre>") y GPU de Edge que escribe Ale (fila "gpu_edge", ?gpu=);
+    # "—" en las corridas anteriores a esas filas
+    esc = next((r["tipo"][len("escena_"):] for r in lat if r["tipo"].startswith("escena_")), "—")
+    gpu = next((r["latencia_ms"] for r in lat if r["tipo"] == "gpu_edge"), "—")
     return {
         "visual": cfg is not None and cfg["latencia_ms"] == "1",
         "hz": cfg["transporte_ms"] if cfg else "",
         "tope": cv["latencia_ms"] if cv else "", "ligero": cv["transporte_ms"] if cv else "",
+        "escena": esc, "gpu_edge": gpu,
     }
 
 
@@ -255,6 +260,7 @@ def analizar(id_corrida, ruta_procesos=None):
         **config_pagina(lat), **validez(sesion, lat),
         "cps_media": st.mean(cps), "cps_min": min(cps), "n_vent": len(cps),
         "vent_lt_290": sum(c < 29.0 for c in cps), "vent_lt_295": sum(c < 29.5 for c in cps),
+        "vent_lt_250": sum(c < 25.0 for c in cps), "vent_lt_200": sum(c < 20.0 for c in cps),   # D-069, D-077
         "cap_update": st.mean(w["cap_update"] for w in v), "tracker": st.mean(w["tracker"] for w in v),
         "trab_s": st.mean(w["trab_s"] for w in v),
         "lag_media": st.mean(lag), "lag_p95": pct(lag, 95), "lag_max": max(lag),
@@ -285,6 +291,8 @@ def analizar(id_corrida, ruta_procesos=None):
     m["valida_reloj"] = abs(m["delta_transporte"]) <= 1.0
     m["un_cliente"] = m["duplicadas"] == 0
     m["C1"] = m["cps_media"] >= 29.5 and m["vent_lt_290"] == 0 and m["cap_update"] > 0
+    m["C1_D069"] = m["cps_media"] >= 29.5 and m["vent_lt_250"] == 0 and m["cap_update"] > 0
+    m["C1_D077"] = m["cps_media"] >= 29.5 and m["vent_lt_200"] == 0 and m["cap_update"] > 0   # vigente
     m["C1_estricto"] = m["vent_lt_295"] == 0
     m["C2"] = m["lag_p95"] <= UMBRAL_LAG_P95 and m["lag_min_p95_max"] <= UMBRAL_LAG_P95   # D-049, D-066
     m["C3"] = m["b_n100"] == 0 and m["b_vacias"] == 0
@@ -299,12 +307,14 @@ def analizar(id_corrida, ruta_procesos=None):
 # ---------------------------------------------------------------------------- tabla
 FILAS = [  # (etiqueta, clave, decimales); decimales None = texto
     ("Inicio", "inicio", None), ("Commit", "commit", None), ("Visual (fila config)", "visual", None),
+    ("Escena (fila escena_*)", "escena", None), ("GPU (gpu_edge)", "gpu_edge", None),
     ("Hz pantalla · tope · ligero", None, None), ("Duración (s)", "dur_s", 0),
     ("Validez: filas sesión", "filas_sesion", 0), ("Validez: filas `continuo` de más (2 clientes)", "duplicadas", 0),
     ("Validez: faltan al arrancar", "faltan_arranque", 0), ("Validez: faltan después", "faltan_despues", 0),
     ("Validez: última fila llegó", "ultima_llego", None), ("Validez: Δ transporte (ms, D-019 ±1)", "delta_transporte", 2),
     ("C1: ciclos/s media (sin #0)", "cps_media", 2), ("C1: ventana mín.", "cps_min", 1),
     ("C1: ventanas < 29.0", "vent_lt_290", 0), ("C1: ventanas < 29.5 (estricto)", "vent_lt_295", 0),
+    ("C1: ventanas < 25.0 (D-069)", "vent_lt_250", 0), ("C1: ventanas < 20.0 (D-077)", "vent_lt_200", 0),
     ("C1: nº ventanas sin #0", "n_vent", 0), ("`cap_update` (ms)", "cap_update", 1), ("`tracker` (ms)", "tracker", 1),
     ("% ciclos > 33.3 ms", "pct_33", 1),
     ("C2: `lag_cam` media", "lag_media", 1), ("C2: `lag_cam` p95", "lag_p95", 1), ("C2: `lag_cam` máx", "lag_max", 1),
@@ -370,7 +380,8 @@ def tabla(ms):
     out.append("| Criterio | " + " | ".join(ids) + " |")
     out.append("|---" * (len(ms) + 1) + "|")
     for k, txt in (("un_cliente", "Un solo cliente"), ("valida_reloj", "Reloj D-019"),
-                   ("dibujo", "Visual dibujó (filas cuadro y visual, D-061)"), ("C1", "C1 (D-023)"),
+                   ("dibujo", "Visual dibujó (filas cuadro y visual, D-061)"), ("C1", "C1 (D-023: ninguna < 29.0)"),
+                   ("C1_D069", "C1 (D-069: ninguna < 25.0)"), ("C1_D077", "C1 (D-077, vigente: ninguna < 20.0)"),
                    ("C1_estricto", "C1 estricto"), ("C2", f"C2 (p95 y p95 de cada minuto ≤ {UMBRAL_LAG_P95}, D-066)"),
                    ("C3", "C3 (0 de (b) > 100)"), ("C4", "C4 (100 % ≤ 250)"),
                    ("C6", "C6 (máx p95 por lote ≤ 16.7 y visual p95 ≤ 100)"), ("C7", "C7 (≥ 5 por mano/s)"),
