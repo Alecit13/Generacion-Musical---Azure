@@ -146,7 +146,7 @@ const DiagnosticoVisual = (() => {
     const destCeldas = seriesCeldas.map(s => maxDestellos1s(s, tiempos));
     const peor = destCeldas.indexOf(Math.max(...destCeldas));
     const r = {
-      escena: (window.Visual && Visual.estadisticas && Visual.estadisticas().escena) || "ondas (sin campo escena)",
+      escena: (typeof Visual !== "undefined" && Visual.estadisticas && Visual.estadisticas().escena) || "ondas (sin campo escena)",
       lienzo_px: `${lienzo.width}x${lienzo.height}`, segundos: +(tiempos[tiempos.length - 1] / 1000).toFixed(1),
       rojo_muestras: rojo.length, rojo_pct_max: +Math.max(...rojo).toFixed(4),
       rojo_cumple: rojo.length > 0 && Math.max(...rojo) <= ROJO_PCT_MAX,
