@@ -69,6 +69,9 @@ const MAX_REGISTRO = 50000;                      // muestras para el CSV descarg
 const PARAMS = new URLSearchParams(location.search);
 const VISUAL = PARAMS.get("visual") !== "0";
 const DEMO = PARAMS.get("demo") === "1";
+// D-082: ?gpu=TEXTO = GPU de Edge que anota Ale a mano (la evidencia es la captura de edge://gpu; no se mide aquí).
+// Sin comas, comillas ni saltos de línea (van al CSV) y como máximo 80 caracteres. Sin el parámetro no se anota nada.
+const GPU_EDGE = (PARAMS.get("gpu") || "").replace(/[,"\r\n]/g, " ").trim().slice(0, 80);
 // Cuestionario de estrés (US31/US32 son del otro curso; aquí solo se abren los enlaces)
 const URL_CUESTIONARIO = { antes: "[POR COMPLETAR]", despues: "[POR COMPLETAR]" };
 document.body.className = VISUAL ? "visual" : "depuracion";
@@ -254,6 +257,8 @@ function conectar() {
     // US38/C6: en cada conexión (una por corrida) se anota la configuración: latencia_ms = visual (1 o 0),
     // transporte_ms = Hz de la pantalla (mediana del intervalo de requestAnimationFrame al cargar la página)
     hzPantalla.then(hz => anotar([Date.now(), "config", VISUAL ? "1" : "0", hz === null ? "" : String(hz), "", "", ""]));
+    // D-082: fila gpu_edge con el texto de ?gpu= en latencia_ms (analisis_visual.py ignora los tipos que no conoce)
+    if (GPU_EDGE) anotar([Date.now(), "gpu_edge", GPU_EDGE, "", "", "", ""]);
     if (VISUAL) Visual.ponerConexion(true);
   };
   ws.onclose = () => {
