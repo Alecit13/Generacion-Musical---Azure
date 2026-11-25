@@ -1,4 +1,4 @@
-# MEDICIONES — línea base, hipótesis y plan (corte: 12/11/2026; mediciones hasta el 12/11)
+# MEDICIONES — línea base, hipótesis y plan (corte: 25/11/2026; mediciones hasta el 24/11)
 
 > Este archivo CAMBIA en cada sesión. Cada cifra cita su origen. MEDIDO = salió de un CSV o log. INFERIDO = deducción no comprobada.
 > Toda cifra de latencia va con su definición (sección 0). Si dos cifras no coinciden, primero se revisa que usen la misma definición.
@@ -849,6 +849,42 @@ Cálculo con `analisis_visual.py` (`b769fff`): |Δ`tempo`| entre filas seguidas 
 - **US16 cumple** con D-073 en la tanda oficial (155202, V1, V2) y en las 5 corridas adicionales de 10 min. Ningún p99 supera 0.60 (el más alto, 0.554, en I1 e I3).
 - **Máximo 1.000 en todas (MEDIDO):** en algún momento el tempo pasa de un extremo al otro entre dos filas seguidas. INFERIDO: la normalización de 20 s (D-035) puede producir saltos así al cambiar el rango; como el tempo se aplica en los ticks (≈ 0.25–1 s), un salto entre filas no es necesariamente un salto audible (limitación de D-073).
 
+## 4o. 24/11: tanda final con Jardín de luz (D-082, D-083) (MEDIDO salvo indicación)
+Fuentes en `sesiones/` (sin versionar): `sesion_20261124_<hora>_mjpg-cambios-2026-11-07_cuda-lite.*`; `gpu_intel_20261124.csv`, `cpu_intel_20261124.csv`, `procesos_intel_20261124.csv` (hasta 16:14) y los mismos con sufijo `_r4` (163035); `regla_corrida4_20261124.txt`; `puerta_demo_jardin_20261124.txt`; `REPORTE_SPRINT4_20261124.md`. Cifras con `analisis_visual.py` (`843603e`) y scripts de solo lectura de Code.
+**Condiciones:** commit `843603e` sin `-sucio` en todas (`git diff congelado-jardin 843603e` solo cambia `CLAUDE.md`, `docs/HISTORIAS.md` y `analisis_visual.py`); Edge en Intel (`gpu_edge` = "Intel UHD Graphics 0xA7A8", escrito por Ale con `?gpu=`; capturas de `edge://gpu` `[POR COMPLETAR]`); escena `jardin` (fila `escena_jardin`); parlante JBL; sin Kernel-Power durante las corridas. Servicio de hora: resync 14:46 y 15:18–15:22; el servicio arrancó solo a las 14:57:47 (antes de 150651) y estuvo detenido desde antes de 152355 hasta el final de la tanda.
+
+| Corrida | s | Uso | Validez (D-062) |
+|---|---|---|---|
+| 150651 | 181 | Prueba de 3 min | Descartada (prueba). **Ahorro de energía activo** (Ale): CPU 89 % de rendimiento (179 el 12/11), `tracker` 33.8 ms, 3.9 trabajos/s del hilo de manos; fallan C1, C2, C3 y C7. Servicio de hora en marcha |
+| 152355 | 192 | Prueba de 3 min, sin ahorro de energía | Descartada (prueba). CPU 173 %; cumple todos los criterios (C1 y C7 indicativos, 3 min) |
+| 153958 | 636 | 10 min | **Fuera de protocolo (D-083)**: app de Claude y otros procesos desde ≈ 565 s. Se informan como hechos 2 `lat_tick_ms` > 250 ms (273.6 ms a los 330.7 s; 310.9 ms a los 501.4 s) y 1 muestra de (b) > 100 ms a los 124 s, no atribuidos al proceso ajeno |
+| **155159** | 615 | 10 min | **Cuenta** |
+| **160255** | 615 | 10 min | **Cuenta** |
+| **163035** | 614 | 10 min (repetición, D-083) | **Cuenta**; sin `claude` durante la corrida (última muestra 16:29:39.917) |
+
+Las 3 que cuentan (validez: un solo cliente, 0 filas faltantes, la última fila llegó, Δ `transporte_ms` −0.00 a +0.01 ms, visual dibujó con 867–882 latencias visuales):
+| Métrica | 155159 | 160255 | 163035 |
+|---|---|---|---|
+| Semilla | 1933184680 | 818129156 | 1044403801 |
+| C1: media · ventana mín. · `cap_update` (ms) | 29.96 · 29.0 · 4.4 | 29.96 · 28.6 · 4.3 | 29.97 · 29.1 · 4.3 |
+| C1: ventanas < 20.0 (D-077) · < 25.0 (D-069) · < 29.0 (D-023) · < 29.5 | 0 · 0 · 0 · 5 | 0 · 0 · 3 · 5 | 0 · 0 · 0 · 3 |
+| `tracker` (ms) · % ciclos > 33.3 ms · CPU % rendimiento | 24.1 · 17.2 · 179 | 24.1 · 17.4 · 181 | 24.1 · 17.6 · 174 |
+| C2: `lag_cam` p95 · p95 por minuto (máx) | 18.1 · 19.1 | 18.2 · 18.5 | 17.8 · 18.5 |
+| C3: (b) n · media / p95 / máx · > 100 (%) | 18421 · 34.9 / 49.1 / 132.0 · 3 (0.0163 %) | 18415 · 34.9 / 49.1 / 118.0 · 2 (0.0109 %) | 18400 · 35.0 / 48.7 / 103.7 · 1 (0.0054 %) |
+| (a) media / p95 / máx | 28.5 / 33.2 / 115.1 | 28.5 / 33.1 / 114.9 | 28.6 / 33.3 / 102.8 |
+| C4: `lat_tick` máx · > 250 | 117.3 · 0 de 868 | 112.8 · 0 de 866 | 81.1 · 0 de 881 |
+| C6: máx de los p95 por lote (ms) · latencia visual p95 (ms) | 1.10 · 61.7 | 0.90 · 61.9 | 0.90 · 62.1 |
+| C7: datos nuevos por mano/s (izq / der) | 7.22 / 7.09 | 7.14 / 6.99 | 7.17 / 6.90 |
+| HU0017-1: saltos de `apertura01` > 0.3 por s | 0.24 | 0.27 | 0.34 |
+| Elementos vivos máx (`cuadro_elementos`) | 86 | 86 | 86 |
+| HU0016: salto de tempo p99 · notas reconstruidas · racha máx | 0.423 · 869/869 · 2 | 0.423 · 867/867 · 2 | 0.432 · 882/882 · 2 |
+- **Criterios (D-082):** C1 (D-077), C2, C4, C6, C7, HU0017-1 y diseño (vivos ≤ 200) cumplen en las 3. **C3 (0 muestras > 100 ms, D-049) no cumple en ninguna (3 / 2 / 1)**; con HU0023-1 reescrita (D-084: p95 ≤ 100 ms y ≤ 0,1 % > 100 ms) cumple en las 3.
+- **Muestras de (b) > 100 ms (HU0023-2):** en las 6, el mayor retardo está en Python (`latencia_ms − transporte_ms` = 83.3–115.3 ms), con `lag_cam` 0.8–16.9 ms y transporte ≤ 0.6 ms; el periodo entre filas (diff de `t_cap_ms`) en ese punto es 84.6–116.6 ms y los vecinos 25.5–48.4 ms: un único ciclo largo. Etapa interna de Python `[POR COMPLETAR]` (`[PERF]` da medias de 60 ciclos: tracker 23–25 ms en esas ventanas). Ningún proceso ajeno ≥ 50 % de un núcleo en esos instantes.
+- **US26 (D-086):** en 163035 no hay huecos > 1 s (mayor hueco 0.106 s en el CSV de sesión; 107.0 ms entre filas `continuo`); `_perf.txt` contiene 1 cabecera y 313 líneas de cada reporte (`[PERF]`, `[PERF-LINEA]`, `[CAMARA]`, `[FUSION]`, `[ROI]`) más 307 `[PIERNAS]`, y ninguna otra cosa: no registra errores. `[PIERNAS]` (LEÍDO, `main.py`, `anotar_conf_piernas` y `reportar`; D-034): por ventana de 60 ciclos, % de confianza NONE / LOW / MEDIUM de las articulaciones de pierna y % de ciclos con 2 / 1 / 0 rodillas ≥ MEDIUM; diagnóstico de HU0007-2, sin efecto musical. La consola parcial de 163035 que cita Ale no estaba en el equipo el 25/11 `[POR COMPLETAR]`.
+- **Puerta de `?demo=1` (D-078), medida por Ale en Edge con Intel a las 14:41** (`sesiones/puerta_demo_jardin_20261124.txt`, transcripción de Code; el hash del código no se comprobó en esa lectura): 120 s, n 1800; trabajo media 0.72 / p95 1 / máx 2 ms; intervalo media 35.59 / p95 34.9 / máx 3687.3 ms (INFERIDO: pestaña en segundo plano); vivos 80, vivosMax 86, llamadasMax 93; rojo 0 %; destellos 0 en el lienzo y 0 en la peor celda. Peticiones solo locales (dicho por Ale).
+- **Ahorro de energía (INFERIDO con evidencia fuerte, una corrida por lado):** fue la causa de la degradación de 150651. INFERIDO, sin comprobar: también explicaría la del 18/11 (D-081; sin registro de CPU) y la de 130047, 132706 y 143509 del 21/11 (`08111b1`, escena jardin, `tracker` 28–36 ms, 0.6–1.2 datos por mano/s; propósito `[POR COMPLETAR]`).
+- Las cifras de Ondas (`8d58820`, 4i–4n) son de otros días y de otro visual; no se comparan como si fueran del Jardín.
+
 ## 5. Otras cifras vigentes (de ESTADO_ACTUAL, sesiones 26–28/10)
 - Jitter con suavizado: hombros −22% a −32%; rodilla −52% a −53% (dos sesiones).
 - Articulaciones de manos del Kinect sin valor (NONE) ≈ 53% de los frames; las otras 26 ≈ 100%.
@@ -918,7 +954,8 @@ Tarea 2 (reducción del ciclo). Un paso por commit; cada paso se mide con el pro
 | 28 | Cierre de los Sprints 2 y 3 con los CSV (4m): tabla por corrida, D-069 (HU0007-1, a posteriori), estado de US07–US22 y mejoras | HECHO 12/11. P-023 cerrada (D-071) y reformulada (D-077): US07 cumple con D-077 (8/8 corridas largas); US12 Done con evidencia SIMULADA (D-072); US16 cumple con D-073 (4n); US23 abierta (Sprint 4). Textos de HISTORIAS y CLAUDE.md: commit `af7710c` (Ale) |
 | 26 | Tanda de validación con visual (D-047, D-050): 155202 + V1 y V2 de 10 min + control de 3 min; `analisis_visual.py`; etiqueta `validado-visual` en `8d58820` si es válida | **NO VÁLIDA 12/11** (4j): V1, V2 y control fallan D-019 (reloj); V2 y control sin dibujo; V1 no cumple C1 ni C2. Sin etiqueta. Repetir V1, V2 y control (D-060, D-061, D-062). **Repetida 12/11 por la tarde (4k):** 155642, 161012 y 162149 válidas por protocolo (sin registros de procesos); C4, C6, C7 y HU0017 cumplen; C1 y C2 fallan en V1 y C3 en V1 y V2. **Registro oficial (D-065)**; etiqueta `medido-visual` en `1d70ce8` (sin `validado-visual`) |
 | 24 | Manos con el visual encendido (≈ 7 datos/mano/s frente a ≈ 14) | Limitación informada (4i.2); causa `[POR COMPLETAR]`; opciones en P-017 |
-| 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | PENDIENTE (12/11) |
+| 25 | Refactor KISS (regla 13) en `refactor/kiss` desde `medido-final` | HECHO sin Kinect (CLAUDE.md regla 13); no medido. Queda como rama aparte (D-087) |
+| 29 | Tanda final con Jardín (D-082): 2 pruebas de 3 min, 3 corridas de 10 min y 1 repetición (D-083) | HECHO 24/11 (4o): cuentan 155159, 160255 y 163035; C3 original no cumple (3/2/1), HU0023-1 reescrita sí (D-084); el resto cumple |
 Fuera de este plan: `latencia_interna_SDK` `[POR COMPLETAR]`.
 
 ## 10. Protocolo de corrida (repetible)
