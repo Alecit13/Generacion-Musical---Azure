@@ -1,16 +1,15 @@
 """Pruebas unitarias SIN dispositivo (HU0025-1). Cada clase dice qué criterio APOYA (una prueba aislada no declara
 que una historia "cumple": eso lo decide la medición).
-No importan main.py (abre el puerto 8765 y la Kinect al importarse): sus clases se cargan con cargar_de_main, que
-ejecuta solo esas definiciones del archivo tal cual (11/11: código congelado, no se modifica).
+No importan main.py (abre el puerto 8765 y la Kinect al importarse): las clases del movimiento se cargan de
+movimiento.py con cargar_de_main (refactor KISS; hasta 8d58820 se leían de main.py con ast).
 Cobertura (11/11):
   cubiertos  manos.py (calcular_apertura, apertura_vigente, edades_por_mano_ms, TimbrePorManos)
              muestreo.py (elegir_siguiente_nota, calcular_octava, escala activa)
              zona.py (zona_desde_registro)
              servidor.py (enviar_a_todos, manejar_cliente)
-             main.py: NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion, MapeoExtremidades, RegistroPorAngulo
+             movimiento.py: NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion, MapeoExtremidades, RegistroPorAngulo
   sin cubrir main.py: bucle_kinect, HiloManos, FusionTemporal, guardar_latencias, arranque y cierre de la Kinect
-             (necesitan el dispositivo: los cubre la prueba de integración US26); zona.calcular_zona (solo con
-             REGISTRO_POR_ANGULO=False); index.html y visual.js (sin entorno de pruebas de JavaScript; probados con
+             (necesitan el dispositivo: los cubre la prueba de integración US26); index.html y visual.js (sin entorno de pruebas de JavaScript; probados con
              ?demo=1 y un servidor WebSocket falso)
 Uso:  python -m unittest pruebas_unitarias -v      (desde la carpeta del proyecto, con env_cv activo)"""
 import unittest
@@ -256,29 +255,16 @@ from types import SimpleNamespace
 
 
 def cargar_de_main(*nombres):
-    """Carga de main.py SOLO las definiciones pedidas (clases, funciones y asignaciones de nivel superior), en el orden del
-    archivo, sin ejecutar el resto (importar main.py abriría el puerto 8765 y la Kinect). Así se prueba el código
-    congelado sin tocarlo. Relación: lo usan las pruebas de NormalizadorAdaptativo, VelocidadAngular, angulo_articulacion,
-    MapeoExtremidades y RegistroPorAngulo. Variables: `nombres` (lo que se pide, incluidas las constantes de las que
-    dependen); el espacio de nombres solo trae numpy, collections y pykinect_azure (se importa sin el dispositivo).
-    Devuelve un SimpleNamespace con lo pedido; LookupError si alguno no existe en main.py."""
-    import ast
-    import collections
-    import pathlib
-    import numpy as np
-    import pykinect_azure as pykinect
-    arbol = ast.parse(pathlib.Path(__file__).with_name("main.py").read_text(encoding="utf-8"))
-    quiero, nodos, vistos = set(nombres), [], set()
-    for nodo in arbol.body:
-        if isinstance(nodo, (ast.ClassDef, ast.FunctionDef)) and nodo.name in quiero:
-            nodos.append(nodo); vistos.add(nodo.name)
-        elif isinstance(nodo, ast.Assign) and all(isinstance(t, ast.Name) and t.id in quiero for t in nodo.targets):
-            nodos.append(nodo); vistos.update(t.id for t in nodo.targets)
-    if quiero - vistos:
-        raise LookupError(f"no están en main.py: {sorted(quiero - vistos)}")
-    ns = {"np": np, "collections": collections, "pykinect": pykinect}
-    exec(compile(ast.Module(body=nodos, type_ignores=[]), "main.py", "exec"), ns)
-    return SimpleNamespace(**{k: ns[k] for k in nombres})
+    """Devuelve las clases, funciones y constantes pedidas de movimiento.py (refactor KISS: antes vivían en main.py y se
+    leían con ast, porque importar main.py abre el puerto 8765 y la Kinect; movimiento.py se importa sin el dispositivo).
+    Se conserva el nombre y la interfaz para no tocar las pruebas. Relación: lo usan las pruebas de NormalizadorAdaptativo,
+    VelocidadAngular, angulo_articulacion, MapeoExtremidades y RegistroPorAngulo, y validacion_offline.py.
+    Variables: `nombres` (lo que se pide). Devuelve un SimpleNamespace; LookupError si alguno no existe."""
+    import movimiento
+    faltan = sorted(k for k in nombres if not hasattr(movimiento, k))
+    if faltan:
+        raise LookupError(f"no están en movimiento.py: {faltan}")
+    return SimpleNamespace(**{k: getattr(movimiento, k) for k in nombres})
 
 
 CONST_NORM = ("NORM_VENTANA_S", "NORM_CALENTAMIENTO_S")
@@ -286,7 +272,7 @@ CONST_MAPEO = CONST_NORM + ("EMA_VEL_RODILLA", "VENTANA_INTENSIDAD_S", "VENTANA_
                             "RANGO_MIN_VEL_RODILLA", "RANGO_MIN_AMPLITUD", "RANGO_MIN_ACC", "CONF_MIN_ARTICULACION",
                             "CONF_MIN_RODILLA_TEMPO", "J_PELVIS", "J_MUNECAS", "J_TOBILLOS", "J_EXTREMIDADES",
                             "J_RODILLAS")
-CONST_REGISTRO = CONST_NORM + ("EMA_ANGULO_BRAZO", "RANGO_MIN_ANGULO_BRAZO", "HOLD_ANGULO_S", "COMBINACION_BRAZOS",
+CONST_REGISTRO = CONST_NORM + ("EMA_ANGULO_BRAZO", "RANGO_MIN_ANGULO_BRAZO", "HOLD_ANGULO_S",
                                "CONF_MIN_ANGULO_BRAZO", "J_BRAZOS")
 
 
@@ -548,6 +534,57 @@ class PruebaRegistroPorAngulo(unittest.TestCase):
         antes = self._correr(reg, [160] * 30, 6.0)["registro01"]
         despues = self._correr(reg, [20] * 30, 7.0, conf=1)["registro01"]     # LOW < CONF_MIN_ANGULO_BRAZO
         self.assertEqual(despues, antes)
+
+
+class PruebaCabeceraCSV(unittest.TestCase):
+    """salidas.py (refactor KISS). Apoya HU0022-1: el CSV de sesión y el _latencias.csv tienen las mismas columnas que
+    en 8d58820 (código medido), y la fila que arma bucle_kinect tiene tantos valores como columnas la cabecera."""
+
+    # Copiadas de main.py en 8d58820 (log_writer.writerow de la cabecera y guardar_latencias)
+    SESION_8D58820 = ["timestamp", "zona", "lambda", "acc_media", "nota", "octava", "apertura", "apertura_izq",
+                      "apertura_der", "manos", "tempo", "intensidad", "apertura01", "vel_rodilla", "amplitud_mm",
+                      "t_cap_ms", "lat_tick_ms", "ang_hombro_izq", "ang_hombro_der", "ang_codo_izq", "ang_codo_der",
+                      "ang_cadera_izq", "ang_cadera_der", "ang_rodilla_izq", "ang_rodilla_der", "conf_hombro_izq",
+                      "conf_hombro_der", "reg01_izq", "reg01_der", "registro01", "n_joints_ok", "joints_no_disp",
+                      "edad_manos_ms", "par_dt_ms", "desync_manos", "roi_izq", "roi_der", "lag_cam_ms",
+                      "frames_descartados", "nota_id", "lam_sorteo", "semilla", "version", "commit", "edad_izq_ms",
+                      "edad_der_ms"]
+    LATENCIAS_8D58820 = ["t_epoch_ms", "tipo", "latencia_ms", "transporte_ms", "output_latency_ms", "base_latency_ms",
+                         "latencia_llegada_ms"]
+
+    def test_cabeceras_iguales_a_8d58820(self):
+        import salidas
+        self.assertEqual(salidas.COLUMNAS_SESION, self.SESION_8D58820)
+        self.assertEqual(len(salidas.COLUMNAS_SESION), 46)
+        self.assertEqual(salidas.COLUMNAS_LATENCIAS, self.LATENCIAS_8D58820)
+
+    def test_fila_de_bucle_kinect_con_tantos_valores_como_columnas(self):
+        """Cuenta los elementos de la lista que bucle_kinect pasa a log_writer.writerow (sin ejecutar main.py)."""
+        import ast
+        import pathlib
+        import salidas
+        arbol = ast.parse(pathlib.Path(__file__).with_name("main.py").read_text(encoding="utf-8"))
+        bucle = next(n for n in arbol.body if isinstance(n, ast.AsyncFunctionDef) and n.name == "bucle_kinect")
+        filas = [n.args[0] for n in ast.walk(bucle)
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "writerow"
+                 and isinstance(n.func.value, ast.Name) and n.func.value.id == "log_writer"]
+        self.assertEqual(len(filas), 1)
+        self.assertEqual(len(filas[0].elts), len(salidas.COLUMNAS_SESION))
+
+    def test_abrir_csv_escribe_la_misma_cabecera(self):
+        import csv
+        import io
+        import os
+        import tempfile
+        import salidas
+        ruta = os.path.join(tempfile.mkdtemp(), "prueba.csv")
+        archivo, _ = salidas.abrir_csv(ruta, salidas.COLUMNAS_SESION)
+        archivo.close()
+        esperado = io.StringIO(newline="")
+        csv.writer(esperado).writerow(self.SESION_8D58820)
+        with open(ruta, newline="") as f:
+            self.assertEqual(f.read(), esperado.getvalue())
+        os.remove(ruta)
 
 
 if __name__ == "__main__":
